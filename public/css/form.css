@@ -1,0 +1,96 @@
+/* Reaproveitando variáveis */
+:root {
+    --azul-claro: #1d4e89;
+    --azul-escuro: #003366;
+    --cinza-claro: #f4f4f4;
+    --branco: #ffffff;
+    --vermelho: #e74c3c;
+    --verde: #2ecc71;
+}
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--cinza-claro);
+    color: var(--azul-escuro);
+    padding: 40px;
+}
+
+/* Título */
+h1 {
+    text-align: center;
+    color: var(--azul-claro);
+    margin-bottom: 30px;
+}
+
+/* Formulário */
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--branco);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Campos de formulário */
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--azul-escuro);
+}
+
+form input[type="text"],
+form input[type="date"],
+form input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Botão salvar */
+form button {
+    background-color: var(--verde);
+    color: var(--branco);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #27ae60;
+}
+
+/* Link de voltar */
+a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--azul-claro);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: var(--azul-escuro);
+}
+
+/* Exibição da imagem atual */
+p {
+    font-size: 14px;
+    color: #555;
+    margin-top: -15px;
+    margin-bottom: 20px;
+}

@@ -1,0 +1,113 @@
+/* Definição de cores */
+:root {
+    --azul-claro: #1d4e89;  /* Tom de azul claro */
+    --azul-escuro: #003366;  /* Tom de azul escuro */
+    --cinza-claro: #f4f4f4;  /* Tom de fundo claro */
+    --branco: #ffffff;  /* Cor de fundo branco */
+    --vermelho: #e74c3c;  /* Tom de vermelho para o botão de excluir */
+    --verde: #2ecc71; /* Tom de verde para o botão de sucesso (opcional) */
+}
+
+/* Reset básico */
+body, h1, table, th, td {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Estilização geral da página */
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--cinza-claro);
+    color: var(--azul-escuro);
+    padding: 20px;
+}
+
+/* Título */
+h1 {
+    text-align: center;
+    color: var(--azul-claro);
+    margin-bottom: 20px;
+}
+
+/* Link do botão de cadastro */
+a {
+    display: block;
+    text-align: center;
+    background-color: var(--azul-claro);
+    color: var(--branco);
+    padding: 10px 20px;
+    text-decoration: none;
+    margin-bottom: 20px;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+a:hover {
+    background-color: var(--azul-escuro);
+}
+
+/* Estilo da tabela */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--branco);
+    margin: 0 auto;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Cabeçalho da tabela */
+th {
+    background-color: var(--azul-claro);
+    color: var(--branco);
+    padding: 12px;
+    text-align: left;
+}
+
+/* Linhas da tabela */
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Imagem do projeto */
+img {
+    border-radius: 5px;
+}
+
+/* Botão Visualizar */
+a {
+    display: inline-block;
+    background-color: var(--azul-claro);
+    color: var(--branco);
+    padding: 8px 16px;  /* Tamanho ajustado */
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;  /* Tamanho de fonte ajustado */
+    text-align: center;
+}
+
+a:hover {
+    background-color: var(--azul-escuro);
+}
+
+/* Estilo do botão de Apagar */
+form button {
+    background-color: var(--vermelho);
+    color: var(--branco);
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #c0392b;  /* Tom mais escuro de vermelho */
+}
+
+form button:active {
+    background-color: #e74c3c;
+    transform: translateY(2px);
+}
