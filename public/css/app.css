@@ -1,0 +1,337 @@
+/* =======================
+   ESTILOS GERAIS / FORMULÁRIOS
+   ======================= */
+   html, body {
+    height: 100%;
+    margin: 0;
+}
+
+#app-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+}
+
+:root {
+    --azul-claro: #1d4e89;
+    --azul-escuro: #003366;
+    --cinza-claro: #f4f4f4;
+    --branco: #ffffff;
+    --vermelho: #e74c3c;
+    --verde: #2ecc71;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--cinza-claro);
+    color: var(--azul-escuro);
+    padding: 40px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--azul-claro);
+    margin-bottom: 30px;
+}
+
+form {
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: var(--branco);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+fieldset {
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: var(--branco);
+}
+
+.fieldset-introducao,
+.fieldset-detalhes {
+    border: 3px solid black;
+    background-color: #ffffff;
+}
+
+legend {
+    font-weight: bold;
+    padding: 0 10px;
+    font-size: 1.2em;
+    color: var(--azul-claro);
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--azul-escuro);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+textarea,
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+textarea[name="introducao"],
+textarea[name="objetivo_geral"],
+textarea[name="justificativa"],
+textarea[name="recursos"],
+textarea[name="resultados_esperados"] {
+    min-height: 120px;
+}
+
+.atividade-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+button[type="button"],
+button[type="submit"] {
+    background-color: var(--verde);
+    color: var(--branco);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="button"]:hover,
+button[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+
+/* =======================
+   ESTILOS DA LISTAGEM (index)
+   ======================= */
+#filtro-container {
+    max-width: 100%;
+}
+.filtro-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-top: 15px;
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+}
+
+.filtro-form div {
+    flex: 1 1 180px;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    max-width: 220px;
+}
+
+.filtro-form label {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #1d4e89;
+}
+
+.filtro-form input,
+.filtro-form select {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    height: 32px;
+}
+
+.filtro-form button {
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.filtro-form button:hover {
+    background-color: #218838;
+}
+
+.limpar-btn {
+    margin-left: 10px;
+    background: #444;
+    color: white;
+    padding: 7px 14px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+table th,
+table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+table th {
+    background-color: #1d4e89;
+    font-weight: bold;
+    color: #f2f2f2;
+}
+
+table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.botao-apagar {
+    background: none;
+    border: none;
+    color: red;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: inline;
+}
+
+.btn-link-azul {
+    background: none;
+    color: #1d4e89;
+    border: none;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    margin: 0 4px;
+}
+
+.btn-cadastrar {
+    display: inline-block;
+    background-color: #1d4e89;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-cadastrar:hover {
+    background-color: #163a66;
+}
+
+
+/* =======================
+   ESTILOS DA VISUALIZAÇÃO (show)
+   ======================= */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    color: #1d4e89;
+    text-align: center;
+    margin: 40px 0 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+th, td {
+    vertical-align: top;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #1d4e89;
+    color: white;
+    width: 240px;
+    font-weight: bold;
+    text-align: left;
+}
+
+td {
+    background-color: white;
+}
+
+td ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+td ul li {
+    margin-bottom: 8px;
+}
+
+a {
+    color: #1d4e89;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.btn.btn-secondary {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 8px 16px;
+    background-color: #1d4e89;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn.btn-secondary:hover {
+    background-color: #163a66;
+}

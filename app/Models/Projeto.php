@@ -13,7 +13,6 @@ class Projeto extends Model
     use HasFactory;
 
     protected $fillable = [
-        'status',
         'titulo',
         'periodo',
         'data_inicio',
@@ -23,27 +22,38 @@ class Projeto extends Model
         'objetivo_geral',
         'justificativa',
         'metodologia',
-        'execucao_projeto',
-        'documentacao_execucao',
-        'relatorio_final',
-        'cronograma',
         'recursos',
         'resultados_esperados',
-        'arquivo',
+        'numero_projeto',
+        'data_recebimento_napex',
+        'data_encaminhamento_parecer',
+        'aprovado_napex',
+        'motivo_napex',
+        'aprovado_coordenador',
+        'motivo_coordenador',
+        'data_parecer_coordenador',
+        'status',
+        'arquivo'
     ];
-
+    
     public function alunos()
     {
         return $this->hasMany(Aluno::class);
     }
-
-    public function atividades()
-    {
-        return $this->hasMany(Atividade::class);
-    }
-
+    
     public function professores()
     {
         return $this->hasMany(Professor::class);
     }
+    
+    public function atividades()
+    {
+        return $this->hasMany(Atividade::class);
+    }
+    
+    public function cronogramas()
+    {
+        return $this->hasMany(Cronograma::class);
+    }
+    
 }

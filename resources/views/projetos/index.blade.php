@@ -1,133 +1,134 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Propostas de Projeto Extensionista - Curricularização da Extensão') }}
+        </h2>
+    </x-slot>
 
-@section('content')
+    <h1 class="text-2xl font-bold text-blue-800 text-center mb-6">
+        Lista de Proposta de Atividade Extensionista Curricularização da Extensão
+    </h1>
 
-<link rel="stylesheet" href="{{ asset('css/index.css') }}">
+    <div class="py-12">
+        <div class="w-full mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
 
-<h1>Propostas de Projeto Extensionista  Curricularização da Extensão</h1>
-
-@if (session('success'))
-    <p style="color: green;">{{ session('success') }}</p>
-@endif
-
-
-
-
-<div style="margin-top: 20px;">
-    <button id="btn-filtro" class="btn btn-primary">🔍 Filtrar</button>
-    <a href="{{ route('projetos.index') }}" class="limpar-btn">Limpar Filtros</a>
-</div>
-
-<!-- Filtro com largura limitada e centralizado -->
-<div id="filtro-box" style="display: flex; max-width: 1500px;">
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form method="GET" action="{{ route('projetos.index') }}" class="filtro-form">
-        <div>
-            <label for="titulo">Título:</label>
-            <input type="text" name="titulo" value="{{ request('titulo') }}">
-        </div>
-
-        <div>
-            <label for="periodo">Período:</label>
-            <input type="text" name="periodo" value="{{ request('periodo') }}">
-        </div>
-
-        <div>
-            <label for="data_inicio">Data de Início (mínima):</label>
-            <input type="date" name="data_inicio" value="{{ request('data_inicio') }}">
-        </div>
-
-        <div>
-            <label for="data_fim">Data de Fim (máxima):</label>
-            <input type="date" name="data_fim" value="{{ request('data_fim') }}">
-        </div>
-
-        <div>
-            <label for="carga_min">Carga Mínima:</label>
-            <input type="number" name="carga_min" value="{{ request('carga_min') }}">
-        </div>
-
-        <div>
-            <label for="carga_max">Carga Máxima:</label>
-            <input type="number" name="carga_max" value="{{ request('carga_max') }}">
-        </div>
-
-        <div>
-            <label for="status">Status:</label>
-            <select name="status">
-                <option value="">-- Todos --</option>
-                <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
-                <option value="entregue" {{ request('status') === 'entregue' ? 'selected' : '' }}>Entregue</option>
-            </select>
-        </div>
-
-        <div>
-            <button type="submit" class="btn btn-success">Pesquisar</button>
-        </div>
-    </form>
-</div>
-
-<table>
-    <thead>
-        <tr>
-            <th>Título</th>
-            <th>Período</th>
-            <th>Data de Início</th>
-            <th>Data de Fim</th>
-            <th>Carga Horária</th>
-            <th>Status</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($projetos as $projeto)
-            <tr>
-                <td>{{ $projeto->titulo }}</td>
-                <td>{{ $projeto->periodo }}</td>
-                <td>{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
-                <td>{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
-                <td>{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}h</td>
-                <td>{{ ucfirst($projeto->status) }}</td>
-                <td>
-                <a href="{{ route('projetos.show', $projeto->id) }}" class="btn-link-azul">Visualizar</a>
-                @if ($projeto->status !== 'entregue')|
-                    <a href="{{ route('projetos.edit', $projeto->id) }}" class="btn-link-azul">Editar</a>
+                @if (session('success'))
+                    <div class="mb-4 text-green-600 font-semibold">
+                        {{ session('success') }}
+                    </div>
                 @endif
-                    |
-                    <form 
-                        action="{{ route('projetos.destroy', $projeto->id) }}" 
-                        method="POST" 
-                        onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');"
-                        style="display:inline; padding:0; margin:0; border:0;"
-                    >
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" style="background:none; border:none; padding:0; margin:0; color:red; font-weight:bold; font-size:0.95rem; cursor:pointer;">
-                            Apagar
-                        </button>
+
+                <div class="mb-6">
+                    <button id="btn-filtro" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">🔍 Filtrar</button>
+                    <a href="{{ route('projetos.index') }}" class="ml-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded">Limpar Filtros</a>
+                </div>
+
+                <div id="filtro-box" style="display: none;" class="bg-gray-50 p-4 rounded-lg mb-8">
+                    @if ($errors->any())
+                        <div class="mb-4 text-red-600">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div>
+                            <label class="block mb-1">Título:</label>
+                            <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Período:</label>
+                            <input type="text" name="periodo" value="{{ request('periodo') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Data Início:</label>
+                            <input type="date" name="data_inicio" value="{{ request('data_inicio') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Data Fim:</label>
+                            <input type="date" name="data_fim" value="{{ request('data_fim') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Carga Mínima:</label>
+                            <input type="number" name="carga_min" value="{{ request('carga_min') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Carga Máxima:</label>
+                            <input type="number" name="carga_max" value="{{ request('carga_max') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Status:</label>
+                            <select name="status" class="w-full border-gray-300 rounded-md py-1">
+                                <option value="">-- Todos --</option>
+                                <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
+                                <option value="entregue" {{ request('status') === 'entregue' ? 'selected' : '' }}>Entregue</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-end">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Pesquisar</button>
+                        </div>
                     </form>
-                </td>
-            </tr>
-        @endforeach
-    </tbody>
-</table>
+                </div>
 
-<script>
-    const btnFiltro = document.getElementById('btn-filtro');
-    const filtroBox = document.getElementById('filtro-box');
-    btnFiltro.addEventListener('click', () => {
-        filtroBox.style.display = filtroBox.style.display === 'none' ? 'block' : 'none';
-    });
-</script>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full w-full max-w-7xl bg-white border border-gray-300 rounded-lg">
+                        <thead>
+                            <tr class="bg-[#251C57] text-white">
+                                <th class="py-3 px-6 text-left">Título</th>
+                                <th class="py-3 px-6 text-left">Período</th>
+                                <th class="py-3 px-6 text-left">Data de Início</th>
+                                <th class="py-3 px-6 text-left">Data de Fim</th>
+                                <th class="py-3 px-6 text-left">Carga Horária</th>
+                                <th class="py-3 px-6 text-left">Status</th>
+                                <th class="py-3 px-6 text-left">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @foreach ($projetos as $projeto)
+                                <tr class="hover:bg-gray-100">
+                                    <td class="py-2 px-6">{{ $projeto->titulo }}</td>
+                                    <td class="py-2 px-6">{{ $projeto->periodo }}</td>
+                                    <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
+                                    <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
+                                    <td class="py-2 px-6">{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}h</td>
+                                    <td class="py-2 px-6">{{ ucfirst($projeto->status) }}</td>
+                                    <td class="py-2 px-6 space-x-2">
+                                        <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
+                                        @if ($projeto->status !== 'entregue')
+                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
+                                        @endif
+                                        <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:underline">Apagar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-@endsection
+                <script>
+                    const btnFiltro = document.getElementById('btn-filtro');
+                    const filtroBox = document.getElementById('filtro-box');
+                    btnFiltro.addEventListener('click', () => {
+                        filtroBox.style.display = filtroBox.style.display === 'none' ? 'block' : 'none';
+                    });
+                </script>
+
+            </div>
+        </div>
+    </div>
+</x-app-layout>

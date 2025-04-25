@@ -1,188 +1,264 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Editar Projeto de Extensão') }}
+        </h2>
+    </x-slot>
 
-@section('content')
-<div class="container">
-    <h1>Editar Projeto de Extensão</h1>
-    
+    <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
+        <h1 class="text-2xl font-bold text-center text-blue-800 mb-8">Editar Projeto de Extensão</h1>
 
-    <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
+        <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
 
-        <fieldset class="fieldset-introducao">
-            <legend>Introdução</legend>
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
-            <label>Título do Projeto:</label>
-            <input type="text" name="titulo" value="{{ $projeto->titulo }}" required>
+                <label class="block mb-2">Título do Projeto:</label>
+                <input type="text" name="titulo" value="{{ $projeto->titulo }}" class="w-full border-gray-300 rounded-md mb-4" required>
 
-            <label>Período:</label>
-            <input type="text" name="periodo" value="{{ $projeto->periodo }}" required>
+                <label class="block mb-2">Período:</label>
+                <input type="text" name="periodo" value="{{ $projeto->periodo }}" class="w-full border-gray-300 rounded-md mb-4" required>
 
-            <label>Professor(es) envolvidos:</label>
-            <div id="professores-wrapper">
-                @foreach ($projeto->professores as $index => $prof)
-                    <div class="professor-group">
-                        <label>Professor {{ $index + 1 }}</label>
-                        <input type="text" name="professores[{{ $index }}][nome]" value="{{ $prof->nome }}" required>
-                        <input type="email" name="professores[{{ $index }}][email]" value="{{ $prof->email }}" placeholder="Email (opcional)">
-                        <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}" placeholder="Área (opcional)">
-                    </div>
-                @endforeach
+                <label class="block mb-2">Professor(es) envolvidos:</label>
+                <div id="professores-wrapper">
+                    @foreach ($projeto->professores as $index => $prof)
+                        <div class="mb-4">
+                            <input type="text" name="professores[{{ $index }}][nome]" value="{{ $prof->nome }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do professor" required>
+                            <input type="email" name="professores[{{ $index }}][email]" value="{{ $prof->email }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Email (opcional)">
+                            <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
+                            @if ($index > 0)
+                                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
+
+                <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
+                <div id="alunos-wrapper">
+                    @foreach ($projeto->alunos as $index => $aluno)
+                        <div class="mb-4">
+                            <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $aluno->nome }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" required>
+                            <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $aluno->ra }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" required>
+                            <input type="text" name="alunos[{{ $index }}][curso]" value="{{ $aluno->curso }}" class="w-full border-gray-300 rounded-md" placeholder="Curso" required>
+                            @if ($index > 0)
+                                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
+
+                <label class="block mb-2">Público Alvo:</label>
+                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->publico_alvo }}</textarea>
+
+                <label class="block mb-2">Data de Início:</label>
+                <input type="date" name="data_inicio" id="data_inicio" value="{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('Y-m-d') }}" class="w-full border-gray-300 rounded-md mb-4" required>
+
+                <label class="block mb-2">Data de Término:</label>
+                <input type="date" name="data_fim" id="data_fim" value="{{ \Carbon\Carbon::parse($projeto->data_fim)->format('Y-m-d') }}" class="w-full border-gray-300 rounded-md mb-4" required>
+            </fieldset>
+
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
+
+                <label class="block mb-2">1. Introdução</label>
+                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->introducao }}</textarea>
+
+                <label class="block mb-2">2. Objetivos do Projeto</label>
+                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->objetivo_geral }}</textarea>
+
+                <label class="block mb-2">3. Justificativa</label>
+                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->justificativa }}</textarea>
+
+                <label class="block mb-2">4. Metodologia</label>
+                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->metodologia }}</textarea>
+
+                <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
+                <div id="atividades-wrapper">
+                    @foreach ($projeto->atividades as $index => $atividade)
+                        <div class="mb-4">
+                            <textarea name="atividades[{{ $index }}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required>{{ $atividade->o_que_fazer }}</textarea>
+                            <textarea name="atividades[{{ $index }}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required>{{ $atividade->como_fazer }}</textarea>
+                            <input type="number" name="atividades[{{ $index }}][carga_horaria]" value="{{ $atividade->carga_horaria }}" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
+                            @if ($index > 0)
+                                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade</button>
+
+                <label class="block mb-2">6. Cronograma</label>
+<div id="cronograma-wrapper">
+    @if ($projeto->cronogramas && $projeto->cronogramas->count())
+        @foreach ($projeto->cronogramas as $index => $item)
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <input type="hidden" name="cronograma[{{ $index }}][id]" value="{{ $item->id }}">
+                <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $item->atividade }}" class="form-control" placeholder="Título da Atividade" required>
+                <select name="cronograma[{{ $index }}][mes]" class="form-control" required>
+                    <option value="">Selecione o mês</option>
+                    @foreach (["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"] as $mes)
+                        <option value="{{ $mes }}" {{ $item->mes == $mes ? 'selected' : '' }}>{{ $mes }}</option>
+                    @endforeach
+                </select>
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
             </div>
-            <button type="button" id="add-professor">+ Adicionar Professor</button>
-
-            <label>Alunos envolvidos / R.A / Curso:</label>
-            <div id="alunos-wrapper">
-                @foreach ($projeto->alunos as $index => $aluno)
-                    <div class="aluno-group">
-                        <label>Aluno {{ $index + 1 }}</label>
-                        <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $aluno->nome }}" required>
-                        <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $aluno->ra }}" required>
-                        <input type="text" name="alunos[{{ $index }}][curso]" value="{{ $aluno->curso }}" required>
-                    </div>
-                @endforeach
-            </div>
-            <button type="button" id="add-aluno">+ Adicionar Aluno</button>
-
-            <label>Público Alvo:</label>
-            <textarea name="publico_alvo">{{ $projeto->publico_alvo }}</textarea>
-        </fieldset>
-
-        <fieldset class="fieldset-detalhes">
-            <legend>Detalhes do Projeto</legend>
-
-            <label>Data de Início:</label>
-            <input type="date" name="data_inicio" id="data_inicio" value="{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('Y-m-d') }}" required>
-
-            <label>Data de Término:</label>
-            <input type="date" name="data_fim" id="data_fim" value="{{ \Carbon\Carbon::parse($projeto->data_fim)->format('Y-m-d') }}" required>
-
-            <label>Introdução:</label>
-            <textarea name="introducao">{{ $projeto->introducao }}</textarea>
-
-            <label>Objetivo Geral:</label>
-            <textarea name="objetivo_geral">{{ $projeto->objetivo_geral }}</textarea>
-
-            <label>Justificativa:</label>
-            <textarea name="justificativa">{{ $projeto->justificativa }}</textarea>
-
-            <label>Metodologia:</label>
-            <textarea name="metodologia">{{ $projeto->metodologia }}</textarea>
-
-            <label>Atividades a serem desenvolvidas:</label>
-            <div id="atividades-wrapper">
-                @foreach ($projeto->atividades as $index => $atividade)
-                    <div class="atividade-group">
-                        <label>Atividade {{ $index + 1 }}</label>
-                        <textarea name="atividades[{{ $index }}][o_que_fazer]" required>{{ $atividade->o_que_fazer }}</textarea>
-                        <textarea name="atividades[{{ $index }}][como_fazer]" required>{{ $atividade->como_fazer }}</textarea>
-                        <input type="number" name="atividades[{{ $index }}][carga_horaria]" value="{{ $atividade->carga_horaria }}" required>
-                    </div>
-                @endforeach
-            </div>
-            <button type="button" id="add-atividade">+ Adicionar Atividade</button>
-
-            <label>Execução do Projeto:</label>
-            <textarea name="execucao_projeto">{{ $projeto->execucao_projeto }}</textarea>
-
-            <label>Documentação da Execução:</label>
-            <textarea name="documentacao_execucao">{{ $projeto->documentacao_execucao }}</textarea>
-
-            <label>Relatório Final:</label>
-            <textarea name="relatorio_final">{{ $projeto->relatorio_final }}</textarea>
-
-            <label>Cronograma:</label>
-            <textarea name="cronograma">{{ $projeto->cronograma }}</textarea>
-
-            <label>Recursos:</label>
-            <textarea name="recursos">{{ $projeto->recursos }}</textarea>
-
-            <label>Resultados Esperados:</label>
-            <textarea name="resultados_esperados">{{ $projeto->resultados_esperados }}</textarea>
-
-            <label>Arquivo (opcional):</label>
-            <input type="file" name="arquivo">
-
-            <label>Status:</label>
-            <select name="status" required>
-                <option value="editando" {{ $projeto->status === 'editando' ? 'selected' : '' }}>Editando</option>
-                <option value="entregue" {{ $projeto->status === 'entregue' ? 'selected' : '' }}>Entregue</option>
-            </select>
-
-            <br><br>
-            <button type="submit">Atualizar Projeto</button>
-        </fieldset>
-    </form>
+        @endforeach
+    @endif
 </div>
+<button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Cronograma</button>
 
-<script>
-    let professoresWrapper = document.getElementById('professores-wrapper');
-    let addProfessorBtn = document.getElementById('add-professor');
-    let professorCount = {{ $projeto->professores->count() }};
 
-    addProfessorBtn.addEventListener('click', function () {
-        if (professorCount < 9) {
+                
+
+                <label class="block mb-2">7. Recursos Necessários</label>
+                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->recursos }}</textarea>
+
+                <label class="block mb-2">8. Resultados Esperados</label>
+                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->resultados_esperados }}</textarea>
+
+                <h2 class="text-lg font-bold text-blue-700 mb-4 mt-8">Parecer do Núcleo de Apoio à Pesquisa e Extensão (NAPEx)</h2>
+
+                <label class="block mb-2">Número do Projeto</label>
+                <input type="text" name="numero_projeto" value="{{ $projeto->numero_projeto }}" class="w-full border-gray-300 rounded-md mb-4">
+
+                <label class="block mb-2">Data recebimento NAPEx</label>
+                <input type="date" name="data_recebimento_napex" value="{{ $projeto->data_recebimento_napex }}" class="w-full border-gray-300 rounded-md mb-4">
+
+                <label class="block mb-2">Data Encaminhamento Parecer</label>
+                <input type="date" name="data_encaminhamento_parecer" value="{{ $projeto->data_encaminhamento_parecer }}" class="w-full border-gray-300 rounded-md mb-4">
+
+                <label class="block mb-2">Aprovação do NAPEx:</label>
+                <div class="mb-4">
+                    <label><input type="radio" name="aprovado_napex" value="sim" {{ $projeto->aprovado_napex == 'sim' ? 'checked' : '' }}> Sim</label>
+                    <label class="ml-4"><input type="radio" name="aprovado_napex" value="nao" {{ $projeto->aprovado_napex == 'nao' ? 'checked' : '' }}> Não</label>
+                </div>
+
+                <label class="block mb-2">Exposição de motivos (NAPEx)</label>
+                <textarea name="motivo_napex" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->motivo_napex }}</textarea>
+
+                <h2 class="text-lg font-bold text-blue-700 mb-4 mt-8">Parecer do Coordenador</h2>
+
+                <label class="block mb-2">Aprovação do Coordenador:</label>
+                <div class="mb-4">
+                    <label><input type="radio" name="aprovado_coordenador" value="sim" {{ $projeto->aprovado_coordenador == 'sim' ? 'checked' : '' }}> Sim</label>
+                    <label class="ml-4"><input type="radio" name="aprovado_coordenador" value="nao" {{ $projeto->aprovado_coordenador == 'nao' ? 'checked' : '' }}> Não</label>
+                </div>
+
+                <label class="block mb-2">Exposição de motivos (Coordenador)</label>
+                <textarea name="motivo_coordenador" class="w-full border-gray-300 rounded-md mb-4">{{ $projeto->motivo_coordenador }}</textarea>
+
+                <label class="block mb-2">Data do Parecer do Coordenador</label>
+                <input type="date" name="data_parecer_coordenador" value="{{ $projeto->data_parecer_coordenador }}" class="w-full border-gray-300 rounded-md mb-4">
+
+                <label class="block mb-2">Arquivo (opcional)</label>
+                <input type="file" name="arquivo" class="w-full border-gray-300 rounded-md mb-6">
+
+                <label class="block mb-2">Status</label>
+                <select name="status" class="w-full border-gray-300 rounded-md mb-6" required>
+                    <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
+                    <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
+                </select>
+
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">Atualizar Projeto</button>
+            </fieldset>
+        </form>
+    </div>
+
+    <script>
+        let professorCount = {{ $projeto->professores->count() }};
+        let alunoCount = {{ $projeto->alunos->count() }};
+        let atividadeCount = {{ $projeto->atividades->count() }};
+        let cronogramaCount = {{ $projeto->cronogramas ? $projeto->cronogramas->count() : 0 }};
+
+
+
+        let professoresWrapper = document.getElementById('professores-wrapper');
+        let alunosWrapper = document.getElementById('alunos-wrapper');
+        let atividadesWrapper = document.getElementById('atividades-wrapper');
+        let cronogramaWrapper = document.getElementById('cronograma-wrapper');
+
+        document.getElementById('add-professor').addEventListener('click', function () {
+            if (professorCount < 9) {
+                const div = document.createElement('div');
+                div.classList.add('mb-4');
+                div.innerHTML = `
+                    <input type="text" name="professores[${professorCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do professor" required>
+                    <input type="email" name="professores[${professorCount}][email]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Email (opcional)">
+                    <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
+                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                `;
+                professoresWrapper.appendChild(div);
+                professorCount++;
+            }
+        });
+
+        document.getElementById('add-aluno').addEventListener('click', function () {
+            if (alunoCount < 9) {
+                const div = document.createElement('div');
+                div.classList.add('mb-4');
+                div.innerHTML = `
+                    <input type="text" name="alunos[${alunoCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" required>
+                    <input type="text" name="alunos[${alunoCount}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" required>
+                    <input type="text" name="alunos[${alunoCount}][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" required>
+                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                `;
+                alunosWrapper.appendChild(div);
+                alunoCount++;
+            }
+        });
+
+        document.getElementById('add-atividade').addEventListener('click', function () {
             const div = document.createElement('div');
-            div.classList.add('professor-group');
+            div.classList.add('mb-4');
             div.innerHTML = `
-                <label>Professor ${professorCount + 1}</label>
-                <input type="text" name="professores[${professorCount}][nome]" placeholder="Nome do professor" required>
-                <input type="email" name="professores[${professorCount}][email]" placeholder="Email (opcional)">
-                <input type="text" name="professores[${professorCount}][area]" placeholder="Área (opcional)">
+                <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
+                <textarea name="atividades[${atividadeCount}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
+                <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
             `;
-            professoresWrapper.appendChild(div);
-            professorCount++;
-        } else {
-            alert('Você só pode adicionar até 9 professores.');
-        }
-    });
+            atividadesWrapper.appendChild(div);
+            atividadeCount++;
+        });
 
-    let alunosWrapper = document.getElementById('alunos-wrapper');
-    let addAlunoBtn = document.getElementById('add-aluno');
-    let alunoCount = {{ $projeto->alunos->count() }};
-
-    addAlunoBtn.addEventListener('click', function () {
-        if (alunoCount < 9) {
+        document.getElementById('add-cronograma').addEventListener('click', function () {
             const div = document.createElement('div');
-            div.classList.add('aluno-group');
+            div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
             div.innerHTML = `
-                <label>Aluno ${alunoCount + 1}</label>
-                <input type="text" name="alunos[${alunoCount}][nome]" placeholder="Nome do aluno" required>
-                <input type="text" name="alunos[${alunoCount}][ra]" placeholder="RA" required>
-                <input type="text" name="alunos[${alunoCount}][curso]" placeholder="Curso" required>
+                <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" required>
+                <select name="cronograma[${cronogramaCount}][mes]" class="form-control" required>
+                    <option value="">Selecione o mês</option>
+                    <option value="Janeiro">Janeiro</option>
+                    <option value="Fevereiro">Fevereiro</option>
+                    <option value="Março">Março</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Maio">Maio</option>
+                    <option value="Junho">Junho</option>
+                    <option value="Julho">Julho</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Setembro">Setembro</option>
+                    <option value="Outubro">Outubro</option>
+                    <option value="Novembro">Novembro</option>
+                    <option value="Dezembro">Dezembro</option>
+                </select>
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
             `;
-            alunosWrapper.appendChild(div);
-            alunoCount++;
-        } else {
-            alert('Você só pode adicionar até 9 alunos.');
-        }
-    });
+            cronogramaWrapper.appendChild(div);
+            cronogramaCount++;
+        });
 
-    let atividadesWrapper = document.getElementById('atividades-wrapper');
-    let addAtividadeBtn = document.getElementById('add-atividade');
-    let atividadeCount = {{ $projeto->atividades->count() }};
+        document.getElementById('form-projeto').addEventListener('submit', function (e) {
+            const inicio = document.getElementById('data_inicio').value;
+            const fim = document.getElementById('data_fim').value;
 
-    addAtividadeBtn.addEventListener('click', function () {
-        const div = document.createElement('div');
-        div.classList.add('atividade-group');
-        div.innerHTML = `
-            <label>Atividade ${atividadeCount + 1}</label>
-            <textarea name="atividades[${atividadeCount}][o_que_fazer]" placeholder="O que fazer?" required></textarea>
-            <textarea name="atividades[${atividadeCount}][como_fazer]" placeholder="Como fazer?" required></textarea>
-            <input type="number" name="atividades[${atividadeCount}][carga_horaria]" placeholder="Carga horária" required>
-        `;
-        atividadesWrapper.appendChild(div);
-        atividadeCount++;
-    });
-
-    document.getElementById('form-projeto').addEventListener('submit', function (e) {
-        const inicio = document.getElementById('data_inicio').value;
-        const fim = document.getElementById('data_fim').value;
-
-        if (!inicio || !fim || new Date(inicio) > new Date(fim)) {
-            e.preventDefault();
-            alert('A data de início deve ser anterior ou igual à data de fim.');
-        }
-    });
-</script>
-@endsection
+            if (!inicio || !fim || new Date(inicio) > new Date(fim)) {
+                e.preventDefault();
+                alert('A data de início deve ser anterior ou igual à data de fim.');
+                return;
+            }
+        });
+    </script>
+</x-app-layout>

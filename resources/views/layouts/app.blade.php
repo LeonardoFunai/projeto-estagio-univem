@@ -8,11 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/form.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body style="font-family: 'Roboto', sans-serif;     margin: 0;padding: 0;">
+<body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;">
 
-    <!-- Barra superior institucional (ajustada) -->
+    <!-- Barra superior institucional -->
     <div style="background-color: #251c57; color: white; padding: 5px 20px; font-size: 0.85rem;">
         <div class="container d-flex justify-content-start align-items-center">
             <span class="me-3"><i class="bi bi-telephone"></i> (14) 2105-0800</span>
@@ -20,36 +20,56 @@
         </div>
     </div>
 
-    <!-- Cabeçalho com logo + botões -->
+    <!-- Cabeçalho com logo, botões e usuário -->
     <div class="bg-white shadow-sm">
         <div class="container d-flex align-items-center justify-content-between py-3">
             <div class="d-flex align-items-center">
                 <img src="{{ asset('img/site/logo.jpg') }}" alt="Logo Univem" style="height: 60px; margin-right: 10px;">
                 <div>
-                    <h2 style="margin: 0; color: blue;">UNIVEM</h2>
+                    <h2 style="margin: 0; color: #1d4e89;">UNIVEM</h2>
                     <small style="color: gray;">Centro Universitário Eurípedes de Marília</small>
                 </div>
             </div>
 
-            <!-- Botões de navegação -->
-            <div>
+            <div class="d-flex align-items-center">
                 <a href="{{ route('projetos.index') }}" class="btn btn-outline-primary me-2">Lista de Propostas</a>
-                <a href="{{ route('projetos.create') }}" class="btn btn-primary">Nova Proposta</a>
+                <a href="{{ route('projetos.create') }}" class="btn btn-primary me-4">Nova Proposta</a>
+
+                <!-- Dropdown de usuário -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ Auth::user()->name }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                        <li>
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                Perfil
+                            </a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item">Sair</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Conteúdo principal -->
-    <main style="padding: 20px;">
-        @yield('content')
+    <main class="container my-4">
+        {{ $slot }}
     </main>
 
     <!-- Rodapé -->
     <footer class="text-center py-3 bg-light mt-5">
         <div class="container">
-            <p class="mb-0">&copy; Copyright © {{ date('Y') }} - Centro Universitário Eurípides de Marília - UNIVEM</p>
+            <p class="mb-0">&copy; {{ date('Y') }} Centro Universitário Eurípides de Marília - UNIVEM</p>
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
