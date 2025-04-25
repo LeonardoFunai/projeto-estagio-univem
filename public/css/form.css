@@ -1,4 +1,5 @@
-/* Reaproveitando variáveis */
+/* Estilos personalizados para o formulário de Projeto de Extensão */
+
 :root {
     --azul-claro: #1d4e89;
     --azul-escuro: #003366;
@@ -8,13 +9,6 @@
     --verde: #2ecc71;
 }
 
-/* Reset básico */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
     font-family: Arial, sans-serif;
     background-color: var(--cinza-claro);
@@ -22,16 +16,14 @@ body {
     padding: 40px;
 }
 
-/* Título */
 h1 {
     text-align: center;
     color: var(--azul-claro);
     margin-bottom: 30px;
 }
 
-/* Formulário */
 form {
-    max-width: 600px;
+    max-width: 1400px;
     margin: 0 auto;
     background-color: var(--branco);
     padding: 30px;
@@ -39,26 +31,67 @@ form {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Campos de formulário */
-form label {
+fieldset {
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: var(--branco);
+}
+
+.fieldset-introducao,
+.fieldset-detalhes {
+    border: 3px solid black;
+    background-color: #ffffff;}
+
+legend {
+    font-weight: bold;
+    padding: 0 10px;
+    font-size: 1.2em;
+    color: var(--azul-claro);
+}
+
+label {
     display: block;
+    margin-top: 15px;
     margin-bottom: 8px;
     font-weight: bold;
     color: var(--azul-escuro);
 }
 
-form input[type="text"],
-form input[type="date"],
-form input[type="file"] {
+input[type="text"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+textarea,
+select,
+input[type="file"] {
     width: 100%;
     padding: 10px;
+    margin-top: 5px;
     margin-bottom: 20px;
+    box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 5px;
 }
 
-/* Botão salvar */
-form button {
+textarea[name="introducao"],
+textarea[name="objetivo_geral"],
+textarea[name="justificativa"],
+textarea[name="recursos"],
+textarea[name="resultados_esperados"] {
+    min-height: 120px;
+}
+
+.atividade-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+button[type="button"],
+button[type="submit"] {
     background-color: var(--verde);
     color: var(--branco);
     padding: 10px 20px;
@@ -69,28 +102,7 @@ form button {
     transition: background-color 0.3s ease;
 }
 
-form button:hover {
+button[type="button"]:hover,
+button[type="submit"]:hover {
     background-color: #27ae60;
-}
-
-/* Link de voltar */
-a {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
-    color: var(--azul-claro);
-    text-decoration: none;
-    font-weight: bold;
-}
-
-a:hover {
-    color: var(--azul-escuro);
-}
-
-/* Exibição da imagem atual */
-p {
-    font-size: 14px;
-    color: #555;
-    margin-top: -15px;
-    margin-bottom: 20px;
 }

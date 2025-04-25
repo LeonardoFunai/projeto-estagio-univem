@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Response;
 
 use App\Models\Projeto;
 use App\Models\Aluno;
@@ -11,6 +12,16 @@ use App\Http\Requests\UpdateProjetoRequest;
 
 class ProjetoController extends Controller
 {
+    public function downloadArquivo($id)
+    {
+        $projeto = Projeto::findOrFail($id);
+
+        if (!$projeto->arquivo || !file_exists(public_path($projeto->arquivo))) {
+            abort(404, 'Arquivo não encontrado.');
+        }
+
+        return Response::download(public_path($projeto->arquivo));
+    }
     public function index()
     {
         $query = Projeto::with('atividades');

@@ -6,94 +6,105 @@
     <form id="form-projeto" action="{{ route('projetos.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        <h2>1. Identificação</h2>
-        <label>Título do Projeto:</label>
-        <input type="text" name="titulo" required>
+        <fieldset class="fieldset-introducao">
+            <legend>Introdução</legend>
 
-        <label>Período:</label>
-        <input type="text" name="periodo" required>
+            <label>1. Identificação</label>
+            <label>Título do Projeto:</label>
+            <input type="text" name="titulo" required>
 
-        <label>Professor(es) envolvidos:</label>
-        <div id="professores-wrapper">
-            <div class="professor-group">
-                <input type="text" name="professores[0][nome]" placeholder="Nome do professor" required>
-                <input type="email" name="professores[0][email]" placeholder="Email (opcional)">
-                <input type="text" name="professores[0][area]" placeholder="Área (opcional)">
+            <label>Período:</label>
+            <input type="text" name="periodo" required>
+
+            <label>Professor(es) envolvidos:</label>
+            <div id="professores-wrapper">
+                <div class="professor-group">
+                    <input type="text" name="professores[0][nome]" placeholder="Nome do professor" required>
+                    <input type="email" name="professores[0][email]" placeholder="Email (opcional)">
+                    <input type="text" name="professores[0][area]" placeholder="Área (opcional)">
+                </div>
             </div>
-        </div>
-        <button type="button" id="add-professor">+ Adicionar Professor</button>
+            <button type="button" id="add-professor">+ Adicionar Professor</button>
 
-        <label>Alunos envolvidos / R.A / Curso:</label>
-        <div id="alunos-wrapper">
-            <div class="aluno-group">
-                <input type="text" name="alunos[0][nome]" placeholder="Nome do aluno" required>
-                <input type="text" name="alunos[0][ra]" placeholder="RA" required>
-                <input type="text" name="alunos[0][curso]" placeholder="Curso" required>
+            <label>Alunos envolvidos / R.A / Curso:</label>
+            <div id="alunos-wrapper">
+                <div class="aluno-group">
+                    <input type="text" name="alunos[0][nome]" placeholder="Nome do aluno" required>
+                    <input type="text" name="alunos[0][ra]" placeholder="RA" required>
+                    <input type="text" name="alunos[0][curso]" placeholder="Curso" required>
+                </div>
             </div>
-        </div>
-        <button type="button" id="add-aluno">+ Adicionar Aluno</button>
+            <button type="button" id="add-aluno">+ Adicionar Aluno</button>
 
-        <h2>2. Público Alvo</h2>
-        <textarea name="publico_alvo"></textarea>
+            <label>2. Público Alvo</label>
+            <textarea name="publico_alvo"></textarea>
+        </fieldset>
 
-        <h2>3. Período da Realização</h2>
-        <label>Data de Início:</label>
-        <input type="date" name="data_inicio" id="data_inicio" required>
-        <label>Data de Término:</label>
-        <input type="date" name="data_fim" id="data_fim" required>
 
-        <h2>4. Introdução</h2>
-        <textarea name="introducao"></textarea>
 
-        <h2>5. Objetivos do Projeto</h2>
-        <textarea name="objetivo_geral"></textarea>
+        <fieldset class="fieldset-detalhes">
+            <legend>Detalhes do Projeto</legend>
 
-        <h2>6. Justificativa</h2>
-        <textarea name="justificativa"></textarea>
+            <label>3. Período da Realização</label>
+            <label>Data de Início:</label>
+            <input type="date" name="data_inicio" id="data_inicio" required>
+            <label>Data de Término:</label>
+            <input type="date" name="data_fim" id="data_fim" required>
 
-        <h2>7. Metodologia</h2>
-        <textarea name="metodologia"></textarea>
+            <label>4. Introdução</label>
+            <textarea name="introducao"></textarea>
 
-        <h2>8. Atividades a serem desenvolvidas</h2>
-        <div id="atividades-wrapper">
-            <div class="atividade-group">
-                <textarea name="atividades[0][o_que_fazer]" placeholder="O que fazer?" required></textarea>
-                <textarea name="atividades[0][como_fazer]" placeholder="Como fazer?" required></textarea>
-                <input type="number" name="atividades[0][carga_horaria]" placeholder="Carga horária" required>
+            <label>5. Objetivos do Projeto</label>
+            <textarea name="objetivo_geral"></textarea>
+
+            <label>6. Justificativa</label>
+            <textarea name="justificativa"></textarea>
+
+            <label>7. Metodologia</label>
+            <textarea name="metodologia"></textarea>
+
+            <label>8. Atividades a serem desenvolvidas</label>
+            <div id="atividades-wrapper">
+                <div class="atividade-group">
+                    <textarea name="atividades[0][o_que_fazer]" placeholder="O que fazer?" required></textarea>
+                    <textarea name="atividades[0][como_fazer]" placeholder="Como fazer?" required></textarea>
+                    <input type="number" name="atividades[0][carga_horaria]" placeholder="Carga horária" required>
+                </div>
             </div>
-        </div>
-        <button type="button" id="add-atividade">+ Adicionar Atividade</button>
+            <button type="button" id="add-atividade">+ Adicionar Atividade</button>
 
-        <h2>9. Execução do Projeto</h2>
-        <textarea name="execucao_projeto"></textarea>
+            <label>9. Execução do Projeto</label>
+            <textarea name="execucao_projeto"></textarea>
 
-        <label>Documentação da execução:</label>
-        <textarea name="documentacao_execucao"></textarea>
+            <label>Documentação da execução:</label>
+            <textarea name="documentacao_execucao"></textarea>
 
-        <label>Relatório Final:</label>
-        <textarea name="relatorio_final"></textarea>
+            <label>Relatório Final:</label>
+            <textarea name="relatorio_final"></textarea>
 
-        <h2>10. Cronograma</h2>
-        <textarea name="cronograma"></textarea>
+            <label>10. Cronograma</label>
+            <textarea name="cronograma"></textarea>
 
-        <h2>11. Recursos Necessários</h2>
-        <textarea name="recursos"></textarea>
+            <label>11. Recursos Necessários</label>
+            <textarea name="recursos"></textarea>
 
-        <h2>12. Resultados Esperados</h2>
-        <textarea name="resultados_esperados"></textarea>
+            <label>12. Resultados Esperados</label>
+            <textarea name="resultados_esperados"></textarea>
 
-        <h2>13. Arquivo (opcional)</h2>
-        <input type="file" name="arquivo">
+            <label>13. Arquivo (opcional)</label>
+            <input type="file" name="arquivo">
 
-        <label>Status:</label>
-        <select name="status" required>
-            <option value="editando" selected>Editando</option>
-            <option value="entregue">Entregue</option>
-        </select>
+            <label>Status:</label>
+            <select name="status" required>
+                <option value="editando" selected>Editando</option>
+                <option value="entregue">Entregue</option>
+            </select>
 
-        <br><br>
-        <button type="submit">Salvar Projeto</button>
-    </form>
+            <br><br>
+            <button type="submit">Salvar Projeto</button>
+            
+        </fieldset>
+    </form>       
 </div>
 
 <script>
@@ -106,6 +117,7 @@
             const div = document.createElement('div');
             div.classList.add('professor-group');
             div.innerHTML = `
+                <label>Professor ${professorCount + 1}</label>
                 <input type="text" name="professores[${professorCount}][nome]" placeholder="Nome do professor" required>
                 <input type="email" name="professores[${professorCount}][email]" placeholder="Email (opcional)">
                 <input type="text" name="professores[${professorCount}][area]" placeholder="Área (opcional)">
@@ -126,6 +138,7 @@
             const div = document.createElement('div');
             div.classList.add('aluno-group');
             div.innerHTML = `
+                <label>Aluno ${alunoCount + 1}</label>
                 <input type="text" name="alunos[${alunoCount}][nome]" placeholder="Nome do aluno" required>
                 <input type="text" name="alunos[${alunoCount}][ra]" placeholder="RA" required>
                 <input type="text" name="alunos[${alunoCount}][curso]" placeholder="Curso" required>
@@ -145,6 +158,7 @@
         const div = document.createElement('div');
         div.classList.add('atividade-group');
         div.innerHTML = `
+            <label>Atividade ${atividadeCount + 1}</label>
             <textarea name="atividades[${atividadeCount}][o_que_fazer]" placeholder="O que fazer?" required></textarea>
             <textarea name="atividades[${atividadeCount}][como_fazer]" placeholder="Como fazer?" required></textarea>
             <input type="number" name="atividades[${atividadeCount}][carga_horaria]" placeholder="Carga horária" required>
@@ -163,4 +177,5 @@
         }
     });
 </script>
+
 @endsection

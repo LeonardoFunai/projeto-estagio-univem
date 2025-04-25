@@ -1,113 +1,131 @@
-/* Definição de cores */
-:root {
-    --azul-claro: #1d4e89;  /* Tom de azul claro */
-    --azul-escuro: #003366;  /* Tom de azul escuro */
-    --cinza-claro: #f4f4f4;  /* Tom de fundo claro */
-    --branco: #ffffff;  /* Cor de fundo branco */
-    --vermelho: #e74c3c;  /* Tom de vermelho para o botão de excluir */
-    --verde: #2ecc71; /* Tom de verde para o botão de sucesso (opcional) */
+/* MELHORIAS NOS FILTROS */
+.filtro-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px; /* menos espaço entre os campos */
+    align-items: flex-end;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: flex-start;
 }
 
-/* Reset básico */
-body, h1, table, th, td {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+.filtro-form div {
+    flex: 1 1 180px;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    max-width: 220px;
 }
 
-/* Estilização geral da página */
-body {
-    font-family: Arial, sans-serif;
-    background-color: var(--cinza-claro);
-    color: var(--azul-escuro);
-    padding: 20px;
-}
-
-/* Título */
-h1 {
-    text-align: center;
-    color: var(--azul-claro);
-    margin-bottom: 20px;
-}
-
-/* Link do botão de cadastro */
-a {
-    display: block;
-    text-align: center;
-    background-color: var(--azul-claro);
-    color: var(--branco);
-    padding: 10px 20px;
-    text-decoration: none;
-    margin-bottom: 20px;
+.filtro-form label {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
     font-weight: bold;
+    color: #1d4e89;
+}
+
+.filtro-form input,
+.filtro-form select {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    height: 32px;
+}
+
+/* Botão 'Pesquisar' */
+.filtro-form button {
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.filtro-form button:hover {
+    background-color: #218838;
+}
+
+/* Botão Limpar Filtros */
+.limpar-btn {
+    margin-left: 10px;
+    background: #444;
+    color: white;
+    padding: 7px 14px;
+    text-decoration: none;
     border-radius: 5px;
+    font-size: 0.9rem;
 }
 
-a:hover {
-    background-color: var(--azul-escuro);
-}
-
-/* Estilo da tabela */
+/* TABELA BONITA */
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: var(--branco);
-    margin: 0 auto;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Cabeçalho da tabela */
-th {
-    background-color: var(--azul-claro);
-    color: var(--branco);
-    padding: 12px;
-    text-align: left;
-}
-
-/* Linhas da tabela */
-td {
-    padding: 12px;
-    text-align: left;
+table th,
+table td {
+    padding: 10px 12px;
     border-bottom: 1px solid #ddd;
+    text-align: left;
 }
 
-/* Imagem do projeto */
-img {
-    border-radius: 5px;
+table th {
+    background-color: #1d4e89 ;
+    font-weight: bold;
+    color:#f2f2f2;
 }
 
-/* Botão Visualizar */
-a {
-    display: inline-block;
-    background-color: var(--azul-claro);
-    color: var(--branco);
-    padding: 8px 16px;  /* Tamanho ajustado */
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 14px;  /* Tamanho de fonte ajustado */
-    text-align: center;
+table tr:hover {
+    background-color: #f9f9f9;
 }
 
-a:hover {
-    background-color: var(--azul-escuro);
-}
-
-/* Estilo do botão de Apagar */
-form button {
-    background-color: var(--vermelho);
-    color: var(--branco);
-    padding: 8px 16px;
+/* Botão 'Apagar' inline */
+.botao-apagar {
+    background: none;
     border: none;
-    border-radius: 5px;
-    font-size: 14px;
+    color: red;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
     cursor: pointer;
+    font-size: 0.95rem;
+    display: inline;
 }
 
-form button:hover {
-    background-color: #c0392b;  /* Tom mais escuro de vermelho */
+/* Botão azul estilo link */
+.btn-link-azul {
+    background: none;
+    color: #1d4e89;
+    border: none;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    margin: 0 4px;
 }
 
-form button:active {
-    background-color: #e74c3c;
-    transform: translateY(2px);
+/* Botão estilo de link comum para 'Cadastrar Novo Projeto' */
+.btn-cadastrar {
+    display: inline-block;
+    background-color: #1d4e89;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-cadastrar:hover {
+    background-color: #163a66;
 }
