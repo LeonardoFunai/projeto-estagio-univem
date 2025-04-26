@@ -33,8 +33,9 @@
 
             <div class="d-flex align-items-center">
                 <a href="{{ route('projetos.index') }}" class="btn btn-outline-primary me-2">Lista de Propostas</a>
-                <a href="{{ route('projetos.create') }}" class="btn btn-primary me-4">Nova Proposta</a>
-
+                @if(auth()->user()->role == 'aluno')
+                    <a href="{{ route('projetos.create') }}" class="btn btn-primary me-4">Nova Proposta</a>
+                @endif
                 <!-- Dropdown de usuário -->
                 <div class="dropdown">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">

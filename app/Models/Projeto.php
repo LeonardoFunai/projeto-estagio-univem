@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Professor;
 use App\Models\Aluno;
 use App\Models\Atividade;
+use App\Models\User; // Adicionar isso
 
 class Projeto extends Model
 {
@@ -33,7 +34,8 @@ class Projeto extends Model
         'motivo_coordenador',
         'data_parecer_coordenador',
         'status',
-        'arquivo'
+        'arquivo',
+        'user_id', // <-- Adicionado aqui
     ];
     
     public function alunos()
@@ -55,5 +57,9 @@ class Projeto extends Model
     {
         return $this->hasMany(Cronograma::class);
     }
-    
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -26,7 +26,14 @@ class ProjetoController extends Controller
 
     public function index()
     {
-        $query = Projeto::with('atividades');
+        $query = Projeto::with(['atividades', 'user']); // carregar atividades E user
+
+        $user = auth()->user();
+
+        // Se for aluno, só mostra os projetos dele
+        if ($user->role === 'aluno') {
+            $query->where('user_id', $user->id);
+        }
 
         if (request('titulo')) {
             $query->where('titulo', 'like', '%' . request('titulo') . '%');
@@ -52,6 +59,8 @@ class ProjetoController extends Controller
         return view('projetos.index', compact('projetos'));
     }
 
+    
+
     public function create()
     {
         return view('projetos.create');
@@ -73,6 +82,9 @@ class ProjetoController extends Controller
             $fim = date('d/m/Y', strtotime($request->input('data_fim')));
             $data['periodo_realizacao'] = "$inicio a $fim";
         }
+
+        // Vínculo do projeto ao usuário autenticado
+        $data['user_id'] = auth()->id(); // <= Linha que faltava!
 
         $projeto = Projeto::create($data);
 
@@ -102,6 +114,7 @@ class ProjetoController extends Controller
 
         return redirect()->route('projetos.index')->with('success', 'Projeto salvo com sucesso!');
     }
+
 
     public function show($id)
     {

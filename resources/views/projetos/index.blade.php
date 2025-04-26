@@ -85,6 +85,7 @@
                     <table class="min-w-full w-full max-w-7xl bg-white border border-gray-300 rounded-lg">
                         <thead>
                             <tr class="bg-[#251C57] text-white">
+                                <th class="py-3 px-6 text-left">Cadastrado por</th>
                                 <th class="py-3 px-6 text-left">Título</th>
                                 <th class="py-3 px-6 text-left">Período</th>
                                 <th class="py-3 px-6 text-left">Data de Início</th>
@@ -97,6 +98,7 @@
                         <tbody class="divide-y divide-gray-200">
                             @foreach ($projetos as $projeto)
                                 <tr class="hover:bg-gray-100">
+                                    <td class="py-2 px-6">{{ $projeto->user->name ?? 'Desconhecido' }}</td>
                                     <td class="py-2 px-6">{{ $projeto->titulo }}</td>
                                     <td class="py-2 px-6">{{ $projeto->periodo }}</td>
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
