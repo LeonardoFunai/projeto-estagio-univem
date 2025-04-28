@@ -134,78 +134,81 @@ class ProjetoController extends Controller
     }
 
     public function update(UpdateProjetoRequest $request, $id)
-{
-    $projeto = Projeto::findOrFail($id);
-
-    if ($projeto->status === 'entregue') {
-        return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
-    }
-
-    $data = $request->validated();
-
-    // Atualiza o projeto
-    $projeto->update($data);
-
-    // Atualizando alunos
-    $projeto->alunos()->delete();
-    if ($request->has('alunos')) {
-        foreach ($request->alunos as $aluno) {
-            $projeto->alunos()->create($aluno);
+    {
+        $projeto = Projeto::findOrFail($id);
+    
+        if ($projeto->status === 'entregue') {
+            return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
         }
-    }
-
-    // Atualizando professores
-    $projeto->professores()->delete();
-    if ($request->has('professores')) {
-        foreach ($request->professores as $professor) {
-            $projeto->professores()->create($professor);
-        }
-    }
-
-    // Atualizando atividades
-    $projeto->atividades()->delete();
-    if ($request->has('atividades')) {
-        foreach ($request->atividades as $atividade) {
-            $projeto->atividades()->create($atividade);
-        }
-    }
-
-    // 🔥 Aqui é o importante: Atualizando cronogramas sem apagar tudo
-// Atualizando cronogramas sem apagar tudo
-if ($request->has('cronograma')) {
-    $idsExistentes = $projeto->cronogramas()->pluck('id')->toArray();
-    $idsRecebidos = [];
-
-    foreach ($request->cronograma as $item) {
-        if (isset($item['id'])) {
-            // Atualiza cronograma existente
-            $cronograma = $projeto->cronogramas()->where('id', $item['id'])->first();
-            if ($cronograma) {
-                $cronograma->update([
-                    'atividade' => $item['atividade'],
-                    'mes' => $item['mes'],
-                ]);
-                $idsRecebidos[] = $item['id'];
+    
+        $userRole = auth()->user()->role;
+        $data = $request->validated();
+    
+        // Atualiza dados normais do projeto
+        $projeto->update($data);
+    
+        // Se for aluno ou napex, atualiza alunos, professores e atividades normalmente
+        if (in_array($userRole, ['aluno', 'napex'])) {
+    
+            // Atualizando alunos
+            $projeto->alunos()->delete();
+            if ($request->has('alunos')) {
+                foreach ($request->alunos as $aluno) {
+                    $projeto->alunos()->create($aluno);
+                }
             }
-        } else {
-            // Cria novo cronograma
-            $projeto->cronogramas()->create([
-                'atividade' => $item['atividade'],
-                'mes' => $item['mes'],
-            ]);
+    
+            // Atualizando professores
+            $projeto->professores()->delete();
+            if ($request->has('professores')) {
+                foreach ($request->professores as $professor) {
+                    $projeto->professores()->create($professor);
+                }
+            }
+    
+            // Atualizando atividades
+            $projeto->atividades()->delete();
+            if ($request->has('atividades')) {
+                foreach ($request->atividades as $atividade) {
+                    $projeto->atividades()->create($atividade);
+                }
+            }
+    
+            // Atualizando cronogramas
+            if ($request->has('cronograma')) {
+                $idsExistentes = $projeto->cronogramas()->pluck('id')->toArray();
+                $idsRecebidos = [];
+    
+                foreach ($request->cronograma as $item) {
+                    if (isset($item['id'])) {
+                        $cronograma = $projeto->cronogramas()->where('id', $item['id'])->first();
+                        if ($cronograma) {
+                            $cronograma->update([
+                                'atividade' => $item['atividade'],
+                                'mes' => $item['mes'],
+                            ]);
+                            $idsRecebidos[] = $item['id'];
+                        }
+                    } else {
+                        $projeto->cronogramas()->create([
+                            'atividade' => $item['atividade'],
+                            'mes' => $item['mes'],
+                        ]);
+                    }
+                }
+    
+                $idsParaDeletar = array_diff($idsExistentes, $idsRecebidos);
+                if (count($idsParaDeletar) > 0) {
+                    $projeto->cronogramas()->whereIn('id', $idsParaDeletar)->delete();
+                }
+            }
         }
+    
+        // Se for coordenador, só atualiza o parecer dele (já atualizado no $data acima)
+    
+        return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
     }
-
-    // Deleta cronogramas que existiam mas o usuário removeu
-    $idsParaDeletar = array_diff($idsExistentes, $idsRecebidos);
-    if (count($idsParaDeletar) > 0) {
-        $projeto->cronogramas()->whereIn('id', $idsParaDeletar)->delete();
-    }
-}
-
-
-    return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
-}
+    
 
     
 
