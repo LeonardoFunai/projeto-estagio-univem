@@ -23,29 +23,46 @@
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
                 <label class="block mb-2">Status</label>
-                <select name="status" class="w-full border-gray-300 rounded-md mb-6" required>
-                    <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
-                    <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
-                </select>
+                @if($userRole === 'aluno')
+                    <select name="status" class="w-full border-gray-300 rounded-md mb-6" required>
+                        <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
+                        <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
+                    </select>
+                @else
+                    <select class="w-full border-gray-300 rounded-md mb-6 opacity-50" disabled>
+                        <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
+                        <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
+                    </select>
+                    <input type="hidden" name="status" value="{{ $projeto->status }}">
+                @endif
 
                 <label class="block mb-2">Título do Projeto:</label>
-                <input type="text" name="titulo" value="{{ $projeto->titulo }}" class="w-full border-gray-300 rounded-md mb-4" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
+                <input type="text" name="titulo" value="{{ $projeto->titulo }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}" 
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
 
                 <label class="block mb-2">Período:</label>
-                <input type="text" name="periodo" value="{{ $projeto->periodo }}" class="w-full border-gray-300 rounded-md mb-4" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
+                <input type="text" name="periodo" value="{{ $projeto->periodo }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+
                 <label class="block mb-2">Professor(es) envolvidos:</label>
                 <div id="professores-wrapper">
                     @foreach ($projeto->professores as $index => $prof)
                         <div class="mb-4">
-                            <input type="text" name="professores[{{ $index }}][nome]" value="{{ $prof->nome }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do professor" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            <input type="email" name="professores[{{ $index }}][email]" value="{{ $prof->email }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Email (opcional)" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            @if ($index > 0 && !$disableAlunoFields)
-                                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
-                            @endif
+                            <input type="text" name="professores[{{ $index }}][nome]" value="{{ $prof->nome }}"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                            <input type="email" name="professores[{{ $index }}][email]" value="{{ $prof->email }}"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
+                            <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}"
+                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
                         </div>
                     @endforeach
                 </div>
+
                 @if(!$disableAlunoFields)
                     <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
                 @endif
@@ -54,51 +71,78 @@
                 <div id="alunos-wrapper">
                     @foreach ($projeto->alunos as $index => $aluno)
                         <div class="mb-4">
-                            <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $aluno->nome }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $aluno->ra }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            <input type="text" name="alunos[{{ $index }}][curso]" value="{{ $aluno->curso }}" class="w-full border-gray-300 rounded-md" placeholder="Curso" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                            @if ($index > 0 && !$disableAlunoFields)
-                                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
-                            @endif
+                            <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $aluno->nome }}"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                            <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $aluno->ra }}"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                            <input type="text" name="alunos[{{ $index }}][curso]" value="{{ $aluno->curso }}"
+                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
                         </div>
                     @endforeach
                 </div>
+
                 @if(!$disableAlunoFields)
                     <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
                 @endif
 
                 <label class="block mb-2">Público Alvo:</label>
-                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->publico_alvo }}</textarea>
+                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->publico_alvo }}</textarea>
 
                 <label class="block mb-2">Data de Início:</label>
-                <input type="date" name="data_inicio" value="{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('Y-m-d') }}" class="w-full border-gray-300 rounded-md mb-4" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
+                <input type="date" name="data_inicio" value="{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('Y-m-d') }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
 
                 <label class="block mb-2">Data de Término:</label>
-                <input type="date" name="data_fim" value="{{ \Carbon\Carbon::parse($projeto->data_fim)->format('Y-m-d') }}" class="w-full border-gray-300 rounded-md mb-4" required {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
+                <input type="date" name="data_fim" value="{{ \Carbon\Carbon::parse($projeto->data_fim)->format('Y-m-d') }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
 
                 <label class="block mb-2">1. Introdução</label>
-                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->introducao }}</textarea>
+                <textarea name="introducao"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->introducao }}</textarea>
 
                 <label class="block mb-2">2. Objetivos do Projeto</label>
-                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->objetivo_geral }}</textarea>
+                <textarea name="objetivo_geral"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->objetivo_geral }}</textarea>
 
                 <label class="block mb-2">3. Justificativa</label>
-                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->justificativa }}</textarea>
+                <textarea name="justificativa"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->justificativa }}</textarea>
 
                 <label class="block mb-2">4. Metodologia</label>
-                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->metodologia }}</textarea>
+                <textarea name="metodologia"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->metodologia }}</textarea>
 
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                 <div id="atividades-wrapper">
                     @foreach ($projeto->atividades as $index => $atividade)
                         <div class="mb-4">
-                            <textarea name="atividades[{{ $index }}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $atividade->o_que_fazer }}</textarea>
-                            <textarea name="atividades[{{ $index }}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $atividade->como_fazer }}</textarea>
-                            <input type="number" name="atividades[{{ $index }}][carga_horaria]" value="{{ $atividade->carga_horaria }}" class="w-full border-gray-300 rounded-md" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
+                            <textarea name="atividades[{{ $index }}][o_que_fazer]"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $atividade->o_que_fazer }}</textarea>
+
+                            <textarea name="atividades[{{ $index }}][como_fazer]"
+                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $atividade->como_fazer }}</textarea>
+
+                            <input type="number" name="atividades[{{ $index }}][carga_horaria]"
+                                value="{{ $atividade->carga_horaria }}"
+                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
                         </div>
                     @endforeach
                 </div>
@@ -109,51 +153,67 @@
                     </button>
                 @endif
 
-
                 <label class="block mb-2">6. Cronograma</label>
                 <div id="cronograma-wrapper">
-                    @if ($projeto->cronogramas && $projeto->cronogramas->count())
-                        @foreach ($projeto->cronogramas as $index => $item)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $item->atividade }}" class="form-control" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                                <select name="cronograma[{{ $index }}][mes]" class="form-control" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>
-                                    <option value="">Selecione o mês</option>
-                                    @foreach (["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"] as $mes)
-                                        <option value="{{ $mes }}" {{ $item->mes == $mes ? 'selected' : '' }}>{{ $mes }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endforeach
-                    @endif
+                    @foreach ($projeto->cronogramas as $index => $cronograma)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $cronograma->atividade }}"
+                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
+
+                            <select name="cronograma[{{ $index }}][mes]"
+                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                {{ $disableAlunoFields ? 'disabled' : '' }}>
+                                <option value="">Selecione o mês</option>
+                                @foreach (['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $mes)
+                                    <option value="{{ $mes }}" {{ $cronograma->mes == $mes ? 'selected' : '' }}>{{ $mes }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endforeach
                 </div>
 
                 @if(!$disableAlunoFields)
-                    <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Cronograma</button>
+                    <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">
+                        + Adicionar Cronograma
+                    </button>
                 @endif
 
-
                 <label class="block mb-2">7. Recursos Necessários</label>
-                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->recursos }}</textarea>
+                <textarea name="recursos"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->recursos }}</textarea>
 
                 <label class="block mb-2">8. Resultados Esperados</label>
-                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" {{ $disableAlunoFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->resultados_esperados }}</textarea>
+                <textarea name="resultados_esperados"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ $projeto->resultados_esperados }}</textarea>
 
-                <!-- Arquivo -->
                 <label class="block mb-2">Arquivo (opcional)</label>
-                <input type="file" name="arquivo" class="w-full border-gray-300 rounded-md mb-6">
+                @if($userRole === 'aluno')
+                    <input type="file" name="arquivo" class="w-full border-gray-300 rounded-md mb-6">
+                @else
+                    <input type="file" class="w-full border-gray-300 rounded-md mb-6 opacity-50" disabled>
+                @endif
             </fieldset>
 
-                        <!-- PARECER DO NAPEX -->
-                <h2 class="text-lg font-bold text-blue-700 mb-4 mt-8">Parecer do Núcleo de Apoio à Pesquisa e Extensão (NAPEx)</h2>
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Parecer do Núcleo de Apoio à Pesquisa e Extensão (NAPEx)</legend>
 
                 <label class="block mb-2">Número do Projeto</label>
-                <input type="text" name="numero_projeto" value="{{ $projeto->numero_projeto }}" class="w-full border-gray-300 rounded-md mb-4" {{ $disableNapexFields ? 'readonly disabled opacity-50' : '' }}>
+                <input type="text" name="numero_projeto" value="{{ $projeto->numero_projeto }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
+                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
 
-                <label class="block mb-2">Data recebimento NAPEx</label>
-                <input type="date" name="data_recebimento_napex" value="{{ $projeto->data_recebimento_napex }}" class="w-full border-gray-300 rounded-md mb-4" {{ $disableNapexFields ? 'readonly disabled opacity-50' : '' }}>
+                <label class="block mb-2">Data de Recebimento pelo NAPEx</label>
+                <input type="date" name="data_recebimento_napex" value="{{ $projeto->data_recebimento_napex }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
+                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
 
-                <label class="block mb-2">Data Encaminhamento Parecer</label>
-                <input type="date" name="data_encaminhamento_parecer" value="{{ $projeto->data_encaminhamento_parecer }}" class="w-full border-gray-300 rounded-md mb-4" {{ $disableNapexFields ? 'readonly disabled opacity-50' : '' }}>
+                <label class="block mb-2">Data de Encaminhamento para Parecer</label>
+                <input type="date" name="data_encaminhamento_parecer" value="{{ $projeto->data_encaminhamento_parecer }}"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
+                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
 
                 <label class="block mb-2">Aprovação do NAPEx:</label>
                 <div class="mb-4">
@@ -161,11 +221,14 @@
                     <label class="ml-4"><input type="radio" name="aprovado_napex" value="nao" {{ $projeto->aprovado_napex == 'nao' ? 'checked' : '' }} {{ $disableNapexFields ? 'disabled' : '' }}> Não</label>
                 </div>
 
-                <label class="block mb-2">Exposição de motivos (NAPEx)</label>
-                <textarea name="motivo_napex" class="w-full border-gray-300 rounded-md mb-4" {{ $disableNapexFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->motivo_napex }}</textarea>
+                <label class="block mb-2">Exposição de Motivos (NAPEx)</label>
+                <textarea name="motivo_napex"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
+                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>{{ $projeto->motivo_napex }}</textarea>
+            </fieldset>
 
-                <!-- PARECER DO COORDENADOR -->
-                <h2 class="text-lg font-bold text-blue-700 mb-4 mt-8">Parecer do Coordenador de Curso</h2>
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Parecer do Coordenador de Curso</legend>
 
                 <label class="block mb-2">Aprovação do Coordenador:</label>
                 <div class="mb-4">
@@ -173,20 +236,25 @@
                     <label class="ml-4"><input type="radio" name="aprovado_coordenador" value="nao" {{ $projeto->aprovado_coordenador == 'nao' ? 'checked' : '' }} {{ $disableCoordenadorFields ? 'disabled' : '' }}> Não</label>
                 </div>
 
-                <label class="block mb-2">Exposição de motivos (Coordenador)</label>
-                <textarea name="motivo_coordenador" class="w-full border-gray-300 rounded-md mb-4" {{ $disableCoordenadorFields ? 'readonly disabled opacity-50' : '' }}>{{ $projeto->motivo_coordenador }}</textarea>
+                <label class="block mb-2">Exposição de Motivos (Coordenador)</label>
+                <textarea name="motivo_coordenador"
+                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableCoordenadorFields ? 'opacity-50' : '' }}"
+                    {{ $disableCoordenadorFields ? 'readonly disabled' : '' }}>{{ $projeto->motivo_coordenador }}</textarea>
 
                 <label class="block mb-2">Data do Parecer do Coordenador</label>
-                <input type="date" name="data_parecer_coordenador" value="{{ $projeto->data_parecer_coordenador }}" class="w-full border-gray-300 rounded-md mb-6" {{ $disableCoordenadorFields ? 'readonly disabled opacity-50' : '' }}>
- 
+                <input type="date" name="data_parecer_coordenador" value="{{ $projeto->data_parecer_coordenador }}"
+                    class="w-full border-gray-300 rounded-md mb-6 {{ $disableCoordenadorFields ? 'opacity-50' : '' }}"
+                    {{ $disableCoordenadorFields ? 'readonly disabled' : '' }}>
+            </fieldset>
 
-
-
-            <div class="flex justify-center gap-4">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">Atualizar Projeto</button>
-                <a href="{{ route('projetos.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">Voltar</a>
+            <div class="flex justify-center gap-4 mb-8">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">
+                    Atualizar Projeto
+                </button>
+                <a href="{{ route('projetos.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">
+                    Voltar
+                </a>
             </div>
-
         </form>
     </div>
 
@@ -201,11 +269,7 @@
         let atividadesWrapper = document.getElementById('atividades-wrapper');
         let cronogramaWrapper = document.getElementById('cronograma-wrapper');
 
-        @php
-            $userRole = auth()->user()->role;
-        @endphp
-
-        @if (!in_array($userRole, ['coordenador']))
+        @if(!$disableAlunoFields)
         document.getElementById('add-professor')?.addEventListener('click', function () {
             if (professorCount < 9) {
                 const div = document.createElement('div');
@@ -276,18 +340,15 @@
         });
         @endif
 
-        // Validação simples de data
         document.getElementById('form-projeto').addEventListener('submit', function (e) {
             const inicio = document.getElementById('data_inicio')?.value;
             const fim = document.getElementById('data_fim')?.value;
 
             if (inicio && fim && new Date(inicio) > new Date(fim)) {
                 e.preventDefault();
-                alert('A data de início deve ser anterior ou igual à data de fim.');
+                alert('A data de início deve ser anterior ou igual à data de término.');
             }
         });
     </script>
 
 </x-app-layout>
-
-
