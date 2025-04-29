@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Professor;
 use App\Models\Aluno;
 use App\Models\Atividade;
-use App\Models\User; // Adicionar isso
+use App\Models\User;
+use App\Models\Cronograma;
+use App\Models\Rejeicao; 
 
 class Projeto extends Model
 {
@@ -35,7 +37,9 @@ class Projeto extends Model
         'data_parecer_coordenador',
         'status',
         'arquivo',
-        'user_id', // <-- Adicionado aqui
+        'user_id',
+        'napex_aprovado',        
+        'coordenacao_aprovado',  
     ];
     
     public function alunos()
@@ -52,7 +56,7 @@ class Projeto extends Model
     {
         return $this->hasMany(Atividade::class);
     }
-    
+
     public function cronogramas()
     {
         return $this->hasMany(Cronograma::class);
@@ -61,5 +65,10 @@ class Projeto extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function rejeicoes()
+    {
+        return $this->hasMany(Rejeicao::class);
     }
 }

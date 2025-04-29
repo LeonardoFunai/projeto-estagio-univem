@@ -24,11 +24,7 @@
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
-                <label class="block mb-2">Status</label>
-                <select name="status" class="w-full border-gray-300 rounded-md mb-6" required>
-                    <option value="editando" selected>Editando</option>
-                    <option value="entregue">Entregue</option>
-                </select>
+
 
                 <label class="block mb-2">Título do Projeto:</label>
                 <input type="text" name="titulo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Título do Projeto" required {{ $disableAlunoFields ? 'readonly disabled class=opacity-50' : '' }}>

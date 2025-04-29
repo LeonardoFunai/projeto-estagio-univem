@@ -15,18 +15,16 @@ class UpdateProjetoRequest extends FormRequest
     {
         $role = auth()->user()->role;
 
-        if ($role == 'coordenador') {
+        if ($role === 'coordenador') {
             return [
-                'status' => 'required|in:editando,entregue',
                 'aprovado_coordenador' => 'nullable|string|in:sim,nao',
                 'motivo_coordenador' => 'nullable|string',
                 'data_parecer_coordenador' => 'nullable|date',
             ];
         }
 
-        if ($role == 'napex') {
+        if ($role === 'napex') {
             return [
-                'status' => 'required|in:editando,entregue',
                 'titulo' => 'required|string|max:255',
                 'periodo' => 'required|string|max:255',
                 'data_inicio' => 'required|date',
@@ -50,9 +48,9 @@ class UpdateProjetoRequest extends FormRequest
             ];
         }
 
-        // Se for aluno (ou professor)
+        // Para aluno (ou professor)
         return [
-            'status' => 'required|in:editando,entregue',
+            // ❌ status removido!
             'titulo' => 'required|string|max:255',
             'periodo' => 'required|string|max:255',
             'data_inicio' => 'required|date',
@@ -92,9 +90,6 @@ class UpdateProjetoRequest extends FormRequest
     public function messages()
     {
         return [
-            'status.required' => 'O status é obrigatório.',
-            'status.in' => 'O status selecionado é inválido.',
-
             'titulo.required' => 'O título do projeto é obrigatório.',
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_fim.required' => 'A data de término é obrigatória.',

@@ -227,6 +227,35 @@
                     </table>
                 </div>
 
+                @if ($projeto->rejeicoes->count() > 0)
+                    <!-- Seção de Rejeições -->
+                    <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Rejeições Registradas</h1>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
+                            <thead>
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left w-1/3">Data da Rejeição</th>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($projeto->rejeicoes as $rejeicao)
+                                    <tr>
+                                        <td class="bg-white p-4 border-b border-gray-300">
+                                            {{ \Carbon\Carbon::parse($rejeicao->data_rejeicao)->format('d/m/Y') }}
+                                        </td>
+                                        <td class="bg-white p-4 border-b border-gray-300">
+                                            {{ $rejeicao->motivo }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+
             </div>
         </div>
     </div>

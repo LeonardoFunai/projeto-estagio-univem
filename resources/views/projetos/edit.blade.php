@@ -15,6 +15,21 @@
             $disableCoordenadorFields = !($userRole === 'coordenador');
         @endphp
 
+        @if ($userRole === 'aluno')
+            @if ($projeto->status === 'editando')
+                <form method="POST" action="{{ route('projetos.enviar', $projeto->id) }}" class="mb-4">
+                    @csrf
+                    <button type="submit" class="btn btn-primary">Enviar Projeto</button>
+                </form>
+            @elseif ($projeto->status === 'entregue' && !$projeto->napex_aprovado && !$projeto->coordenacao_aprovado)
+                <form method="POST" action="{{ route('projetos.voltar', $projeto->id) }}" class="mb-4">
+                    @csrf
+                    <button type="submit" class="btn btn-warning">Voltar para Edição</button>
+                </form>
+            @endif
+        @endif
+
+
         <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -22,19 +37,6 @@
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
-                <label class="block mb-2">Status</label>
-                @if($userRole === 'aluno')
-                    <select name="status" class="w-full border-gray-300 rounded-md mb-6" required>
-                        <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
-                        <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
-                    </select>
-                @else
-                    <select class="w-full border-gray-300 rounded-md mb-6 opacity-50" disabled>
-                        <option value="editando" {{ $projeto->status == 'editando' ? 'selected' : '' }}>Editando</option>
-                        <option value="entregue" {{ $projeto->status == 'entregue' ? 'selected' : '' }}>Entregue</option>
-                    </select>
-                    <input type="hidden" name="status" value="{{ $projeto->status }}">
-                @endif
 
                 <label class="block mb-2">Título do Projeto:</label>
                 <input type="text" name="titulo" value="{{ $projeto->titulo }}"

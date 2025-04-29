@@ -12,9 +12,6 @@ Route::get('/', function () {
     return redirect('/login'); // se não, manda para login
 });
 
-
-
-
 // Área logada
 Route::middleware('auth')->group(function () {
 
@@ -32,6 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/projetos/{id}/edit', [ProjetoController::class, 'edit'])->name('projetos.edit');
     Route::put('/projetos/{id}', [ProjetoController::class, 'update'])->name('projetos.update');
     Route::get('/projetos/{id}/arquivo', [ProjetoController::class, 'downloadArquivo'])->name('projetos.download');
+
+    //  rotas para o fluxo de envio, edição e parecer
+    Route::post('/projetos/{id}/enviar', [ProjetoController::class, 'enviarProjeto'])->name('projetos.enviar');
+    Route::post('/projetos/{id}/voltar', [ProjetoController::class, 'voltarParaEdicao'])->name('projetos.voltar');
+    Route::post('/projetos/{id}/parecer', [ProjetoController::class, 'darParecer'])->name('projetos.parecer');
 });
 
 // Inclui rotas de login/register do Breeze

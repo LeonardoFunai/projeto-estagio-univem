@@ -107,15 +107,34 @@
                                     <td class="py-2 px-6">{{ ucfirst($projeto->status) }}</td>
                                     <td class="py-2 px-6 space-x-2">
                                         <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
-                                        @if ($projeto->status !== 'entregue')
+
+                                        @php
+                                            $role = auth()->user()->role;
+                                            $isAluno = $role === 'aluno';
+                                            $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
+                                            $podeVoltar = $projeto->status === 'entregue' && !$projeto->napex_aprovado && !$projeto->coordenacao_aprovado;
+                                        @endphp
+
+                                        @if ($isAluno && $projeto->status === 'editando')
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
+
+                                            <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:underline">Apagar</button>
+                                            </form>
+                                        @elseif ($isAluno && $podeVoltar)
+                                            <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                <button type="submit" class="text-yellow-600 hover:underline">Voltar para Edição</button>
+                                            </form>
+                                        @elseif ($isNapexOrCoord && $projeto->status === 'entregue')
+                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Avaliar</a>
                                         @endif
-                                        <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:underline">Apagar</button>
-                                        </form>
                                     </td>
+
+
+
                                 </tr>
                             @endforeach
                         </tbody>
