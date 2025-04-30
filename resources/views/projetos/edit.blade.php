@@ -10,7 +10,7 @@
 
         @php
             $userRole = auth()->user()->role;
-            $disableAlunoFields = in_array($userRole, ['coordenador']);
+            $disableAlunoFields = in_array($userRole, ['coordenador', 'napex']);
             $disableNapexFields = in_array($userRole, ['coordenador', 'aluno']);
             $disableCoordenadorFields = !($userRole === 'coordenador');
         @endphp
@@ -199,55 +199,6 @@
                 @endif
             </fieldset>
 
-            <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4">Parecer do Núcleo de Apoio à Pesquisa e Extensão (NAPEx)</legend>
-
-                <label class="block mb-2">Número do Projeto</label>
-                <input type="text" name="numero_projeto" value="{{ $projeto->numero_projeto }}"
-                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
-                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
-
-                <label class="block mb-2">Data de Recebimento pelo NAPEx</label>
-                <input type="date" name="data_recebimento_napex" value="{{ $projeto->data_recebimento_napex }}"
-                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
-                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
-
-                <label class="block mb-2">Data de Encaminhamento para Parecer</label>
-                <input type="date" name="data_encaminhamento_parecer" value="{{ $projeto->data_encaminhamento_parecer }}"
-                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
-                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>
-
-                <label class="block mb-2">Aprovação do NAPEx:</label>
-                <div class="mb-4">
-                    <label><input type="radio" name="aprovado_napex" value="sim" {{ $projeto->aprovado_napex == 'sim' ? 'checked' : '' }} {{ $disableNapexFields ? 'disabled' : '' }}> Sim</label>
-                    <label class="ml-4"><input type="radio" name="aprovado_napex" value="nao" {{ $projeto->aprovado_napex == 'nao' ? 'checked' : '' }} {{ $disableNapexFields ? 'disabled' : '' }}> Não</label>
-                </div>
-
-                <label class="block mb-2">Exposição de Motivos (NAPEx)</label>
-                <textarea name="motivo_napex"
-                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableNapexFields ? 'opacity-50' : '' }}"
-                    {{ $disableNapexFields ? 'readonly disabled' : '' }}>{{ $projeto->motivo_napex }}</textarea>
-            </fieldset>
-
-            <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4">Parecer do Coordenador de Curso</legend>
-
-                <label class="block mb-2">Aprovação do Coordenador:</label>
-                <div class="mb-4">
-                    <label><input type="radio" name="aprovado_coordenador" value="sim" {{ $projeto->aprovado_coordenador == 'sim' ? 'checked' : '' }} {{ $disableCoordenadorFields ? 'disabled' : '' }}> Sim</label>
-                    <label class="ml-4"><input type="radio" name="aprovado_coordenador" value="nao" {{ $projeto->aprovado_coordenador == 'nao' ? 'checked' : '' }} {{ $disableCoordenadorFields ? 'disabled' : '' }}> Não</label>
-                </div>
-
-                <label class="block mb-2">Exposição de Motivos (Coordenador)</label>
-                <textarea name="motivo_coordenador"
-                    class="w-full border-gray-300 rounded-md mb-4 {{ $disableCoordenadorFields ? 'opacity-50' : '' }}"
-                    {{ $disableCoordenadorFields ? 'readonly disabled' : '' }}>{{ $projeto->motivo_coordenador }}</textarea>
-
-                <label class="block mb-2">Data do Parecer do Coordenador</label>
-                <input type="date" name="data_parecer_coordenador" value="{{ $projeto->data_parecer_coordenador }}"
-                    class="w-full border-gray-300 rounded-md mb-6 {{ $disableCoordenadorFields ? 'opacity-50' : '' }}"
-                    {{ $disableCoordenadorFields ? 'readonly disabled' : '' }}>
-            </fieldset>
 
             <div class="flex justify-center gap-4 mb-8">
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">

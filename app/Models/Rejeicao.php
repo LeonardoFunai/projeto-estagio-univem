@@ -13,6 +13,7 @@ class Rejeicao extends Model
         'projeto_id',
         'motivo',
         'data_rejeicao',
+        'autor',
     ];
 
     protected $table = 'rejeicoes'; 

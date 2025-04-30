@@ -20,7 +20,7 @@ class ProjetoController extends Controller
         $projeto = Projeto::findOrFail($id);
 
         if (!$projeto->arquivo || !file_exists(public_path($projeto->arquivo))) {
-            abort(404, 'Arquivo n\u00e3o encontrado.');
+            abort(404, 'Arquivo não encontrado.');
         }
 
         return Response::download(public_path($projeto->arquivo));
@@ -32,17 +32,14 @@ class ProjetoController extends Controller
 
         $user = auth()->user();
 
-        // Se for aluno, mostra só os projetos dele
         if ($user->role === 'aluno') {
             $query->where('user_id', $user->id);
         }
 
-        // Se for NAPEx ou Coordenador, mostra apenas projetos entregues
         if (in_array($user->role, ['napex', 'coordenador'])) {
             $query->where('status', 'entregue');
         }
 
-        // Filtros
         if (request('titulo')) {
             $query->where('titulo', 'like', '%' . request('titulo') . '%');
         }
@@ -65,7 +62,6 @@ class ProjetoController extends Controller
 
         $projetos = $query->get();
 
-        // Filtro de carga horária após carregar as atividades
         $projetos = $projetos->filter(function ($projeto) {
             $carga = $projeto->atividades->sum('carga_horaria');
             $min = request('carga_min');
@@ -76,9 +72,6 @@ class ProjetoController extends Controller
         return view('projetos.index', compact('projetos'));
     }
 
-
-    
-
     public function create()
     {
         return view('projetos.create');
@@ -87,7 +80,7 @@ class ProjetoController extends Controller
     public function store(StoreProjetoRequest $request)
     {
         $data = $request->validated();
-        $data['status'] = 'editando';  // Forçar o status para "editando"
+        $data['status'] = 'editando';
 
         if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
             $file = $request->file('arquivo');
@@ -102,8 +95,7 @@ class ProjetoController extends Controller
             $data['periodo_realizacao'] = "$inicio a $fim";
         }
 
-        // Vínculo do projeto ao usuário autenticado
-        $data['user_id'] = auth()->id(); 
+        $data['user_id'] = auth()->id();
 
         $projeto = Projeto::create($data);
 
@@ -134,109 +126,136 @@ class ProjetoController extends Controller
         return redirect()->route('projetos.index')->with('success', 'Projeto salvo com sucesso!');
     }
 
-
     public function show($id)
     {
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
+        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes'])->findOrFail($id);
         return view('projetos.show', compact('projeto'));
     }
 
     public function edit($id)
     {
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
-    
+
         $userRole = auth()->user()->role;
-    
-        // Se for aluno e o projeto está entregue, bloqueia
+
         if ($userRole === 'aluno' && $projeto->status === 'entregue') {
             return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
         }
-    
+
         return view('projetos.edit', compact('projeto'));
     }
-    
 
     public function update(UpdateProjetoRequest $request, $id)
     {
         $projeto = Projeto::findOrFail($id);
     
-        $userRole = auth()->user()->role;
-
-        // Aluno não pode editar se o projeto já foi entregue
-        if ($userRole === 'aluno' && $projeto->status === 'entregue') {
+        if (auth()->user()->role === 'aluno' && $projeto->status === 'entregue') {
             return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
         }
-          
     
-
         $data = $request->validated();
-    
-        // Atualiza dados normais do projeto
         $projeto->update($data);
     
-        // Se for aluno ou napex, atualiza alunos, professores e atividades normalmente
-        if (in_array($userRole, ['aluno', 'napex'])) {
-    
-            // Atualizando alunos
-            $projeto->alunos()->delete();
-            if ($request->has('alunos')) {
-                foreach ($request->alunos as $aluno) {
-                    $projeto->alunos()->create($aluno);
-                }
-            }
-    
-            // Atualizando professores
-            $projeto->professores()->delete();
-            if ($request->has('professores')) {
-                foreach ($request->professores as $professor) {
-                    $projeto->professores()->create($professor);
-                }
-            }
-    
-            // Atualizando atividades
-            $projeto->atividades()->delete();
-            if ($request->has('atividades')) {
-                foreach ($request->atividades as $atividade) {
-                    $projeto->atividades()->create($atividade);
-                }
-            }
-    
-            // Atualizando cronogramas
-            if ($request->has('cronograma')) {
-                $idsExistentes = $projeto->cronogramas()->pluck('id')->toArray();
-                $idsRecebidos = [];
-    
-                foreach ($request->cronograma as $item) {
-                    if (isset($item['id'])) {
-                        $cronograma = $projeto->cronogramas()->where('id', $item['id'])->first();
-                        if ($cronograma) {
-                            $cronograma->update([
-                                'atividade' => $item['atividade'],
-                                'mes' => $item['mes'],
-                            ]);
-                            $idsRecebidos[] = $item['id'];
-                        }
-                    } else {
-                        $projeto->cronogramas()->create([
-                            'atividade' => $item['atividade'],
-                            'mes' => $item['mes'],
-                        ]);
-                    }
-                }
-    
-                $idsParaDeletar = array_diff($idsExistentes, $idsRecebidos);
-                if (count($idsParaDeletar) > 0) {
-                    $projeto->cronogramas()->whereIn('id', $idsParaDeletar)->delete();
-                }
+        // Atualizar alunos
+        $projeto->alunos()->delete();
+        if ($request->has('alunos')) {
+            foreach ($request->alunos as $aluno) {
+                $projeto->alunos()->create($aluno);
             }
         }
     
-        // Se for coordenador, só atualiza o parecer dele (já atualizado no $data acima)
+        // Atualizar professores
+        $projeto->professores()->delete();
+        if ($request->has('professores')) {
+            foreach ($request->professores as $professor) {
+                $projeto->professores()->create($professor);
+            }
+        }
+    
+        // Atualizar atividades
+        $projeto->atividades()->delete();
+        if ($request->has('atividades')) {
+            foreach ($request->atividades as $atividade) {
+                $projeto->atividades()->create($atividade);
+            }
+        }
+    
+        // Atualizar cronograma
+        $projeto->cronogramas()->delete();
+        if ($request->has('cronograma')) {
+            foreach ($request->cronograma as $cronograma) {
+                $projeto->cronogramas()->create($cronograma);
+            }
+        }
     
         return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
     }
+        
+
+    public function avaliarNapex(Request $request, $id)
+    {
+        $projeto = Projeto::findOrFail($id);
+    
+        if ($request->input('aprovado_napex') === 'nao') {
+            $this->registrarRejeicao($projeto, $request->input('motivo_napex'), 'napex');
+    
+            $projeto->update([
+                'numero_projeto' => null,
+                'data_recebimento_napex' => null,
+                'data_encaminhamento_parecer' => null,
+                'aprovado_napex' => null,
+                'motivo_napex' => null,
+                'aprovado_coordenador' => null,
+                'motivo_coordenador' => null,
+                'data_parecer_coordenador' => null,
+                'status' => 'editando',
+            ]);
+    
+            return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pelo NAPEx e devolvido ao aluno.');
+        }
+    
+        $projeto->update($request->only([
+            'numero_projeto',
+            'data_recebimento_napex',
+            'data_encaminhamento_parecer',
+            'aprovado_napex',
+            'motivo_napex'
+        ]));
+    
+        return redirect()->route('projetos.show', $id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
+    }
     
 
+    public function avaliarCoordenador(Request $request, $id)
+    {
+        $projeto = Projeto::findOrFail($id);
+    
+        if ($request->input('aprovado_coordenador') === 'nao') {
+            $this->registrarRejeicao($projeto, $request->input('motivo_coordenador'), 'coordenador');
+    
+            $projeto->update([
+                'numero_projeto' => null,
+                'data_recebimento_napex' => null,
+                'data_encaminhamento_parecer' => null,
+                'aprovado_napex' => null,
+                'motivo_napex' => null,
+                'aprovado_coordenador' => null,
+                'motivo_coordenador' => null,
+                'data_parecer_coordenador' => null,
+                'status' => 'editando',
+            ]);
+    
+            return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pela Coordenação e devolvido ao aluno.');
+        }
+    
+        $projeto->update($request->only([
+            'aprovado_coordenador',
+            'motivo_coordenador',
+            'data_parecer_coordenador'
+        ]));
+    
+        return redirect()->route('projetos.show', $id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
+    }
     
 
     public function destroy($id)
@@ -262,55 +281,27 @@ class ProjetoController extends Controller
     public function voltarParaEdicao($id)
     {
         $projeto = Projeto::findOrFail($id);
-
-        if ($projeto->status === 'entregue' && !$projeto->napex_aprovado && !$projeto->coordenacao_aprovado) {
-            $projeto->status = 'editando';
-            $projeto->save();
+    
+        // Impede retorno à edição se já tiver sido aprovado por NAPEx ou Coordenação
+        if ($projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
+            return redirect()->route('projetos.index')->with('error', 'Não é possível voltar para edição após aprovação.');
         }
-
+    
+        $projeto->status = 'editando';
+        $projeto->save();
+    
         return redirect()->route('projetos.index')->with('success', 'Projeto liberado para edição novamente.');
     }
+    
 
-    public function darParecer(Request $request, $id)
-    {
-        $projeto = Projeto::findOrFail($id);
-
-        $perfil = auth()->user()->role; // aluno, napex, coordenador
-
-        if ($request->input('aprovado') === 'sim') {
-            if ($perfil === 'napex') {
-                $projeto->napex_aprovado = true;
-            } elseif ($perfil === 'coordenador') {
-                $projeto->coordenacao_aprovado = true;
-            }
-
-            // Se ambos aprovarem
-            if ($projeto->napex_aprovado && $projeto->coordenacao_aprovado) {
-                $projeto->status = 'aprovado';
-            }
-
-            $projeto->save();
-
-            return redirect()->route('projetos.index')->with('success', 'Parecer registrado como aprovado.');
-        } 
-        else {
-            $this->registrarRejeicao($projeto, $request->input('motivo'));
-
-            $projeto->status = 'editando';
-            $projeto->napex_aprovado = false;
-            $projeto->coordenacao_aprovado = false;
-            $projeto->save();
-
-            return redirect()->route('projetos.index')->with('success', 'Projeto rejeitado e liberado para edição.');
-        }
-    }
-
-    private function registrarRejeicao($projeto, $motivo)
+    private function registrarRejeicao($projeto, $motivo, $autor)
     {
         Rejeicao::create([
             'projeto_id' => $projeto->id,
             'motivo' => $motivo,
             'data_rejeicao' => now(),
+            'autor' => $autor,
         ]);
     }
+    
 }

@@ -17,7 +17,6 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
                         <tbody>
-
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Título</th>
                                 <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->titulo }}</td>
@@ -156,105 +155,148 @@
                                     @endif
                                 </td>
                             </tr>
-
                         </tbody>
                     </table>
                 </div>
 
-            </div>
-        </div>
-    </div>
+                 <!-- TABELA DE PARECERES - VISUAL PARA ALUNO -->
+                 @if(auth()->user()->role === 'aluno')
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
+                    <div class="mb-10">
+                        <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto }}</p>
+                        <p><strong>Data de Recebimento:</strong> {{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</p>
+                        <p><strong>Data de Encaminhamento:</strong> {{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</p>
+                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_napex) }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_napex }}</p>
+                    </div>
 
-                <!-- Parecer do NAPEx -->
-                <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Parecer do Núcleo de Apoio à Pesquisa e Extensão</h1>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
-                        <tbody>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Número do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->numero_projeto }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento NAPEx</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Data de Encaminhamento para Pareceres</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Aprovação NAPEx</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->aprovado_napex }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Motivo NAPEx</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->motivo_napex }}</td>
-                            </tr>
-
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Parecer do Coordenador -->
-                <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Parecer do Coordenador de Curso</h1>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full w-full border border-gray-300 rounded-lg">
-                        <tbody>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Aprovação Coordenador</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->aprovado_coordenador }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Motivo Coordenador</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->motivo_coordenador }}</td>
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Data do Parecer Coordenador</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</td>
-                            </tr>
-
-                        </tbody>
-                    </table>
-                </div>
-
-                @if ($projeto->rejeicoes->count() > 0)
-                    <!-- Seção de Rejeições -->
-                    <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Rejeições Registradas</h1>
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
-                            <thead>
-                                <tr>
-                                    <th class="bg-[#251C57] text-white p-4 text-left w-1/3">Data da Rejeição</th>
-                                    <th class="bg-[#251C57] text-white p-4 text-left">Motivo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($projeto->rejeicoes as $rejeicao)
-                                    <tr>
-                                        <td class="bg-white p-4 border-b border-gray-300">
-                                            {{ \Carbon\Carbon::parse($rejeicao->data_rejeicao)->format('d/m/Y') }}
-                                        </td>
-                                        <td class="bg-white p-4 border-b border-gray-300">
-                                            {{ $rejeicao->motivo }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
+                    <div class="mb-10">
+                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_coordenador) }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador }}</p>
+                        <p><strong>Data do Parecer:</strong> {{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</p>
                     </div>
                 @endif
 
+                <!-- FORMULÁRIO DO NAPEX -->
+                @if(auth()->user()->role === 'napex')
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
+                    <div class="mb-10">
+                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_coordenador) }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador }}</p>
+                        <p><strong>Data do Parecer:</strong> {{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</p>
+                    </div>
+
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
+                    @if(request('editar') === 'napex' || is_null($projeto->aprovado_napex))
+                        <form method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
+                            @csrf
+                            <label>Número do Projeto</label>
+                            <input type="text" name="numero_projeto" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('numero_projeto', $projeto->numero_projeto) }}">
+
+                            <label>Data de Recebimento</label>
+                            <input type="date" name="data_recebimento_napex" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_recebimento_napex', $projeto->data_recebimento_napex) }}">
+
+                            <label>Data de Encaminhamento</label>
+                            <input type="date" name="data_encaminhamento_parecer" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_encaminhamento_parecer', $projeto->data_encaminhamento_parecer) }}">
+
+                            <label>Aprovação</label>
+                            <select name="aprovado_napex" class="w-full border-gray-300 rounded-md mb-4">
+                                <option value="">Selecione</option>
+                                <option value="sim" {{ $projeto->aprovado_napex == 'sim' ? 'selected' : '' }}>Sim</option>
+                                <option value="nao" {{ $projeto->aprovado_napex == 'nao' ? 'selected' : '' }}>Não</option>
+                            </select>
+
+                            <label>Motivo</label>
+                            <textarea name="motivo_napex" class="w-full border-gray-300 rounded-md mb-4">{{ old('motivo_napex', $projeto->motivo_napex) }}</textarea>
+
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">Enviar Parecer</button>
+                        </form>
+                    @else
+                        <div class="mb-10">
+                            <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto }}</p>
+                            <p><strong>Data de Recebimento:</strong> {{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</p>
+                            <p><strong>Data de Encaminhamento:</strong> {{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</p>
+                            <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_napex) }}</p>
+                            <p><strong>Motivo:</strong> {{ $projeto->motivo_napex }}</p>
+                            <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4 inline-block">Editar Parecer</a>
+                        </div>
+                    @endif
+                @endif
+
+                <!-- FORMULÁRIO DO COORDENADOR -->
+                @if(auth()->user()->role === 'coordenador')
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
+                    <div class="mb-10">
+                        <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto }}</p>
+                        <p><strong>Data de Recebimento:</strong> {{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</p>
+                        <p><strong>Data de Encaminhamento:</strong> {{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</p>
+                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_napex) }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_napex }}</p>
+                    </div>
+
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador de Curso</h2>
+                    @if(request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador))
+                        <form method="POST" action="{{ route('projetos.avaliar.coordenador', $projeto->id) }}" class="mb-10">
+                            @csrf
+                            <label>Aprovação</label>
+                            <select name="aprovado_coordenador" class="w-full border-gray-300 rounded-md mb-4">
+                                <option value="">Selecione</option>
+                                <option value="sim" {{ $projeto->aprovado_coordenador == 'sim' ? 'selected' : '' }}>Sim</option>
+                                <option value="nao" {{ $projeto->aprovado_coordenador == 'nao' ? 'selected' : '' }}>Não</option>
+                            </select>
+
+                            <label>Motivo</label>
+                            <textarea name="motivo_coordenador" class="w-full border-gray-300 rounded-md mb-4">{{ old('motivo_coordenador', $projeto->motivo_coordenador) }}</textarea>
+
+                            <label>Data do Parecer</label>
+                            <input type="date" name="data_parecer_coordenador" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_parecer_coordenador', $projeto->data_parecer_coordenador) }}">
+
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">Enviar Parecer</button>
+                        </form>
+                    @else
+                        <div class="mb-10">
+                            <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_coordenador) }}</p>
+                            <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador }}</p>
+                            <p><strong>Data do Parecer:</strong> {{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</p>
+                            <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4 inline-block">Editar Parecer</a>
+                        </div>
+                    @endif
+                @endif
+
+
+                <!-- Rejeições -->
+                @if ($projeto->rejeicoes->count() > 0)
+                    <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Rejeições Registradas</h1>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
+                        <thead>
+                            <tr>
+                                <th class="bg-[#251C57] text-white p-4 text-left w-1/4">Data da Rejeição</th>
+                                <th class="bg-[#251C57] text-white p-4 text-left w-1/2">Motivo</th>
+                                <th class="bg-[#251C57] text-white p-4 text-left w-1/4">Responsável</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($projeto->rejeicoes as $rejeicao)
+                                <tr>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ \Carbon\Carbon::parse($rejeicao->data_rejeicao)->format('d/m/Y') }}
+                                    </td>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ $rejeicao->motivo }}
+                                    </td>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ $rejeicao->autor === 'napex' ? 'NAPEx' : ($rejeicao->autor === 'coordenador' ? 'Coordenação' : 'Desconhecido') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+
+
+                        </table>
+                    </div>
+                @endif
 
             </div>
         </div>

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('projeto_id')->constrained('projetos')->onDelete('cascade');
             $table->text('motivo');
             $table->date('data_rejeicao');
-            $table->timestamps();
+            $table->timestamps();   
         });
     }
 

@@ -30,10 +30,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/projetos/{id}', [ProjetoController::class, 'update'])->name('projetos.update');
     Route::get('/projetos/{id}/arquivo', [ProjetoController::class, 'downloadArquivo'])->name('projetos.download');
 
-    //  rotas para o fluxo de envio, edição e parecer
+    // 📤 Fluxo de envio, edição e parecer
     Route::post('/projetos/{id}/enviar', [ProjetoController::class, 'enviarProjeto'])->name('projetos.enviar');
     Route::post('/projetos/{id}/voltar', [ProjetoController::class, 'voltarParaEdicao'])->name('projetos.voltar');
     Route::post('/projetos/{id}/parecer', [ProjetoController::class, 'darParecer'])->name('projetos.parecer');
+
+    // 📝 Novas rotas de avaliação específicas para show.blade.php
+    Route::post('/projetos/{id}/avaliar-napex', [ProjetoController::class, 'avaliarNapex'])->name('projetos.avaliar.napex');
+    Route::post('/projetos/{id}/avaliar-coordenador', [ProjetoController::class, 'avaliarCoordenador'])->name('projetos.avaliar.coordenador');
 });
 
 // Inclui rotas de login/register do Breeze

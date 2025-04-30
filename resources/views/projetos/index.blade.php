@@ -92,6 +92,10 @@
                                 <th class="py-3 px-6 text-left">Data de Fim</th>
                                 <th class="py-3 px-6 text-left">Carga Horária</th>
                                 <th class="py-3 px-6 text-left">Status</th>
+                                <th class="py-3 px-6 text-left">Aprovação NAPEx</th>
+                                <th class="py-3 px-6 text-left">Aprovação Coordenador</th>
+                                <th class="py-3 px-6 text-left">Aprovação Final</th>
+
                                 <th class="py-3 px-6 text-left">Ações</th>
                             </tr>
                         </thead>
@@ -105,15 +109,31 @@
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
                                     <td class="py-2 px-6">{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}h</td>
                                     <td class="py-2 px-6">{{ ucfirst($projeto->status) }}</td>
-                                    <td class="py-2 px-6 space-x-2">
-                                        <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
+                                    <td class="py-2 px-6">
+                                        {{ $projeto->aprovado_napex === 'sim' ? 'Sim' : ($projeto->aprovado_napex === 'nao' ? 'Não' : '--') }}
+                                    </td>
+                                    <td class="py-2 px-6">
+                                        {{ $projeto->aprovado_coordenador === 'sim' ? 'Sim' : ($projeto->aprovado_coordenador === 'nao' ? 'Não' : '--') }}
+                                    </td>
 
+                                    <td class="py-2 px-6">
+                                        {{ $projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim' ? 'Sim' : '--' }}
+                                    </td>
+
+
+                                    <td class="py-2 px-6 space-x-2">    
                                         @php
                                             $role = auth()->user()->role;
                                             $isAluno = $role === 'aluno';
                                             $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
-                                            $podeVoltar = $projeto->status === 'entregue' && !$projeto->napex_aprovado && !$projeto->coordenacao_aprovado;
+                                            $podeVoltar = $projeto->status === 'entregue' 
+                                                && $projeto->aprovado_napex !== 'sim' 
+                                                && $projeto->aprovado_coordenador !== 'sim';
                                         @endphp
+
+                                        @if ($isAluno)
+                                            <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
+                                        @endif
 
                                         @if ($isAluno && $projeto->status === 'editando')
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
@@ -129,9 +149,10 @@
                                                 <button type="submit" class="text-yellow-600 hover:underline">Voltar para Edição</button>
                                             </form>
                                         @elseif ($isNapexOrCoord && $projeto->status === 'entregue')
-                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Avaliar</a>
+                                            <a href="{{ route('projetos.show', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Analise/Parecer</a>
                                         @endif
                                     </td>
+
 
 
 
