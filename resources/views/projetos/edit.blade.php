@@ -29,6 +29,11 @@
             @endif
         @endif
 
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ session('error') }}
+            </div>
+        @endif
 
         <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -48,26 +53,30 @@
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
                     {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
 
-                <label class="block mb-2">Professor(es) envolvidos:</label>
-                <div id="professores-wrapper">
-                    @foreach ($projeto->professores as $index => $prof)
-                        <div class="mb-4">
-                            <input type="text" name="professores[{{ $index }}][nome]" value="{{ $prof->nome }}"
-                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
-                            <input type="email" name="professores[{{ $index }}][email]" value="{{ $prof->email }}"
-                                class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
-                            <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}"
-                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }}>
-                        </div>
-                    @endforeach
-                </div>
+                    <label class="block mb-2">Professor(es) envolvidos:</label>
+                    <div id="professores-wrapper">
+                        @foreach ($projeto->professores as $index => $prof)
+                            <div class="mb-4 flex items-center gap-4">
+                                <select name="professores[{{ $index }}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                                    <option value="">-- Selecione um professor --</option>
+                                    @foreach ($professores as $professor)
+                                        <option value="{{ $professor->id }}" {{ $professor->name === $prof->nome ? 'selected' : '' }}>
+                                            {{ $professor->name }} ({{ $professor->email }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="text" name="professores[{{ $index }}][area]" value="{{ $prof->area }}" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+                                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
+                            </div>
+                        @endforeach
+                    </div>
 
-                @if(!$disableAlunoFields)
-                    <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
-                @endif
+
+
+                    @if(!$disableAlunoFields)
+                        <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
+                    @endif
+
 
                 <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
                 <div id="alunos-wrapper">
@@ -226,12 +235,16 @@
         document.getElementById('add-professor')?.addEventListener('click', function () {
             if (professorCount < 9) {
                 const div = document.createElement('div');
-                div.classList.add('mb-4');
+                div.classList.add('mb-4', 'flex', 'items-center', 'gap-4');
                 div.innerHTML = `
-                    <input type="text" name="professores[${professorCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do professor" required>
-                    <input type="email" name="professores[${professorCount}][email]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Email (opcional)">
-                    <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                    <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                        <option value="">-- Selecione um professor --</option>
+                        @foreach ($professores as $professor)
+                            <option value="{{ $professor->id }}">{{ $professor->name }} ({{ $professor->email }})</option>
+                        @endforeach
+                    </select>
+                    <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
                 `;
                 professoresWrapper.appendChild(div);
                 professorCount++;
@@ -246,7 +259,7 @@
                     <input type="text" name="alunos[${alunoCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" required>
                     <input type="text" name="alunos[${alunoCount}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" required>
                     <input type="text" name="alunos[${alunoCount}][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" required>
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
                 `;
                 alunosWrapper.appendChild(div);
                 alunoCount++;
@@ -260,7 +273,7 @@
                 <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
                 <textarea name="atividades[${atividadeCount}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
                 <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
             `;
             atividadesWrapper.appendChild(div);
             atividadeCount++;
@@ -286,7 +299,7 @@
                     <option value="Novembro">Novembro</option>
                     <option value="Dezembro">Dezembro</option>
                 </select>
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
             `;
             cronogramaWrapper.appendChild(div);
             cronogramaCount++;
@@ -303,5 +316,6 @@
             }
         });
     </script>
+
 
 </x-app-layout>

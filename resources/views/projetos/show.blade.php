@@ -163,29 +163,39 @@
                  @if(auth()->user()->role === 'aluno')
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
                     <div class="mb-10">
-                        <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto }}</p>
-                        <p><strong>Data de Recebimento:</strong> {{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</p>
-                        <p><strong>Data de Encaminhamento:</strong> {{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</p>
-                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_napex) }}</p>
-                        <p><strong>Motivo:</strong> {{ $projeto->motivo_napex }}</p>
+                        <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto ?? '--' }}</p>
+                        <p><strong>Data de Recebimento:</strong> 
+                            {{ $projeto->data_recebimento_napex ? \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') : '--' }}
+                        </p>
+                        <p><strong>Data de Encaminhamento:</strong> 
+                            {{ $projeto->data_encaminhamento_parecer ? \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') : '--' }}
+                        </p>
+                        <p><strong>Aprovação:</strong> {{ $projeto->aprovado_napex ? ucfirst($projeto->aprovado_napex) : '--' }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_napex ?? '--' }}</p>
                     </div>
 
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
                     <div class="mb-10">
-                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_coordenador) }}</p>
-                        <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador }}</p>
-                        <p><strong>Data do Parecer:</strong> {{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</p>
+                        <p><strong>Aprovação:</strong> {{ $projeto->aprovado_coordenador ? ucfirst($projeto->aprovado_coordenador) : '--' }}</p>
+                        <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador ?? '--' }}</p>
+                        <p><strong>Data do Parecer:</strong> 
+                            {{ $projeto->data_parecer_coordenador ? \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') : '--' }}
+                        </p>
                     </div>
                 @endif
 
+
                 <!-- FORMULÁRIO DO NAPEX -->
                 @if(auth()->user()->role === 'napex')
-                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
-                    <div class="mb-10">
-                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_coordenador) }}</p>
-                        <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador }}</p>
-                        <p><strong>Data do Parecer:</strong> {{ \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') }}</p>
-                    </div>
+                <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
+                <div class="mb-10">
+                    <p><strong>Aprovação:</strong> {{ $projeto->aprovado_coordenador ? ucfirst($projeto->aprovado_coordenador) : '--' }}</p>
+                    <p><strong>Motivo:</strong> {{ $projeto->motivo_coordenador ?? '--' }}</p>
+                    <p><strong>Data do Parecer:</strong> 
+                        {{ $projeto->data_parecer_coordenador ? \Carbon\Carbon::parse($projeto->data_parecer_coordenador)->format('d/m/Y') : '--' }}
+                    </p>
+                </div>  
+
 
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
                     @if(request('editar') === 'napex' || is_null($projeto->aprovado_napex))
@@ -226,14 +236,19 @@
 
                 <!-- FORMULÁRIO DO COORDENADOR -->
                 @if(auth()->user()->role === 'coordenador')
-                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
-                    <div class="mb-10">
-                        <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto }}</p>
-                        <p><strong>Data de Recebimento:</strong> {{ \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') }}</p>
-                        <p><strong>Data de Encaminhamento:</strong> {{ \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') }}</p>
-                        <p><strong>Aprovação:</strong> {{ ucfirst($projeto->aprovado_napex) }}</p>
-                        <p><strong>Motivo:</strong> {{ $projeto->motivo_napex }}</p>
-                    </div>
+                <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
+                <div class="mb-10">
+                    <p><strong>Número do Projeto:</strong> {{ $projeto->numero_projeto ?? '--' }}</p>
+                    <p><strong>Data de Recebimento:</strong> 
+                        {{ $projeto->data_recebimento_napex ? \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') : '--' }}
+                    </p>
+                    <p><strong>Data de Encaminhamento:</strong> 
+                        {{ $projeto->data_encaminhamento_parecer ? \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') : '--' }}
+                    </p>
+                    <p><strong>Aprovação:</strong> {{ $projeto->aprovado_napex ? ucfirst($projeto->aprovado_napex) : '--' }}</p>
+                    <p><strong>Motivo:</strong> {{ $projeto->motivo_napex ?? '--' }}</p>
+                </div>
+
 
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador de Curso</h2>
                     @if(request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador))

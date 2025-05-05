@@ -50,15 +50,13 @@ class UpdateProjetoRequest extends FormRequest
 
         // Para aluno (ou professor)
         return [
-            // ❌ status removido!
             'titulo' => 'required|string|max:255',
             'periodo' => 'required|string|max:255',
             'data_inicio' => 'required|date',
             'data_fim' => 'required|date|after_or_equal:data_inicio',
 
             'professores' => 'nullable|array',
-            'professores.*.nome' => 'required_with:professores|string|max:255',
-            'professores.*.email' => 'nullable|email|max:255',
+            'professores.*.id' => 'required_with:professores|exists:users,id',
             'professores.*.area' => 'nullable|string|max:255',
 
             'alunos' => 'nullable|array',
@@ -95,8 +93,10 @@ class UpdateProjetoRequest extends FormRequest
             'data_fim.required' => 'A data de término é obrigatória.',
             'data_fim.after_or_equal' => 'A data de término deve ser igual ou posterior à data de início.',
 
-            'professores.*.nome.required_with' => 'O nome do professor é obrigatório.',
-            'professores.*.email.email' => 'O e-mail do professor deve ser válido.',
+            'professores.*.id.required_with' => 'Selecione um professor válido.',
+            'professores.*.id.exists' => 'O professor selecionado não existe.',
+            'professores.*.area.max' => 'A área do professor deve ter no máximo 255 caracteres.',
+
             'alunos.*.nome.required_with' => 'O nome do aluno é obrigatório.',
             'alunos.*.ra.required_with' => 'O RA do aluno é obrigatório.',
             'alunos.*.curso.required_with' => 'O curso do aluno é obrigatório.',

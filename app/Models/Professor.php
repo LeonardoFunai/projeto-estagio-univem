@@ -9,10 +9,11 @@ class Professor extends Model
 {
     use HasFactory;
 
-    protected $table = 'professores'; // 👈 Aqui está a correção!
+    protected $table = 'professores';
 
     protected $fillable = [
         'projeto_id',
+        'user_id',   
         'nome',
         'email',
         'area',
@@ -21,5 +22,10 @@ class Professor extends Model
     public function projeto()
     {
         return $this->belongsTo(Projeto::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

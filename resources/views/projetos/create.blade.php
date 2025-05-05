@@ -8,6 +8,12 @@
     <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
         <h1 class="text-2xl font-bold text-center text-blue-800 mb-8">Cadastro de Projeto de Extensão</h1>
 
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <form id="form-projeto" action="{{ route('projetos.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
@@ -19,16 +25,22 @@
 
                 <label class="block mb-2">Período:</label>
                 <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." required>
-
-                <label class="block mb-2">Professor(es) envolvidos:</label>
+                
+                <label class="block mb-2">Selecione o Professor Responsável:</label>
                 <div id="professores-wrapper">
                     <div class="mb-4">
-                        <input type="text" name="professores[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do professor" required>
-                        <input type="email" name="professores[0][email]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Email (opcional)">
+                        <select name="professores[0][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                            <option value="">-- Selecione um professor --</option>
+                            @foreach($professores as $professor)
+                                <option value="{{ $professor->id }}">{{ $professor->name }} ({{ $professor->email }})</option>
+                            @endforeach
+                        </select>
                         <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
                     </div>
-                </div>
-                <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
+                </div>  
+
+            <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
+
 
                 <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
                 <div id="alunos-wrapper">
@@ -104,27 +116,36 @@
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">Salvar Projeto</button>
         </form>
     </div>
-
     <script>
         let professorCount = 1;
         let alunoCount = 1;
         let atividadeCount = 1;
         let cronogramaCount = 1;
 
+        // Pega as opções do select inicial de professor
+        const professorOptions = `
+            <option value="">-- Selecione um professor --</option>
+            ${Array.from(document.querySelector('select[name="professores[0][id]"]').options)
+                .slice(1)
+                .map(option => `<option value="${option.value}">${option.text}</option>`)
+                .join('')}
+        `;
+
         document.getElementById('add-professor')?.addEventListener('click', () => {
             if (professorCount < 9) {
                 const div = document.createElement('div');
                 div.classList.add('mb-4');
                 div.innerHTML = `
-                    <input type="text" name="professores[${professorCount}][nome]" class="form-control mb-2" placeholder="Nome do professor" required>
-                    <input type="email" name="professores[${professorCount}][email]" class="form-control mb-2" placeholder="Email (opcional)">
-                    <input type="text" name="professores[${professorCount}][area]" class="form-control mb-2" placeholder="Área (opcional)">
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                    <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                        ${professorOptions}
+                    </select>
+                    <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
                 `;
                 document.getElementById('professores-wrapper').appendChild(div);
                 professorCount++;
             }
-        });
+        }); 
 
         document.getElementById('add-aluno')?.addEventListener('click', () => {
             if (alunoCount < 9) {
@@ -134,7 +155,7 @@
                     <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
                     <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" required>
                     <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" required>
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
                 `;
                 document.getElementById('alunos-wrapper').appendChild(div);
                 alunoCount++;
@@ -148,7 +169,7 @@
                 <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="form-control mb-2" placeholder="O que fazer?" required></textarea>
                 <textarea name="atividades[${atividadeCount}][como_fazer]" class="form-control mb-2" placeholder="Como fazer?" required></textarea>
                 <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="form-control mb-2" placeholder="Carga horária" required>
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
             document.getElementById('atividades-wrapper').appendChild(div);
             atividadeCount++;
@@ -163,7 +184,7 @@
                     <option value="">Selecione o mês</option>
                     ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger mb-2">Remover</button>
+                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
             document.getElementById('cronograma-wrapper').appendChild(div);
             cronogramaCount++;
@@ -178,4 +199,5 @@
             }
         });
     </script>
+
 </x-app-layout>

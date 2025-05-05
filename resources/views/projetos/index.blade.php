@@ -37,6 +37,11 @@
 
                     <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <div>
+                            <label class="block mb-1">Cadastrado por:</label>
+                            <input type="text" name="cadastrado_por" value="{{ request('cadastrado_por') }}" class="w-full border-gray-300 rounded-md py-1">
+                        </div>
+
+                        <div>
                             <label class="block mb-1">Título:</label>
                             <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-1">
                         </div>
@@ -75,10 +80,35 @@
                             </select>
                         </div>
 
+                        <div>
+                            <label class="block mb-1">Aprovação NAPEx:</label>
+                            <select name="aprovado_napex" class="w-full border-gray-300 rounded-md py-1">
+                                <option value="">-- Todos --</option>
+                                <option value="sim" {{ request('aprovado_napex') === 'sim' ? 'selected' : '' }}>Sim</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Aprovação Coordenador:</label>
+                            <select name="aprovado_coordenador" class="w-full border-gray-300 rounded-md py-1">
+                                <option value="">-- Todos --</option>
+                                <option value="sim" {{ request('aprovado_coordenador') === 'sim' ? 'selected' : '' }}>Sim</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1">Aprovação Final:</label>
+                            <select name="aprovacao_final" class="w-full border-gray-300 rounded-md py-1">
+                                <option value="">-- Todos --</option>
+                                <option value="sim" {{ request('aprovacao_final') === 'sim' ? 'selected' : '' }}>Sim</option>
+                            </select>
+                        </div>
+
                         <div class="flex items-end">
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Pesquisar</button>
                         </div>
                     </form>
+
                 </div>
 
                 <div class="overflow-x-auto">
@@ -122,20 +152,23 @@
 
 
                                     <td class="py-2 px-6 space-x-2">    
-                                        @php
-                                            $role = auth()->user()->role;
-                                            $isAluno = $role === 'aluno';
-                                            $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
-                                            $podeVoltar = $projeto->status === 'entregue' 
-                                                && $projeto->aprovado_napex !== 'sim' 
-                                                && $projeto->aprovado_coordenador !== 'sim';
-                                        @endphp
+                                    @php
+                                        $role = auth()->user()->role;
+                                        $isAluno = $role === 'aluno';
+                                        $isProfessor = $role === 'professor';
+                                        $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
+                                        $podeEditar = $projeto->status === 'editando';
+                                        $podeVoltar = $projeto->status === 'entregue' 
+                                            && $projeto->aprovado_napex !== 'sim' 
+                                            && $projeto->aprovado_coordenador !== 'sim';
+                                    @endphp
 
-                                        @if ($isAluno)
+
+                                        @if ($isAluno || $isProfessor)
                                             <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
                                         @endif
 
-                                        @if ($isAluno && $projeto->status === 'editando')
+                                        @if (($isAluno || $isProfessor) && $podeEditar)
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
 
                                             <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
@@ -143,7 +176,7 @@
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:underline">Apagar</button>
                                             </form>
-                                        @elseif ($isAluno && $podeVoltar)
+                                        @elseif (($isAluno || $isProfessor) && $podeVoltar)
                                             <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" style="display:inline">
                                                 @csrf
                                                 <button type="submit" class="text-yellow-600 hover:underline">Voltar para Edição</button>
