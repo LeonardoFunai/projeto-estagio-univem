@@ -152,23 +152,22 @@
 
 
                                     <td class="py-2 px-6 space-x-2">    
-                                    @php
-                                        $role = auth()->user()->role;
-                                        $isAluno = $role === 'aluno';
-                                        $isProfessor = $role === 'professor';
-                                        $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
-                                        $podeEditar = $projeto->status === 'editando';
-                                        $podeVoltar = $projeto->status === 'entregue' 
-                                            && $projeto->aprovado_napex !== 'sim' 
-                                            && $projeto->aprovado_coordenador !== 'sim';
-                                    @endphp
-
+                                        @php
+                                            $role = auth()->user()->role;
+                                            $isAluno = $role === 'aluno';
+                                            $isProfessor = $role === 'professor';
+                                            $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
+                                            $podeEditar = $projeto->status === 'editando';
+                                            $podeVoltar = $projeto->status === 'entregue' 
+                                                && $projeto->aprovado_napex !== 'sim' 
+                                                && $projeto->aprovado_coordenador !== 'sim';
+                                        @endphp
 
                                         @if ($isAluno || $isProfessor)
                                             <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
                                         @endif
 
-                                        @if (($isAluno || $isProfessor) && $podeEditar)
+                                        @if ($isAluno && $podeEditar)
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
 
                                             <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
@@ -176,6 +175,8 @@
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:underline">Apagar</button>
                                             </form>
+                                        @elseif ($isProfessor && $podeEditar)
+                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
                                         @elseif (($isAluno || $isProfessor) && $podeVoltar)
                                             <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" style="display:inline">
                                                 @csrf
@@ -185,6 +186,7 @@
                                             <a href="{{ route('projetos.show', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Analise/Parecer</a>
                                         @endif
                                     </td>
+
 
 
 

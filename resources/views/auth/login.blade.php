@@ -1,5 +1,6 @@
 @extends('layouts.auth')
 
+
 @section('content')
     <!-- Status da Sessão -->
     <x-auth-session-status class="mb-4 text-white" :status="session('status')" />
@@ -22,6 +23,15 @@
         <input id="password" type="password" name="password" placeholder="Senha"
             required class="auth-input">
     </div>
+    @if ($errors->any())
+    <div class="mb-4 text-red-600">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
 
 
@@ -57,4 +67,5 @@
             @endif
         </div>
     </form>
+
 @endsection

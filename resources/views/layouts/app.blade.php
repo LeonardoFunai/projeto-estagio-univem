@@ -12,52 +12,57 @@
 </head>
 <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;">
 
-    <!-- Barra superior institucional -->
-    <div style="background-color: #251c57; color: white; padding: 5px 20px; font-size: 0.85rem;">
-        <div class="container d-flex justify-content-start align-items-center">
-            <span class="me-3"><i class="bi bi-telephone"></i> (14) 2105-0800</span>
-            <span><i class="bi bi-chat-dots"></i> Fale Conosco</span>
+    <!-- Barra roxa escura superior -->
+    <div style="background-color: #251c57; color: white; padding: 15px 20px; font-size: 0.85rem;">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <span class="me-3"><i class="bi bi-telephone"></i> (14) 2105-0800</span>
+                <span><i class="bi bi-chat-dots"></i> Fale Conosco</span>
+            </div>
+
         </div>
     </div>
 
-    <!-- Cabeçalho com logo, botões e usuário -->
-    <div class="bg-white shadow-sm">
-        <div class="container d-flex align-items-center justify-content-between py-3">
-            <div class="d-flex align-items-center">
-                <img src="{{ asset('img/site/logo.jpg') }}" alt="Logo Univem" style="height: 60px; margin-right: 10px;">
-                <div>
-                    <h2 style="margin: 0; color: #1d4e89;">UNIVEM</h2>
-                    <small style="color: gray;">Centro Universitário Eurípedes de Marília</small>
-                </div>
-            </div>
 
-            <div class="d-flex align-items-center">
-                <a href="{{ route('projetos.index') }}" class="btn btn-outline-primary me-2">Lista de Propostas</a>
-                @if(auth()->user()->role == 'aluno')
-                    <a href="{{ route('projetos.create') }}" class="btn btn-primary me-4">Nova Proposta</a>
-                @endif
-                <!-- Dropdown de usuário -->
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ Auth::user()->name }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                        <li>
-                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                Perfil
-                            </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="dropdown-item">Sair</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+<!-- Faixa azul clara inclinada -->
+<div style="
+    background-color: #28aee3;
+    clip-path: polygon(3% 0, 100% 0, 100% 100%, 0% 100%);
+    padding: 5px 20px;
+    margin-top: -40px;
+    position: relative;
+    z-index: 20;
+    width: 50%;
+    margin-left: auto;
+">
+    <div class="container d-flex justify-content-end align-items-center">
+        <a href="{{ route('projetos.index') }}" class="btn btn-outline-light me-2">Lista de Propostas</a>
+        
+        @if(auth()->user()->role == 'aluno')
+            <a href="{{ route('projetos.create') }}" class="btn btn-light me-2">Nova Proposta</a>
+        @endif
+
+        <a href="{{ route('profile.edit') }}" class="btn btn-outline-light me-2">
+            {{ Auth::user()->name }}
+        </a>
+
+        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-outline-light">Sair</button>
+        </form>
     </div>
+</div>
+
+
+<!-- Logo e navegação principal -->
+<div class="bg-white shadow-sm" style="position: relative;">
+    <!-- removido z-index -->
+    <div class="container d-flex align-items-center justify-content-start py-3">
+        <img src="{{ asset('img/site/logo-univem.png') }}" alt="Logo Univem" style="height:60px; width:250px; margin-right: 5px;">
+    </div>
+</div>
+
+
 
     <!-- Conteúdo principal -->
     <main class="container my-4">
@@ -65,11 +70,14 @@
     </main>
 
     <!-- Rodapé -->
-    <footer class="text-center py-3 bg-light mt-5">
+    <footer class="text-center py-3" style="background-color: #29abe2; color: white;">
         <div class="container">
             <p class="mb-0">&copy; {{ date('Y') }} Centro Universitário Eurípides de Marília - UNIVEM</p>
         </div>
     </footer>
+
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -13,9 +13,26 @@
                 <h1 class="text-2xl font-bold text-[#251C57] text-center mb-2">Detalhes do Projeto</h1>
                 <p class="text-center text-gray-600 font-medium mb-8">Status: {{ ucfirst($projeto->status) }}</p>
 
+                <!-- botão de editar -->
+                @php
+                    $role = auth()->user()->role;
+                    $isAluno = $role === 'aluno';
+                    $isProfessor = $role === 'professor';
+                @endphp
+
+                @if ($isAluno || $isProfessor)
+                    <div class="mb-4">
+                        <a href="{{ route('projetos.edit', $projeto->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            ✏️ Editar Proposta
+                        </a>
+                    </div>
+                @endif
+
+
                 <!-- TABELA 1 - Detalhes do Projeto -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
+                        
                         <tbody>
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Título</th>

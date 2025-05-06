@@ -284,7 +284,8 @@ class ProjetoController extends Controller
             }
         }
     
-        return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
+        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto atualizado com sucesso!');
+
     }
         
     
@@ -359,10 +360,18 @@ class ProjetoController extends Controller
     public function destroy($id)
     {
         $projeto = Projeto::findOrFail($id);
+        $user = auth()->user();
+    
+        // Bloqueia se não for aluno
+        if ($user->role !== 'aluno') {
+            return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para excluir este projeto.');
+        }
+    
         $projeto->delete();
-
+    
         return redirect()->route('projetos.index')->with('success', 'Projeto excluído com sucesso!');
     }
+    
 
     public function enviarProjeto($id)
     {

@@ -63,7 +63,7 @@
     <div class="flex bg-white custom-shadow overflow-hidden w-full max-w-4xl">
         <!-- Lado esquerdo: imagem / logo -->
         <div class="w-1/2 bg-white p-8 flex items-center justify-center">
-            <img src="{{ asset('img/site/univem-logo-login.jpg') }}" alt="Logo UNIVEM" class="max-w-xs">
+            <img src="{{ asset('img/site/logo-univem.png') }}" alt="Logo UNIVEM" class="max-w-xs">
         </div>
 
         <!-- Lado direito: formulário -->
