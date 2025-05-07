@@ -13,6 +13,16 @@
                 {{ session('error') }}
             </div>
         @endif
+        @if ($errors->any())
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
 
         <form id="form-projeto" action="{{ route('projetos.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -21,10 +31,10 @@
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
                 <label class="block mb-2">Título do Projeto:</label>
-                <input type="text" name="titulo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Título do Projeto" required>
+                <input type="text"  name="titulo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Título do Projeto" value="{{ old('titulo') }}" required>
 
                 <label class="block mb-2">Período:</label>
-                <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." required>
+                <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." value="{{ old('titulo') }}" required>
                 
                 <label class="block mb-2">Selecione o Professor Responsável:</label>
                 <div id="professores-wrapper">
@@ -35,7 +45,7 @@
                                 <option value="{{ $professor->id }}">{{ $professor->name }} ({{ $professor->email }})</option>
                             @endforeach
                         </select>
-                        <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
+                        <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" value="{{ old('titulo') }}" placeholder="Área (opcional) ">
                     </div>
                 </div>  
 
@@ -45,9 +55,9 @@
                 <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
                 <div id="alunos-wrapper">
                     <div class="mb-4">
-                        <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" required>
-                        <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" required>
-                        <input type="text" name="alunos[0][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" required>
+                        <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" value="{{ old('titulo') }}" required>
+                        <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" value="{{ old('titulo') }}" required>
+                        <input type="text" name="alunos[0][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" value="{{ old('titulo') }}" required>
                     </div>
                 </div>
                 <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
@@ -56,35 +66,35 @@
                 <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4" placeholder="População em Geral"></textarea>
 
                 <label class="block mb-2">Data de Início:</label>
-                <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" required>
+                <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}" required>
 
                 <label class="block mb-2">Data de Término:</label>
-                <input type="date" name="data_fim" id="data_fim" class="w-full border-gray-300 rounded-md mb-4" required>
+                <input type="date" name="data_fim" id="data_fim" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}" required>
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
 
                 <label class="block mb-2">1. Introdução</label>
-                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">2. Objetivos do Projeto</label>
-                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">3. Justificativa</label>
-                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">4. Metodologia</label>
-                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                 <small class="block mb-2 text-gray-600">(O que fazer, como fazer e carga horária)</small>
 
                 <div id="atividades-wrapper">
                     <div class="mb-4">
-                        <textarea name="atividades[0][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
-                        <textarea name="atividades[0][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
-                        <input type="number" name="atividades[0][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
+                        <textarea name="atividades[0][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" value="{{ old('titulo') }}"required></textarea>
+                        <textarea name="atividades[0][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" value="{{ old('titulo') }}"required></textarea>
+                        <input type="number" name="atividades[0][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" value="{{ old('titulo') }}"required>
                     </div>
                 </div>
                 <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade</button>
@@ -92,7 +102,7 @@
                 <label class="block mb-2 text-lg font-semibold text-blue-700">Cronograma</label>
                 <div id="cronograma-wrapper">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" name="cronograma[0][atividade]" class="form-control" placeholder="Título da Atividade" required>
+                        <input type="text" name="cronograma[0][atividade]" class="form-control" placeholder="Título da Atividade" value="{{ old('titulo') }}" required>
                         <select name="cronograma[0][mes]" class="form-control" required>
                             <option value="">Selecione o mês</option>
                             @foreach(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $mes)
@@ -104,10 +114,10 @@
                 <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Cronograma</button>
 
                 <label class="block mb-2">7. Recursos Necessários</label>
-                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">8. Resultados Esperados</label>
-                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4"></textarea>
+                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('titulo') }}"></textarea>
 
                 <label class="block mb-2">Arquivo (opcional)</label>
                 <input type="file" name="arquivo" class="w-full border-gray-300 rounded-md mb-6">
@@ -116,6 +126,7 @@
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">Salvar Projeto</button>
         </form>
     </div>
+
     <script>
         let professorCount = 1;
         let alunoCount = 1;
@@ -136,6 +147,7 @@
                 const div = document.createElement('div');
                 div.classList.add('mb-4');
                 div.innerHTML = `
+                    <h4 class="font-semibold mb-2">Professor ${professorCount + 1}</h4>
                     <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                         ${professorOptions}
                     </select>
@@ -145,13 +157,14 @@
                 document.getElementById('professores-wrapper').appendChild(div);
                 professorCount++;
             }
-        }); 
+        });
 
         document.getElementById('add-aluno')?.addEventListener('click', () => {
             if (alunoCount < 9) {
                 const div = document.createElement('div');
                 div.classList.add('mb-4');
                 div.innerHTML = `
+                    <h4 class="font-semibold mb-2">Aluno ${alunoCount + 1}</h4>
                     <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
                     <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" required>
                     <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" required>
@@ -166,8 +179,12 @@
             const div = document.createElement('div');
             div.classList.add('mb-4');
             div.innerHTML = `
+                <h4 class="font-semibold mb-2">Atividade ${atividadeCount + 1}</h4>
+                <label class="block mb-1">O que fazer</label>
                 <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="form-control mb-2" placeholder="O que fazer?" required></textarea>
+                <label class="block mb-1">Como fazer</label>
                 <textarea name="atividades[${atividadeCount}][como_fazer]" class="form-control mb-2" placeholder="Como fazer?" required></textarea>
+                <label class="block mb-1">Carga horária (horas)</label>
                 <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="form-control mb-2" placeholder="Carga horária" required>
                 <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
@@ -199,5 +216,8 @@
             }
         });
     </script>
+
+
+
 
 </x-app-layout>

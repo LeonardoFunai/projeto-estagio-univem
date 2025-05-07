@@ -25,6 +25,10 @@ class UpdateProjetoRequest extends FormRequest
 
         if ($role === 'napex') {
             return [
+                'data_recebimento_napex' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+                'data_encaminhamento_parecer' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+
+
                 'titulo' => 'required|string|max:255',
                 'periodo' => 'required|string|max:255',
                 'data_inicio' => 'required|date',
@@ -88,6 +92,10 @@ class UpdateProjetoRequest extends FormRequest
     public function messages()
     {
         return [
+            'data_recebimento_napex.regex' => 'A data de recebimento deve estar no formato DD-MM-AAAA.',
+            'data_encaminhamento_parecer.regex' => 'A data de encaminhamento deve estar no formato DD-MM-AAAA.',
+
+
             'titulo.required' => 'O título do projeto é obrigatório.',
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_fim.required' => 'A data de término é obrigatória.',
@@ -117,4 +125,41 @@ class UpdateProjetoRequest extends FormRequest
             'arquivo.max' => 'O arquivo não pode ultrapassar 5MB.',
         ];
     }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->has('professores')) {
+                $professoresIds = collect($this->input('professores'))->pluck('id');
+                if ($professoresIds->duplicates()->isNotEmpty()) {
+                    $validator->errors()->add('professores', 'Você tentou adicionar o mesmo professor mais de uma vez.');
+                }
+            }
+    
+            // Checar ano nas datas de NAPEx
+            $datas = [
+                'data_recebimento_napex' => $this->input('data_recebimento_napex'),
+                'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
+            ];
+    
+            foreach ($datas as $campo => $valor) {
+                if ($valor && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $matches)) {
+                    $ano = (int)$matches[1];
+                    $mes = (int)$matches[2];
+                    $dia = (int)$matches[3];
+    
+                    if ($ano < 1000 || $ano > 9999) {
+                        $validator->errors()->add($campo, 'O ano deve estar entre 1000 e 9999.');
+                    }
+    
+                    if (!checkdate($mes, $dia, $ano)) {
+                        $validator->errors()->add($campo, 'A data informada não é válida.');
+                    }
+                } elseif ($valor) {
+                    $validator->errors()->add($campo, 'A data deve estar no formato AAAA-MM-DD.');
+                }
+            }
+        });
+    }
+    
+
 }

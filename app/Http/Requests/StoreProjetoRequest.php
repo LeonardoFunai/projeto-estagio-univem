@@ -14,6 +14,10 @@ class StoreProjetoRequest extends FormRequest
     public function rules()
     {
         return [
+            //
+            'data_recebimento_napex' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+            'data_encaminhamento_parecer' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+
             // Dados do Projeto
             'titulo' => 'required|string|max:255',
             'periodo' => 'required|string|max:255',
@@ -70,6 +74,9 @@ class StoreProjetoRequest extends FormRequest
     public function messages()
     {
         return [
+            'data_recebimento_napex.regex' => 'A data de recebimento do NAPEx deve estar no formato AAAA-MM-DD com ano de 4 dígitos.',
+            'data_encaminhamento_parecer.regex' => 'A data de encaminhamento deve estar no formato AAAA-MM-DD com ano de 4 dígitos.',
+
             // Projeto
             'titulo.required' => 'O título do projeto é obrigatório.',
             'data_inicio.required' => 'A data de início é obrigatória.',
@@ -111,5 +118,25 @@ class StoreProjetoRequest extends FormRequest
             'cronograma.*.mes.required' => 'O mês da atividade no cronograma é obrigatório.',
         ];
     }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $datas = [
+                'data_recebimento_napex' => $this->input('data_recebimento_napex'),
+                'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
+            ];
+    
+            foreach ($datas as $campo => $valor) {
+                if ($valor && preg_match('/^(\d{4})-\d{2}-\d{2}$/', $valor, $matches)) {
+                    $ano = (int)$matches[1];
+                    if ($ano > 9999) {
+                        $validator->errors()->add($campo, 'O ano na data não pode ser maior que 9999.');
+                    }
+                }
+            }
+        });
+    }
+    
+
     
 }

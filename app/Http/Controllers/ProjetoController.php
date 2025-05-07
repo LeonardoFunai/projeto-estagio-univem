@@ -12,7 +12,7 @@ use App\Http\Requests\StoreProjetoRequest;
 use App\Http\Requests\UpdateProjetoRequest;
 use App\Models\Rejeicao;
 use Illuminate\Http\Request;
-
+use Illuminate\Database\QueryException;
 class ProjetoController extends Controller
 {
     public function downloadArquivo($id)
@@ -234,6 +234,12 @@ class ProjetoController extends Controller
         }
     
         $data = $request->validated();
+        foreach (['data_recebimento_napex', 'data_encaminhamento_parecer', 'data_parecer_coordenador'] as $campo) {
+            if (!empty($data[$campo]) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $data[$campo])) {
+                unset($data[$campo]);
+            }
+        }
+        
         $projeto->update($data);
     
         // Atualizar alunos
@@ -313,25 +319,38 @@ class ProjetoController extends Controller
             return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pelo NAPEx e devolvido ao aluno.');
         }
     
-        $projeto->update($request->only([
+        $napexData = $request->only([
             'numero_projeto',
             'data_recebimento_napex',
             'data_encaminhamento_parecer',
             'aprovado_napex',
             'motivo_napex'
-        ]));
+        ]);
     
-        return redirect()->route('projetos.show', $id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
+        try {
+            if (!empty($napexData['data_recebimento_napex']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $napexData['data_recebimento_napex'])) {
+                return redirect()->back()->with('error', 'A data de recebimento está inválida. Use o formato YYYY-MM-DD.');
+            }
+    
+            if (!empty($napexData['data_encaminhamento_parecer']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $napexData['data_encaminhamento_parecer'])) {
+                return redirect()->back()->with('error', 'A data de encaminhamento está inválida. Use o formato YYYY-MM-DD.');
+            }
+    
+            $projeto->update($napexData);
+    
+            return redirect()->route('projetos.show', $id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao salvar no banco: verifique os dados e tente novamente.');
+        }
     }
     
-
     public function avaliarCoordenador(Request $request, $id)
     {
         $projeto = Projeto::findOrFail($id);
-    
+
         if ($request->input('aprovado_coordenador') === 'nao') {
             $this->registrarRejeicao($projeto, $request->input('motivo_coordenador'), 'coordenador');
-    
+
             $projeto->update([
                 'numero_projeto' => null,
                 'data_recebimento_napex' => null,
@@ -343,18 +362,32 @@ class ProjetoController extends Controller
                 'data_parecer_coordenador' => null,
                 'status' => 'editando',
             ]);
-    
+
             return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pela Coordenação e devolvido ao aluno.');
         }
-    
-        $projeto->update($request->only([
+
+        $coordData = $request->only([
             'aprovado_coordenador',
             'motivo_coordenador',
             'data_parecer_coordenador'
-        ]));
-    
-        return redirect()->route('projetos.show', $id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
+        ]);
+
+        try {
+            if (!empty($coordData['data_parecer_coordenador'])) {
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $coordData['data_parecer_coordenador'])) {
+                    return redirect()->back()->with('error', 'A data informada está inválida. Use o formato YYYY-MM-DD.');
+                }
+            }
+
+            $projeto->update($coordData);
+
+            return redirect()->route('projetos.show', $id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
+
+        } catch (QueryException $e) {
+            return redirect()->back()->with('error', 'Erro ao salvar no banco: verifique os dados e tente novamente.');
+        }
     }
+
     
 
     public function destroy($id)

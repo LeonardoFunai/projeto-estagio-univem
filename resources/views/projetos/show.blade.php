@@ -8,6 +8,18 @@
     <div class="py-12">
         <div class="w-full px-6">
             <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
+            @if (session('error'))
+                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                    <strong>Erro:</strong> {{ session('error') }}
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                    <strong>Sucesso:</strong> {{ session('success') }}
+                </div>
+            @endif
+
 
                 <!-- Título + Status -->
                 <h1 class="text-2xl font-bold text-[#251C57] text-center mb-2">Detalhes do Projeto</h1>

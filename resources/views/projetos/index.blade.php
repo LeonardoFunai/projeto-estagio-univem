@@ -47,11 +47,6 @@
                         </div>
 
                         <div>
-                            <label class="block mb-1">Período:</label>
-                            <input type="text" name="periodo" value="{{ request('periodo') }}" class="w-full border-gray-300 rounded-md py-1">
-                        </div>
-
-                        <div>
                             <label class="block mb-1">Data Início:</label>
                             <input type="date" name="data_inicio" value="{{ request('data_inicio') }}" class="w-full border-gray-300 rounded-md py-1">
                         </div>
@@ -117,7 +112,6 @@
                             <tr class="bg-[#251C57] text-white">
                                 <th class="py-3 px-6 text-left">Cadastrado por</th>
                                 <th class="py-3 px-6 text-left">Título</th>
-                                <th class="py-3 px-6 text-left">Período</th>
                                 <th class="py-3 px-6 text-left">Data de Início</th>
                                 <th class="py-3 px-6 text-left">Data de Fim</th>
                                 <th class="py-3 px-6 text-left">Carga Horária</th>
@@ -134,7 +128,6 @@
                                 <tr class="hover:bg-gray-100">
                                     <td class="py-2 px-6">{{ $projeto->user->name ?? 'Desconhecido' }}</td>
                                     <td class="py-2 px-6">{{ $projeto->titulo }}</td>
-                                    <td class="py-2 px-6">{{ $projeto->periodo }}</td>
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
                                     <td class="py-2 px-6">{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}h</td>
@@ -151,7 +144,7 @@
                                     </td>
 
 
-                                    <td class="py-2 px-6 space-x-2">    
+                                    <td class="py-2 px-6 space-x-2" x-data="{ openModal: false }">
                                         @php
                                             $role = auth()->user()->role;
                                             $isAluno = $role === 'aluno';
@@ -170,11 +163,31 @@
                                         @if ($isAluno && $podeEditar)
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
 
-                                            <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza que deseja apagar este projeto?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Apagar</button>
-                                            </form>
+                                            <!-- Botão que abre o modal -->
+                                            <button @click="openModal = true" class="text-red-600 hover:underline">Apagar</button>
+
+                                            <!-- Modal -->
+                                            <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                                <div class="bg-white rounded-lg p-6 shadow-lg w-80">
+                                                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirmação</h2>
+                                                    <p class="mb-6 text-gray-600">Tem certeza que deseja apagar este projeto?</p>
+                                                    <div class="flex justify-end space-x-2">
+                                                        <button @click="openModal = false"
+                                                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-4 rounded">
+                                                            Cancelar
+                                                        </button>
+                                                        <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">
+                                                                Apagar
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         @elseif ($isProfessor && $podeEditar)
                                             <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
                                         @elseif (($isAluno || $isProfessor) && $podeVoltar)
@@ -186,6 +199,7 @@
                                             <a href="{{ route('projetos.show', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Analise/Parecer</a>
                                         @endif
                                     </td>
+
 
 
 

@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 return [
     'accepted'             => 'O campo :attribute deve ser aceito.',
     'active_url'           => 'O campo :attribute não é uma URL válida.',
@@ -22,6 +19,8 @@ return [
     ],
     'boolean'              => 'O campo :attribute deve ser verdadeiro ou falso.',
     'confirmed'            => 'A confirmação do campo :attribute não confere.',
+    'current_password'     => 'A senha atual está incorreta.',
+    'password'             => 'A senha está incorreta.',
     'date'                 => 'O campo :attribute não é uma data válida.',
     'date_equals'          => 'O campo :attribute deve ser uma data igual a :date.',
     'date_format'          => 'O campo :attribute não corresponde ao formato :format.',
@@ -72,10 +71,10 @@ return [
     'uuid'                 => 'O campo :attribute deve ser um UUID válido.',
 
     'attributes' => [
-    'name' => 'nome',
-    'email' => 'email',
-    'password' => 'senha',
-    'password_confirmation' => 'confirmação de senha',
-    'role' => 'tipo de usuário',
+        'name' => 'nome',
+        'email' => 'email',
+        'password' => 'senha',
+        'password_confirmation' => 'confirmação de senha',
+        'role' => 'tipo de usuário',
     ],
 ];

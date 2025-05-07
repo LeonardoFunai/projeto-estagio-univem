@@ -9,6 +9,22 @@
     <link rel="stylesheet" href="{{ asset('css/form.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+    .custom-btn {
+        border: none !important;
+        background: none !important;
+        color: white !important;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .custom-btn:hover {
+        background-color: #28aee3 !important;
+        color: #251c57 !important;
+    }
+    [x-cloak] { display: none !important; }
+
+</style>
+
 </head>
 <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;">
 
@@ -34,22 +50,25 @@
     z-index: 20;
     width: 50%;
     margin-left: auto;
+
+
 ">
-    <div class="container d-flex justify-content-end align-items-center">
-        <a href="{{ route('projetos.index') }}" class="btn btn-outline-light me-2">Lista de Propostas</a>
-        
+    <div style="color: white;" class="container d-flex justify-content-start align-items-center ">
+        <a href="{{ route('projetos.index') }}" class="btn custom-btn me-2">Lista de Propostas</a> |
+
         @if(auth()->user()->role == 'aluno')
-            <a href="{{ route('projetos.create') }}" class="btn btn-light me-2">Nova Proposta</a>
+            <a href="{{ route('projetos.create') }}" class="btn custom-btn me-2">Nova Proposta</a>  |
         @endif
 
-        <a href="{{ route('profile.edit') }}" class="btn btn-outline-light me-2">
+        <a href="{{ route('profile.edit') }}" class="btn custom-btn me-2">
             {{ Auth::user()->name }}
-        </a>
+        </a>  |
 
         <form method="POST" action="{{ route('logout') }}" class="d-inline">
             @csrf
-            <button type="submit" class="btn btn-outline-light">Sair</button>
+            <button type="submit" class="btn custom-btn">Sair</button>
         </form>
+
     </div>
 </div>
 
