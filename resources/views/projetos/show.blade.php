@@ -32,13 +32,14 @@
                     $isProfessor = $role === 'professor';
                 @endphp
 
-                @if ($isAluno || $isProfessor)
+                @if (($isAluno || $isProfessor) && $projeto->status !== 'entregue')
                     <div class="mb-4">
                         <a href="{{ route('projetos.edit', $projeto->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             ✏️ Editar Proposta
                         </a>
                     </div>
                 @endif
+
 
 
                 <!-- TABELA 1 - Detalhes do Projeto -->

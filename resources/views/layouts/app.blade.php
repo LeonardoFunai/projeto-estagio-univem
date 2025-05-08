@@ -33,7 +33,10 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div>
                 <span class="me-3"><i class="bi bi-telephone"></i> (14) 2105-0800</span>
-                <span><i class="bi bi-chat-dots"></i> Fale Conosco</span>
+                <a href="mailto:atendimento@univem.edu.br" class="text-white text-decoration-none">
+                    <i class="bi bi-chat-dots"></i> Fale Conosco
+                </a>
+
             </div>
 
         </div>

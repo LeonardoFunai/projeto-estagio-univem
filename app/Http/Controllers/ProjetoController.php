@@ -76,12 +76,22 @@ class ProjetoController extends Controller
             $query->where('aprovado_napex', 'sim')->where('aprovado_coordenador', 'sim');
         }
     
-        if (request('data_inicio')) {
-            $query->whereDate('data_inicio', '>=', request('data_inicio'));
+        // filtro de intervalo para data_inicio
+        if (request('data_inicio_de') && request('data_inicio_ate')) {
+            $query->whereBetween('data_inicio', [request('data_inicio_de'), request('data_inicio_ate')]);
+        } elseif (request('data_inicio_de')) {
+            $query->whereDate('data_inicio', '>=', request('data_inicio_de'));
+        } elseif (request('data_inicio_ate')) {
+            $query->whereDate('data_inicio', '<=', request('data_inicio_ate'));
         }
     
-        if (request('data_fim')) {
-            $query->whereDate('data_fim', '<=', request('data_fim'));
+        //filtro de intervalo para data_fim
+        if (request('data_fim_de') && request('data_fim_ate')) {
+            $query->whereBetween('data_fim', [request('data_fim_de'), request('data_fim_ate')]);
+        } elseif (request('data_fim_de')) {
+            $query->whereDate('data_fim', '>=', request('data_fim_de'));
+        } elseif (request('data_fim_ate')) {
+            $query->whereDate('data_fim', '<=', request('data_fim_ate'));
         }
     
         $projetos = $query->get();
@@ -95,6 +105,7 @@ class ProjetoController extends Controller
     
         return view('projetos.index', compact('projetos'));
     }
+    
     
 
     
@@ -299,22 +310,12 @@ class ProjetoController extends Controller
 
     public function avaliarNapex(Request $request, $id)
     {
-        $projeto = Projeto::findOrFail($id);
     
+        $projeto = Projeto::findOrFail($id);
+
         if ($request->input('aprovado_napex') === 'nao') {
             $this->registrarRejeicao($projeto, $request->input('motivo_napex'), 'napex');
-    
-            $projeto->update([
-                'numero_projeto' => null,
-                'data_recebimento_napex' => null,
-                'data_encaminhamento_parecer' => null,
-                'aprovado_napex' => null,
-                'motivo_napex' => null,
-                'aprovado_coordenador' => null,
-                'motivo_coordenador' => null,
-                'data_parecer_coordenador' => null,
-                'status' => 'editando',
-            ]);
+            $this->limparAprovacoes($projeto);
     
             return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pelo NAPEx e devolvido ao aluno.');
         }
@@ -350,19 +351,8 @@ class ProjetoController extends Controller
 
         if ($request->input('aprovado_coordenador') === 'nao') {
             $this->registrarRejeicao($projeto, $request->input('motivo_coordenador'), 'coordenador');
-
-            $projeto->update([
-                'numero_projeto' => null,
-                'data_recebimento_napex' => null,
-                'data_encaminhamento_parecer' => null,
-                'aprovado_napex' => null,
-                'motivo_napex' => null,
-                'aprovado_coordenador' => null,
-                'motivo_coordenador' => null,
-                'data_parecer_coordenador' => null,
-                'status' => 'editando',
-            ]);
-
+            $this->limparAprovacoes($projeto);
+    
             return redirect()->route('projetos.index')->with('success', 'Projeto reprovado pela Coordenação e devolvido ao aluno.');
         }
 
@@ -387,6 +377,22 @@ class ProjetoController extends Controller
             return redirect()->back()->with('error', 'Erro ao salvar no banco: verifique os dados e tente novamente.');
         }
     }
+    
+    private function limparAprovacoes($projeto)
+    {
+        $projeto->update([
+            'numero_projeto' => null,
+            'data_recebimento_napex' => null,
+            'data_encaminhamento_parecer' => null,
+            'aprovado_napex' => 'pendente',
+            'motivo_napex' => null,
+            'aprovado_coordenador' => 'pendente',
+            'motivo_coordenador' => null,
+            'data_parecer_coordenador' => null,
+            'status' => 'editando',
+        ]);
+    }
+
 
     
 

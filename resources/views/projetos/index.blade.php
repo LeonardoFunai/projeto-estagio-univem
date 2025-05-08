@@ -36,48 +36,63 @@
                     @endif
 
                     <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <!-- Cadastrado por -->
                         <div>
                             <label class="block mb-1">Cadastrado por:</label>
-                            <input type="text" name="cadastrado_por" value="{{ request('cadastrado_por') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <input type="text" name="cadastrado_por" value="{{ request('cadastrado_por') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
+                        <!-- Título -->
                         <div>
                             <label class="block mb-1">Título:</label>
-                            <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
-                        <div>
+                        <!-- Data Início de/até -->
+                        <div class="col-span-2">
                             <label class="block mb-1">Data Início:</label>
-                            <input type="date" name="data_inicio" value="{{ request('data_inicio') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <div class="flex gap-2">
+                                <input type="date" name="data_inicio_de" value="{{ request('data_inicio_de') }}" class="w-full border-gray-300 rounded-md py-0.5">
+                                <span class="self-center">até</span>
+                                <input type="date" name="data_inicio_ate" value="{{ request('data_inicio_ate') }}" class="w-full border-gray-300 rounded-md py-0.5">
+                            </div>
                         </div>
 
-                        <div>
+                        <!-- Data Fim de/até -->
+                        <div class="col-span-2">
                             <label class="block mb-1">Data Fim:</label>
-                            <input type="date" name="data_fim" value="{{ request('data_fim') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <div class="flex gap-2">
+                                <input type="date" name="data_fim_de" value="{{ request('data_fim_de') }}" class="w-full border-gray-300 rounded-md py-0.5">
+                                <span class="self-center">até</span>
+                                <input type="date" name="data_fim_ate" value="{{ request('data_fim_ate') }}" class="w-full border-gray-300 rounded-md py-0.5">
+                            </div>
                         </div>
 
+                        <!-- Carga horária -->
                         <div>
                             <label class="block mb-1">Carga Mínima:</label>
-                            <input type="number" name="carga_min" value="{{ request('carga_min') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <input type="number" name="carga_min" value="{{ request('carga_min') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
                         <div>
                             <label class="block mb-1">Carga Máxima:</label>
-                            <input type="number" name="carga_max" value="{{ request('carga_max') }}" class="w-full border-gray-300 rounded-md py-1">
+                            <input type="number" name="carga_max" value="{{ request('carga_max') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
+                        <!-- Status -->
                         <div>
                             <label class="block mb-1">Status:</label>
-                            <select name="status" class="w-full border-gray-300 rounded-md py-1">
+                            <select name="status" class="w-auto border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
                                 <option value="entregue" {{ request('status') === 'entregue' ? 'selected' : '' }}>Entregue</option>
                             </select>
                         </div>
 
+                        <!-- Aprovações -->
                         <div>
                             <label class="block mb-1">Aprovação NAPEx:</label>
-                            <select name="aprovado_napex" class="w-full border-gray-300 rounded-md py-1">
+                            <select name="aprovado_napex" class="w-auto border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="sim" {{ request('aprovado_napex') === 'sim' ? 'selected' : '' }}>Sim</option>
                             </select>
@@ -85,7 +100,7 @@
 
                         <div>
                             <label class="block mb-1">Aprovação Coordenador:</label>
-                            <select name="aprovado_coordenador" class="w-full border-gray-300 rounded-md py-1">
+                            <select name="aprovado_coordenador" class="w-auto border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="sim" {{ request('aprovado_coordenador') === 'sim' ? 'selected' : '' }}>Sim</option>
                             </select>
@@ -93,7 +108,7 @@
 
                         <div>
                             <label class="block mb-1">Aprovação Final:</label>
-                            <select name="aprovacao_final" class="w-full border-gray-300 rounded-md py-1">
+                            <select name="aprovacao_final" class="w-auto border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="sim" {{ request('aprovacao_final') === 'sim' ? 'selected' : '' }}>Sim</option>
                             </select>
@@ -103,6 +118,7 @@
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Pesquisar</button>
                         </div>
                     </form>
+
 
                 </div>
 

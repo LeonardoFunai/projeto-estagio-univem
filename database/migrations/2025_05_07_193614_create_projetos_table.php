@@ -22,16 +22,14 @@ return new class extends Migration {
             $table->string('numero_projeto')->nullable();
             $table->date('data_recebimento_napex')->nullable();
             $table->date('data_encaminhamento_parecer')->nullable();
-            $table->boolean('aprovado_napex')->default(false);
+            $table->enum('aprovado_napex', ['pendente', 'sim', 'nao'])->default('pendente');
             $table->text('motivo_napex')->nullable();
-            $table->boolean('aprovado_coordenador')->default(false);
+            $table->enum('aprovado_coordenador', ['pendente', 'sim', 'nao'])->default('pendente');
             $table->text('motivo_coordenador')->nullable();
             $table->date('data_parecer_coordenador')->nullable();
             $table->string('status')->default('editando');
             $table->string('arquivo')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->boolean('napex_aprovado')->default(false);
-            $table->boolean('coordenacao_aprovado')->default(false);
             $table->foreignId('professor_id')->nullable()->constrained('professores')->onDelete('set null');
             $table->timestamps();
         });
