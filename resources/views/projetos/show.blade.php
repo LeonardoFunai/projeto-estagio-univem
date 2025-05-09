@@ -8,37 +8,54 @@
     <div class="py-12">
         <div class="w-full px-6">
             <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
-            @if (session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                    <strong>Erro:</strong> {{ session('error') }}
-                </div>
-            @endif
 
-            @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                    <strong>Sucesso:</strong> {{ session('success') }}
-                </div>
-            @endif
+                <!-- mensagens de erro e sucesso -->
+                @if (session('error'))
+                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                        <strong>Erro:</strong> {{ session('error') }}
+                    </div>
+                @endif
+
+                @if (session('success'))
+                    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                        <strong>Sucesso:</strong> {{ session('success') }}
+                    </div>
+                @endif
 
 
                 <!-- Título + Status -->
                 <h1 class="text-2xl font-bold text-[#251C57] text-center mb-2">Detalhes do Projeto</h1>
                 <p class="text-center text-gray-600 font-medium mb-8">Status: {{ ucfirst($projeto->status) }}</p>
-
-                <!-- botão de editar -->
+                
+                <!-- Botão de Editar -->
                 @php
                     $role = auth()->user()->role;
                     $isAluno = $role === 'aluno';
                     $isProfessor = $role === 'professor';
+                    $podeEditar = $projeto->status === 'editando';
+                    $podeVoltar = $projeto->status === 'entregue' 
+                        && $projeto->aprovado_napex === 'pendente' 
+                        && $projeto->aprovado_coordenador === 'pendente';
                 @endphp
 
-                @if (($isAluno || $isProfessor) && $projeto->status !== 'entregue')
-                    <div class="mb-4">
-                        <a href="{{ route('projetos.edit', $projeto->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            ✏️ Editar Proposta
-                        </a>
+                @if ($isAluno || $isProfessor)
+                    <div class="mb-4 flex flex-wrap gap-2">
+                        @if ($podeEditar)
+                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                ✏️ Editar Proposta
+                            </a>
+                        @elseif ($podeVoltar)
+                            <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
+                                    ⬅️ Voltar para Edição
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 @endif
+
+
 
 
 

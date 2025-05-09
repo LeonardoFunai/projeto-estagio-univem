@@ -197,29 +197,34 @@ class ProjetoController extends Controller
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
         $user = auth()->user();
         $userRole = $user->role;
-    
+
+        // Bloqueia edição se NAPEx ou Coordenador já aprovou
+        if ($projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
+            return redirect()->route('projetos.index')->with('error', 'Este projeto já possui aprovação e não pode mais ser editado.');
+        }
+
         // BUSCA OS PROFESSORES CADASTRADOS
         $professores = User::where('role', 'professor')->get();
-    
+
         if ($userRole === 'aluno' && $projeto->status === 'entregue') {
             return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
         }
-    
+
         if ($userRole === 'professor') {
-            // VERIFICA SE O PROFESSOR LOGADO ESTÁ NA LISTA DE PROFESSORES RELACIONADOS
             $isProfessorLinked = $projeto->professores->contains('user_id', $user->id);
-    
+
             if (!$isProfessorLinked) {
                 return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para editar este projeto.');
             }
-    
+
             if ($projeto->status === 'entregue') {
                 return redirect()->route('projetos.index')->with('error', 'Este projeto foi entregue e não pode mais ser editado.');
             }
         }
-    
+
         return view('projetos.edit', compact('projeto', 'professores'));
     }
+
     
     
     
@@ -338,6 +343,13 @@ class ProjetoController extends Controller
             }
     
             $projeto->update($napexData);
+            
+            //atualiza status p/ aprovado caso napex e coord aprove
+            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+                $projeto->status = 'aprovado';
+                $projeto->save();
+            }   
+
     
             return redirect()->route('projetos.show', $id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
         } catch (\Exception $e) {
@@ -370,6 +382,12 @@ class ProjetoController extends Controller
             }
 
             $projeto->update($coordData);
+
+            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+                $projeto->status = 'aprovado';
+                $projeto->save();
+            }
+
 
             return redirect()->route('projetos.show', $id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
 
@@ -429,9 +447,10 @@ class ProjetoController extends Controller
         $projeto = Projeto::findOrFail($id);
     
         // Impede retorno à edição se já tiver sido aprovado por NAPEx ou Coordenação
-        if ($projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
+        if ($projeto->status === 'aprovado' || $projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
             return redirect()->route('projetos.index')->with('error', 'Não é possível voltar para edição após aprovação.');
         }
+
     
         $projeto->status = 'editando';
         $projeto->save();

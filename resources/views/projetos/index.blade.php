@@ -13,6 +13,7 @@
         <div class="w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
 
+            <!-- Erros -->
                 @if (session('success'))
                     <div class="mb-4 text-green-600 font-semibold">
                         {{ session('success') }}
@@ -35,6 +36,7 @@
                         </div>
                     @endif
 
+                    <!-- Filtro -->
                     <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <!-- Cadastrado por -->
                         <div>
@@ -106,14 +108,6 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block mb-1">Aprovação Final:</label>
-                            <select name="aprovacao_final" class="w-auto border-gray-300 rounded-md py-1">
-                                <option value="">-- Todos --</option>
-                                <option value="sim" {{ request('aprovacao_final') === 'sim' ? 'selected' : '' }}>Sim</option>
-                            </select>
-                        </div>
-
                         <div class="flex items-end">
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Pesquisar</button>
                         </div>
@@ -131,95 +125,123 @@
                                 <th class="py-3 px-6 text-left">Data de Início</th>
                                 <th class="py-3 px-6 text-left">Data de Fim</th>
                                 <th class="py-3 px-6 text-left">Carga Horária</th>
-                                <th class="py-3 px-6 text-left">Status</th>
                                 <th class="py-3 px-6 text-left">Aprovação NAPEx</th>
                                 <th class="py-3 px-6 text-left">Aprovação Coordenador</th>
-                                <th class="py-3 px-6 text-left">Aprovação Final</th>
-
+                                <th class="py-3 px-6 text-left">Status</th> 
                                 <th class="py-3 px-6 text-left">Ações</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach ($projetos as $projeto)
                                 <tr class="hover:bg-gray-100">
+
+                                    <!-- Nome do perfil de cadastro -->
                                     <td class="py-2 px-6">{{ $projeto->user->name ?? 'Desconhecido' }}</td>
+
+                                    <!-- Título -->
                                     <td class="py-2 px-6">{{ $projeto->titulo }}</td>
+
+                                    <!-- Dat Início -->
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
+
+                                    <!-- Data Fim -->
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
+
+                                    <!-- Carga Horária -->
                                     <td class="py-2 px-6">{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}h</td>
-                                    <td class="py-2 px-6">{{ ucfirst($projeto->status) }}</td>
+
+                                    <!-- Aprovação Napex -->
                                     <td class="py-2 px-6">
                                         {{ $projeto->aprovado_napex === 'sim' ? 'Sim' : ($projeto->aprovado_napex === 'nao' ? 'Não' : '--') }}
                                     </td>
+
+                                    <!-- Aprovação Coord -->
                                     <td class="py-2 px-6">
                                         {{ $projeto->aprovado_coordenador === 'sim' ? 'Sim' : ($projeto->aprovado_coordenador === 'nao' ? 'Não' : '--') }}
                                     </td>
 
-                                    <td class="py-2 px-6">
-                                        {{ $projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim' ? 'Sim' : '--' }}
-                                    </td>
+                                    <!-- status -->
+                                    <td class="py-2 px-6">{{ ucfirst($projeto->status) }}</td>  
 
-
+                                    <!-- Ações -->
                                     <td class="py-2 px-6 space-x-2" x-data="{ openModal: false }">
+
                                         @php
+                                            // Identifica o papel do usuário
                                             $role = auth()->user()->role;
                                             $isAluno = $role === 'aluno';
                                             $isProfessor = $role === 'professor';
                                             $isNapexOrCoord = in_array($role, ['napex', 'coordenador']);
+
+                                             // Permite editar se status for editando
                                             $podeEditar = $projeto->status === 'editando';
+
+                                            // Só permite voltar se entregue e ambos pendentes
                                             $podeVoltar = $projeto->status === 'entregue' 
-                                                && $projeto->aprovado_napex !== 'sim' 
-                                                && $projeto->aprovado_coordenador !== 'sim';
+                                                && $projeto->aprovado_napex === 'pendente' 
+                                                && $projeto->aprovado_coordenador === 'pendente';
+
+                                            // Permite análise se entregue
+                                            $podeAprovar = $projeto->status === 'entregue';
+
+                                            // Marca se já está aprovado
+                                            $isAprovado = $projeto->status === 'aprovado';
                                         @endphp
 
-                                        @if ($isAluno || $isProfessor)
+                                        <!-- {{-- Sempre exibe Visualizar --}} -->
+                                         @if($isAluno || $isProfessor)
                                             <a href="{{ route('projetos.show', $projeto->id) }}" class="text-blue-600 hover:underline">Visualizar</a>
                                         @endif
+                                        <!-- {{-- Só mostra ações extras se não estiver aprovado --}} -->
+                                        @if (!$isAprovado)
+                                            @if ($isAluno && $podeEditar)
 
-                                        @if ($isAluno && $podeEditar)
-                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
+                                                <!-- {{-- Editar para aluno --}} -->
+                                                <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
 
-                                            <!-- Botão que abre o modal -->
-                                            <button @click="openModal = true" class="text-red-600 hover:underline">Apagar</button>
+                                                <!-- {{-- Botão Apagar com modal --}} -->
+                                                <button @click="openModal = true" class="text-red-600 hover:underline">Apagar</button>
 
-                                            <!-- Modal -->
-                                            <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                                                <div class="bg-white rounded-lg p-6 shadow-lg w-80">
-                                                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirmação</h2>
-                                                    <p class="mb-6 text-gray-600">Tem certeza que deseja apagar este projeto?</p>
-                                                    <div class="flex justify-end space-x-2">
-                                                        <button @click="openModal = false"
-                                                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-4 rounded">
-                                                            Cancelar
-                                                        </button>
-                                                        <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">
-                                                                Apagar
+                                                <!-- {{-- Modal de confirmação --}} -->
+                                                <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                                    <div class="bg-white rounded-lg p-6 shadow-lg w-80">
+                                                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirmação</h2>
+                                                        <p class="mb-6 text-gray-600">Tem certeza que deseja apagar este projeto?</p>
+                                                        <div class="flex justify-end space-x-2">
+                                                            <button @click="openModal = false"
+                                                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-4 rounded">
+                                                                Cancelar
                                                             </button>
-                                                        </form>
+                                                            <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">
+                                                                    Apagar
+                                                                </button>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                        @elseif ($isProfessor && $podeEditar)
-                                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
-                                        @elseif (($isAluno || $isProfessor) && $podeVoltar)
-                                            <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" style="display:inline">
-                                                @csrf
-                                                <button type="submit" class="text-yellow-600 hover:underline">Voltar para Edição</button>
-                                            </form>
-                                        @elseif ($isNapexOrCoord && $projeto->status === 'entregue')
-                                            <a href="{{ route('projetos.show', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Analise/Parecer</a>
+                                            @elseif ($isProfessor && $podeEditar)
+                                                <!-- {{-- Editar para professor --}} -->
+                                                <a href="{{ route('projetos.edit', $projeto->id) }}" class="text-blue-600 hover:underline">Editar</a>
+
+                                            @elseif (($isAluno || $isProfessor) && $podeVoltar)
+                                                <!-- {{-- Botão voltar para edição --}} -->
+                                                <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" style="display:inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-yellow-600 hover:underline">Voltar para Edição</button>
+                                                </form>
+
+                                            @elseif ($isNapexOrCoord && $podeAprovar)
+                                                <!-- {{-- Link de análise para Napex/Coordenação --}} -->
+                                                <a href="{{ route('projetos.show', $projeto->id) }}" class="text-green-700 hover:underline font-semibold">Análise/Parecer</a>
+                                            @endif
                                         @endif
+
                                     </td>
-
-
-
-
-
 
                                 </tr>
                             @endforeach
