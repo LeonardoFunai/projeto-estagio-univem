@@ -24,11 +24,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/projetos', [ProjetoController::class, 'index'])->name('projetos.index');
     Route::get('/projetos/create', [ProjetoController::class, 'create'])->name('projetos.create');
     Route::post('/projetos', [ProjetoController::class, 'store'])->name('projetos.store');
+    
+    // 📄 Exportar relatório em PDF (visível só para NAPEx e Coordenação)
+    Route::get('/projetos/pdf', [ProjetoController::class, 'exportarPdf'])->name('projetos.exportarPdf');
+    
     Route::get('/projetos/{id}', [ProjetoController::class, 'show'])->name('projetos.show');
     Route::delete('/projetos/{id}', [ProjetoController::class, 'destroy'])->name('projetos.destroy');
     Route::get('/projetos/{id}/edit', [ProjetoController::class, 'edit'])->name('projetos.edit');
     Route::put('/projetos/{id}', [ProjetoController::class, 'update'])->name('projetos.update');
     Route::get('/projetos/{id}/arquivo', [ProjetoController::class, 'downloadArquivo'])->name('projetos.download');
+    
+
+
 
     // 📤 Fluxo de envio, edição e parecer
     Route::post('/projetos/{id}/enviar', [ProjetoController::class, 'enviarProjeto'])->name('projetos.enviar');

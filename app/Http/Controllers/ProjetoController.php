@@ -13,6 +13,8 @@ use App\Http\Requests\UpdateProjetoRequest;
 use App\Models\Rejeicao;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 class ProjetoController extends Controller
 {
     public function downloadArquivo($id)
@@ -42,9 +44,10 @@ class ProjetoController extends Controller
             });
         }
     
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            $query->where('status', 'entregue');
+        if (in_array($user->role, ['napex', 'coordenador']) && !request()->filled('status')) {
+            $query->whereIn('status', ['entregue', 'aprovado']);
         }
+
     
         if (request('cadastrado_por')) {
             $query->whereHas('user', function ($q) {
@@ -467,6 +470,70 @@ class ProjetoController extends Controller
             'data_rejeicao' => now(),
             'autor' => $autor,
         ]);
+    }
+    
+    //Exportar PDF
+    public function exportarPdf(Request $request)
+    {
+        if (!in_array(auth()->user()->role, ['napex', 'coordenador'])) {
+            abort(403);
+        }
+
+        $query = Projeto::query()->with('user');
+
+        // Somente status 'entregue' ou 'aprovado'
+        $query->whereIn('status', ['entregue', 'aprovado']);
+
+        // 🔍 Filtros
+        if ($request->filled('titulo')) {
+            $query->where('titulo', 'like', '%' . $request->titulo . '%');
+        }
+
+        if ($request->filled('cadastrado_por')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
+            });
+        }
+
+        if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
+            $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
+        }
+
+        if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
+            $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
+        }
+
+        if ($request->filled('carga_min')) {
+            $query->where('carga_horaria', '>=', $request->carga_min);
+        }
+
+        if ($request->filled('carga_max')) {
+            $query->where('carga_horaria', '<=', $request->carga_max);
+        }
+
+        if ($request->filled('status') && $request->status !== '--') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('aprovado_napex') && $request->aprovado_napex !== '--') {
+            $query->where('aprovado_napex', $request->aprovado_napex);
+        }
+
+        if ($request->filled('aprovado_coordenador') && $request->aprovado_coordenador !== '--') {
+            $query->where('aprovado_coordenador', $request->aprovado_coordenador);
+        }
+
+        $projetos = $query->get();
+        $filtros = $request->all();
+        $usuario = auth()->user()->name;
+
+        $pdf = Pdf::loadView('pdf.projetos', [
+            'projetos' => $projetos,
+            'filtros' => $filtros,
+            'usuario' => $usuario
+        ]);
+
+        return $pdf->download('relatorio_projetos.pdf');
     }
     
 }

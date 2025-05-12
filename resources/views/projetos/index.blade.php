@@ -9,6 +9,13 @@
         Lista de Proposta de Atividade Extensionista Curricularização da Extensão
     </h1>
 
+    <!-- Botão de Exportar PDF -->
+    @if (in_array(auth()->user()->role, ['napex', 'coordenador']))
+        <a href="{{ route('projetos.exportarPdf', request()->query()) }}" class="btn btn-danger mb-3">
+            📄 Gerar Relatório em PDF
+        </a>
+    @endif
+
     <div class="py-12">
         <div class="w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
@@ -120,6 +127,7 @@
                     <table class="min-w-full w-full max-w-7xl bg-white border border-gray-300 rounded-lg">
                         <thead>
                             <tr class="bg-[#251C57] text-white">
+                                <th class="py-3 px-6 text-left">#</th>
                                 <th class="py-3 px-6 text-left">Cadastrado por</th>
                                 <th class="py-3 px-6 text-left">Título</th>
                                 <th class="py-3 px-6 text-left">Data de Início</th>
@@ -132,8 +140,10 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            @foreach ($projetos as $projeto)
+                            @foreach ($projetos as $index => $projeto)
+
                                 <tr class="hover:bg-gray-100">
+                                    <td class="py-2 px-6">{{ $index + 1 }}</td>
 
                                     <!-- Nome do perfil de cadastro -->
                                     <td class="py-2 px-6">{{ $projeto->user->name ?? 'Desconhecido' }}</td>

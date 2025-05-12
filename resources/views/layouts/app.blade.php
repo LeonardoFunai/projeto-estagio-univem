@@ -64,7 +64,8 @@
         @endif
 
         <a href="{{ route('profile.edit') }}" class="btn custom-btn me-2">
-            {{ Auth::user()->name }}
+            {{ auth()->user()->name }}
+
         </a>  |
 
         <form method="POST" action="{{ route('logout') }}" class="d-inline">

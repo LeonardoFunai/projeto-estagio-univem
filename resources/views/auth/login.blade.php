@@ -59,12 +59,13 @@
                 </a>
             </div>
 
-            @if (Route::has('password.request'))
+            @if (route('password.request', [], false))
                 <a class="underline text-sm text-white hover:text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
-                    href="{{ route('password.request') }}">
+                href="{{ route('password.request') }}">
                     Esqueceu sua senha?
                 </a>
             @endif
+
         </div>
     </form>
 
