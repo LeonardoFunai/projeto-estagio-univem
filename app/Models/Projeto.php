@@ -36,7 +36,6 @@
             'motivo_coordenador',
             'data_parecer_coordenador',
             'status',
-            'arquivo',
             'user_id',
             'napex_aprovado',        
             'coordenacao_aprovado',

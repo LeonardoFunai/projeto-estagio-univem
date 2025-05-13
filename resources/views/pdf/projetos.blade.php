@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Str; @endphp
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -122,11 +123,11 @@
                 <p>Status: {{ ucfirst($filtros['status']) }}</p>
             @endif
 
-            @if (!empty($filtros['aprovado_napex']) && $filtros['aprovado_napex'] !== '--')
+            @if (!empty($filtros['aprovado_napex']) && $filtros['aprovado_napex'] !== 'pendente')
                 <p>Aprovação NAPEx: {{ ucfirst($filtros['aprovado_napex']) }}</p>
             @endif
 
-            @if (!empty($filtros['aprovado_coordenador']) && $filtros['aprovado_coordenador'] !== '--')
+            @if (!empty($filtros['aprovado_coordenador']) && $filtros['aprovado_coordenador'] !== 'pendente')
                 <p>Aprovação Coordenador: {{ ucfirst($filtros['aprovado_coordenador']) }}</p>
             @endif
         </div>
@@ -157,12 +158,12 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $projeto->user->name ?? '-' }}</td>
-                    <td>{{ $projeto->titulo }}</td>
+                    <td>{{ Str::limit($projeto->titulo, 50, '...') }}</td>
                     <td>{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
-                    <td>{{ $projeto->carga_horaria }} h</td>
-                    <td>{{ ucfirst($projeto->aprovado_napex ?? '-') }}</td>
-                    <td>{{ ucfirst($projeto->aprovado_coordenador ?? '-') }}</td>
+                    <td>{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}hh</td>
+                    <td>{{ ucfirst($projeto->aprovado_napex ?? 'pendente') }}</td>
+                    <td>{{ ucfirst($projeto->aprovado_coordenador ?? 'pendente') }}</td>
                     <td>{{ ucfirst($projeto->status) }}</td>
                 </tr>
             @endforeach

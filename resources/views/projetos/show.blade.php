@@ -66,7 +66,10 @@
                         <tbody>
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Título</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->titulo }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                    {{ $projeto->titulo }}
+                                </td>
+
                             </tr>
 
                             <tr>
@@ -121,22 +124,36 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Introdução</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->introducao }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                    {{ $projeto->introducao }}
+                                </td>
+
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Objetivos do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->objetivo_geral }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300">
+                                    <div style="white-space: pre-line;">{{ $projeto->objetivo_geral }}</div>
+                                </td>
+
+
+
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Justificativa do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->justificativa }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                    {{ $projeto->justificativa }}
+                                </td>
+
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Metodologia</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->metodologia }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                    {{ $projeto->metodologia }}
+                                </td>
+
                             </tr>
 
                             <tr>
@@ -187,7 +204,10 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Resultados Esperados</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->resultados_esperados }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                    {{ $projeto->resultados_esperados }}
+                                </td>
+
                             </tr>
 
                             <tr>
@@ -202,6 +222,20 @@
                                     @endif
                                 </td>
                             </tr>
+
+                            <tr>
+                                <th class="bg-[#251C57] text-white p-4 text-left">Criado em</th>
+                                <td class="bg-white p-4 border-b border-gray-300">
+                                    {{ $projeto->created_at->format('d/m/Y H:i:s') }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-[#251C57] text-white p-4 text-left">Última edição</th>
+                                <td class="bg-white p-4 border-b border-gray-300">
+                                    {{ $projeto->updated_at->format('d/m/Y H:i:s') }}
+                                </td>
+                            </tr>
+
                         </tbody>
                     </table>
                 </div>

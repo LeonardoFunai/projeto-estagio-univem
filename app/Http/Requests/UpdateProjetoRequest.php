@@ -128,29 +128,33 @@ class UpdateProjetoRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Evita duplicidade de professores
             if ($this->has('professores')) {
                 $professoresIds = collect($this->input('professores'))->pluck('id');
                 if ($professoresIds->duplicates()->isNotEmpty()) {
                     $validator->errors()->add('professores', 'Você tentou adicionar o mesmo professor mais de uma vez.');
                 }
             }
-    
-            // Checar ano nas datas de NAPEx
+
+            // Valida ano e formato das datas
             $datas = [
                 'data_recebimento_napex' => $this->input('data_recebimento_napex'),
                 'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
+                'data_inicio' => $this->input('data_inicio'),
+                'data_fim' => $this->input('data_fim'),
+                'data_parecer_coordenador' => $this->input('data_parecer_coordenador'),
             ];
-    
+
             foreach ($datas as $campo => $valor) {
                 if ($valor && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $matches)) {
                     $ano = (int)$matches[1];
                     $mes = (int)$matches[2];
                     $dia = (int)$matches[3];
-    
+
                     if ($ano < 1000 || $ano > 9999) {
                         $validator->errors()->add($campo, 'O ano deve estar entre 1000 e 9999.');
                     }
-    
+
                     if (!checkdate($mes, $dia, $ano)) {
                         $validator->errors()->add($campo, 'A data informada não é válida.');
                     }
@@ -160,6 +164,7 @@ class UpdateProjetoRequest extends FormRequest
             }
         });
     }
+
     
 
 }

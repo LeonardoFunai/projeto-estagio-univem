@@ -1,5 +1,6 @@
+@php use Illuminate\Support\Str; @endphp
 <x-app-layout>
-    <x-slot name="header">
+<x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Propostas de Projeto Extensionista - Curricularização da Extensão') }}
         </h2>
@@ -140,16 +141,23 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
+                            
                             @foreach ($projetos as $index => $projeto)
 
                                 <tr class="hover:bg-gray-100">
                                     <td class="py-2 px-6">{{ $index + 1 }}</td>
 
                                     <!-- Nome do perfil de cadastro -->
-                                    <td class="py-2 px-6">{{ $projeto->user->name ?? 'Desconhecido' }}</td>
+                                    <td class="py-2 px-6" style="max-width: 200px; word-wrap: break-word;">
+                                        {{ Str::limit($projeto->user->name ?? 'Desconhecido', 50, '...') }}
+                                    </td>
+
 
                                     <!-- Título -->
-                                    <td class="py-2 px-6">{{ $projeto->titulo }}</td>
+                                    <td class="py-2 px-6" style="max-width: 250px; word-wrap: break-word; white-space: normal;">
+                                        {{ $projeto->titulo }}
+                                    </td>
+
 
                                     <!-- Dat Início -->
                                     <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
@@ -162,12 +170,12 @@
 
                                     <!-- Aprovação Napex -->
                                     <td class="py-2 px-6">
-                                        {{ $projeto->aprovado_napex === 'sim' ? 'Sim' : ($projeto->aprovado_napex === 'nao' ? 'Não' : '--') }}
+                                        {{ $projeto->aprovado_napex === 'sim' ? 'Sim' : ($projeto->aprovado_napex === 'nao' ? 'Não' : 'pendente') }}
                                     </td>
 
                                     <!-- Aprovação Coord -->
                                     <td class="py-2 px-6">
-                                        {{ $projeto->aprovado_coordenador === 'sim' ? 'Sim' : ($projeto->aprovado_coordenador === 'nao' ? 'Não' : '--') }}
+                                        {{ $projeto->aprovado_coordenador === 'sim' ? 'Sim' : ($projeto->aprovado_coordenador === 'nao' ? 'Não' : 'pendente') }}
                                     </td>
 
                                     <!-- status -->

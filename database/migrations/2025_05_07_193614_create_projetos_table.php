@@ -28,7 +28,6 @@ return new class extends Migration {
             $table->text('motivo_coordenador')->nullable();
             $table->date('data_parecer_coordenador')->nullable();
             $table->string('status')->default('editando');
-            $table->string('arquivo')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('professor_id')->nullable()->constrained('professores')->onDelete('set null');
             $table->timestamps();

@@ -124,18 +124,23 @@ class StoreProjetoRequest extends FormRequest
             $datas = [
                 'data_recebimento_napex' => $this->input('data_recebimento_napex'),
                 'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
+                'data_inicio' => $this->input('data_inicio'),
+                'data_fim' => $this->input('data_fim'),
             ];
-    
+
             foreach ($datas as $campo => $valor) {
                 if ($valor && preg_match('/^(\d{4})-\d{2}-\d{2}$/', $valor, $matches)) {
                     $ano = (int)$matches[1];
-                    if ($ano > 9999) {
-                        $validator->errors()->add($campo, 'O ano na data não pode ser maior que 9999.');
+                    if ($ano > 9999 || $ano < 1000) {
+                        $validator->errors()->add($campo, 'O ano da data deve estar entre 1000 e 9999.');
                     }
+                } elseif ($valor && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor)) {
+                    $validator->errors()->add($campo, 'A data deve estar no formato AAAA-MM-DD.');
                 }
             }
         });
     }
+
     
 
     
