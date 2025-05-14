@@ -195,9 +195,9 @@
                                             $podeEditar = $projeto->status === 'editando';
 
                                             // Só permite voltar se entregue e ambos pendentes
-                                            $podeVoltar = $projeto->status === 'entregue' 
-                                                && $projeto->aprovado_napex === 'pendente' 
-                                                && $projeto->aprovado_coordenador === 'pendente';
+                                            $podeVoltar = $projeto->status === 'entregue'
+                                                && Str::lower(trim($projeto->aprovado_napex ?? 'pendente')) === 'pendente'
+                                                && Str::lower(trim($projeto->aprovado_coordenador ?? 'pendente')) === 'pendente';
 
                                             // Permite análise se entregue
                                             $podeAprovar = $projeto->status === 'entregue';
