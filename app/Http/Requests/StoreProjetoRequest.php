@@ -14,36 +14,35 @@ class StoreProjetoRequest extends FormRequest
     public function rules()
     {
         return [
-            //
             'data_recebimento_napex' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
             'data_encaminhamento_parecer' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
 
             // Dados do Projeto
             'titulo' => 'required|string|max:255',
-            'periodo' => 'required|string|max:255',
+            'periodo' => 'required|string|max:50',
             'data_inicio' => 'required|date',
             'data_fim' => 'required|date|after_or_equal:data_inicio',
-    
+
             // Professores
             'professores' => 'required|array|min:1|max:9',
             'professores.*.id' => 'required|integer|exists:users,id',
-            'professores.*.area' => 'nullable|string|max:255',
-    
+            'professores.*.area' => 'nullable|string|max:100',
+
             // Alunos
             'alunos' => 'required|array|min:1|max:9',
-            'alunos.*.nome' => 'required|string|max:255',
+            'alunos.*.nome' => 'required|string|max:100',
             'alunos.*.ra' => 'required|string|max:50',
-            'alunos.*.curso' => 'required|string|max:255',
-    
-            // Publico Alvo e Descrição do Projeto
-            'publico_alvo' => 'nullable|string',
-            'introducao' => 'nullable|string',
-            'objetivo_geral' => 'nullable|string',
-            'justificativa' => 'nullable|string',
-            'metodologia' => 'nullable|string',
+            'alunos.*.curso' => 'required|string|max:100',
+
+            // Descrição do Projeto com limites definidos
+            'publico_alvo' => 'nullable|string|max:100',
+            'introducao' => 'nullable|string|max:1000',
+            'objetivo_geral' => 'nullable|string|max:1000',
+            'justificativa' => 'nullable|string|max:1000',
+            'metodologia' => 'nullable|string|max:500',
             'recursos' => 'nullable|string',
-            'resultados_esperados' => 'nullable|string',
-    
+            'resultados_esperados' => 'nullable|string|max:1000',
+
             // Pareceres NAPEx e Coordenador
             'numero_projeto' => 'nullable|string|max:255',
             'data_recebimento_napex' => 'nullable|date',
@@ -53,22 +52,23 @@ class StoreProjetoRequest extends FormRequest
             'aprovado_coordenador' => 'nullable|string|in:sim,nao',
             'motivo_coordenador' => 'nullable|string',
             'data_parecer_coordenador' => 'nullable|date',
-    
+
             // Arquivo
             'arquivo' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',
-    
-            // Atividades
+
+            // Atividades (texto e carga horária)
             'atividades' => 'nullable|array|min:1|max:10',
-            'atividades.*.o_que_fazer' => 'required|string|max:255',
-            'atividades.*.como_fazer' => 'required|string|max:255',
-            'atividades.*.carga_horaria' => 'required|integer|min:1',
-    
+            'atividades.*.o_que_fazer' => 'required|string|max:1000',
+            'atividades.*.como_fazer' => 'required|string|max:1000',
+            'atividades.*.carga_horaria' => 'required|integer|min:1|max:99999',
+
             // Cronograma
             'cronograma' => 'nullable|array|min:1|max:10',
-            'cronograma.*.atividade' => 'required|string|max:255',
+            'cronograma.*.atividade' => 'required|string|max:100',
             'cronograma.*.mes' => 'required|string|max:20',
         ];
     }
+
     
 
     public function messages()

@@ -66,20 +66,21 @@
                         <tbody>
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Título</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->titulo }}
                                 </td>
-
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Período</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->periodo }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                    {{ $projeto->periodo }}
+                                </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Professor(es) envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     @if ($projeto->professores && $projeto->professores->count())
                                         <ul class="list-disc pl-5">
                                             @foreach ($projeto->professores as $prof)
@@ -97,7 +98,7 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Alunos envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     @if ($projeto->alunos && $projeto->alunos->count())
                                         <ul class="list-disc pl-5">
                                             @foreach ($projeto->alunos as $aluno)
@@ -112,60 +113,55 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Público Alvo da Atividade</th>
-                                <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->publico_alvo }}</td>
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                    {{ $projeto->publico_alvo }}
+                                </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Período da realização do projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }} a {{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Introdução</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->introducao }}
                                 </td>
-
-                            </tr>
-
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Objetivos do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
-                                    <div style="white-space: pre-line;">{{ $projeto->objetivo_geral }}</div>
-                                </td>
-
-
-
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Justificativa do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->justificativa }}
                                 </td>
-
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Metodologia</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->metodologia }}
                                 </td>
-
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Atividades a serem desenvolvidas</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     @if ($projeto->atividades && $projeto->atividades->count())
                                         <ul class="list-disc pl-5">
                                             @foreach ($projeto->atividades as $atividade)
-                                                <li class="mb-2">
-                                                    <p><strong>O que fazer:</strong> {{ $atividade->o_que_fazer }}</p>
-                                                    <p><strong>Como fazer:</strong> {{ $atividade->como_fazer }}</p>
-                                                    <p><strong>Carga Horária:</strong> {{ $atividade->carga_horaria }} horas</p>
+                                                <li class="list-decimal">
+                                                    <p style="max-width: 100%; word-wrap: break-word; white-space: pre-line;">
+                                                        <strong>O que fazer:</strong> {{ $atividade->o_que_fazer }}
+                                                    </p>
+                                                    <p style="max-width: 100%; word-wrap: break-word; white-space: pre-line;">
+                                                        <strong>Como fazer:</strong> {{ $atividade->como_fazer }}
+                                                    </p>
+                                                    <p style="max-width: 100%; word-wrap: break-word;">
+                                                        <strong>Carga Horária:</strong> {{ $atividade->carga_horaria }} horas
+                                                    </p>
                                                 </li>
                                             @endforeach
                                         </ul>
@@ -174,6 +170,7 @@
                                     @endif
                                 </td>
                             </tr>
+
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Cronograma</th>
@@ -204,24 +201,12 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Resultados Esperados</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->resultados_esperados }}
                                 </td>
-
                             </tr>
 
-                            <tr>
-                                <th class="bg-[#251C57] text-white p-4 text-left">Arquivo</th>
-                                <td class="bg-white p-4">
-                                    @if ($projeto->arquivo)
-                                        <a href="{{ route('projetos.download', $projeto->id) }}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                                            📄 Ver/Download do Arquivo
-                                        </a>
-                                    @else
-                                        Nenhum arquivo enviado.
-                                    @endif
-                                </td>
-                            </tr>
+                            
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Criado em</th>

@@ -158,7 +158,10 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $projeto->user->name ?? '-' }}</td>
-                    <td>{{ Str::limit($projeto->titulo, 50, '...') }}</td>
+                    <td style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                        {{ $projeto->titulo }}
+                    </td>
+
                     <td>{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
                     <td>{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}hh</td>

@@ -35,9 +35,22 @@ class ProjetoController extends Controller
             });
         }
     
-        if (in_array($user->role, ['napex', 'coordenador']) && !request()->filled('status')) {
-            $query->whereIn('status', ['entregue', 'aprovado']);
+        if (in_array($user->role, ['napex', 'coordenador'])) {
+            // Se o status foi enviado manualmente via URL
+            if (request()->filled('status')) {
+                // Só aceita 'entregue' ou 'aprovado', senão ignora
+                if (in_array(request('status'), ['entregue', 'aprovado'])) {
+                    $query->where('status', request('status'));
+                } else {
+                    // Ignora status inválido para napex/coord
+                    $query->whereIn('status', ['entregue', 'aprovado']);
+                }
+            } else {
+                // Sem status enviado: mostra só os permitidos
+                $query->whereIn('status', ['entregue', 'aprovado']);
+            }
         }
+
 
     
         if (request('cadastrado_por')) {
@@ -106,13 +119,21 @@ class ProjetoController extends Controller
 
     public function create()
     {
+        if (auth()->user()->role !== 'aluno') {
+            abort(403, 'Apenas alunos podem criar projetos.');
+        }
+
         $professores = User::where('role', 'professor')->get();
         return view('projetos.create', compact('professores'));
     }
+
     
 
     public function store(StoreProjetoRequest $request)
     {
+        if (auth()->user()->role !== 'aluno') {
+            abort(403, 'Apenas alunos podem cadastrar projetos.');
+        }
         $data = $request->validated();
         $data['status'] = 'editando';
 
@@ -311,6 +332,10 @@ class ProjetoController extends Controller
 
     public function avaliarNapex(Request $request, $id)
     {
+        if (auth()->user()->role !== 'napex') {
+            abort(403, 'Apenas NAPEx pode avaliar nesta etapa.');
+        }
+
     
         $projeto = Projeto::findOrFail($id);
 
@@ -355,6 +380,10 @@ class ProjetoController extends Controller
     
     public function avaliarCoordenador(Request $request, $id)
     {
+        if (auth()->user()->role !== 'coordenador') {
+            abort(403, 'Apenas Coordenador pode avaliar nesta etapa.');
+        }
+
         $projeto = Projeto::findOrFail($id);
 
         if ($request->input('aprovado_coordenador') === 'nao') {
@@ -414,16 +443,16 @@ class ProjetoController extends Controller
     {
         $projeto = Projeto::findOrFail($id);
         $user = auth()->user();
-    
-        // Bloqueia se não for aluno
+
         if ($user->role !== 'aluno') {
-            return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para excluir este projeto.');
+            abort(403, 'Apenas alunos podem excluir projetos.');
         }
-    
+
         $projeto->delete();
-    
+
         return redirect()->route('projetos.index')->with('success', 'Projeto excluído com sucesso!');
     }
+
     
 
     public function enviarProjeto($id)

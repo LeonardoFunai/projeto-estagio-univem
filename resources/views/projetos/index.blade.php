@@ -89,15 +89,23 @@
                             <input type="number" name="carga_max" value="{{ request('carga_max') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
+                        @php
+                            $role = auth()->user()->role;
+                        @endphp
+
                         <!-- Status -->
                         <div>
                             <label class="block mb-1">Status:</label>
                             <select name="status" class="w-auto border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
-                                <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
+                                @if ($role === 'aluno' || $role === 'professor')
+                                    <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
+                                @endif
                                 <option value="entregue" {{ request('status') === 'entregue' ? 'selected' : '' }}>Entregue</option>
+                                <option value="aprovado" {{ request('status') === 'aprovado' ? 'selected' : '' }}>Aprovado</option>
                             </select>
                         </div>
+
 
                         <!-- Aprovações -->
                         <div>
