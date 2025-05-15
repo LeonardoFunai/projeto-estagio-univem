@@ -6,7 +6,9 @@
     </x-slot>
 
     <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
-        <h1 class="text-2xl font-bold text-center text-blue-800 mb-8">Cadastro de Projeto de Extensão</h1>
+        <x-slot name="pageTitle">
+            Cadastrar Projeto de Extensão
+        </x-slot>
 
         @if(session('error'))
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

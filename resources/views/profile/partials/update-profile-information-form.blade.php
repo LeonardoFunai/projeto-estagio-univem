@@ -1,4 +1,7 @@
 <section>
+    <x-slot name="pageTitle">
+        Perfil
+    </x-slot>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
             {{ __('Informações do Perfil') }}

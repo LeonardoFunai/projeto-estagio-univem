@@ -100,7 +100,15 @@ class ProjetoController extends Controller
         } elseif (request('data_fim_ate')) {
             $query->whereDate('data_fim', '<=', request('data_fim_ate'));
         }
-    
+        
+        //Ordenação
+        $ordenar = request('ordenar');
+        if ($ordenar == 'data_asc') {
+            $query->orderBy('created_at', 'asc');
+        } elseif ($ordenar == 'data_desc') {
+            $query->orderBy('created_at', 'desc');
+        }
+
         $projetos = $query->get();
     
         $projetos = $projetos->filter(function ($projeto) {

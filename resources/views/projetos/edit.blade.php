@@ -9,7 +9,9 @@
     </x-slot>
 
     <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
-        <h1 class="text-2xl font-bold text-center text-blue-800 mb-8">Editar Projeto de Extensão</h1>
+        <x-slot name="pageTitle">
+            Editar Projeto de Extensão
+        </x-slot>
         <!-- Definição de variáveis de permissão conforme papel do usuário -->
         @php
             $userRole = auth()->user()->role;
@@ -17,20 +19,7 @@
             $disableNapexFields = in_array($userRole, ['coordenador', 'aluno']);
             $disableCoordenadorFields = !($userRole === 'coordenador');
         @endphp
-        <!-- Botões de enviar projeto ou voltar para edição (visíveis apenas para aluno) -->
-        @if ($userRole === 'aluno')
-            @if ($projeto->status === 'editando')
-                <form method="POST" action="{{ route('projetos.enviar', $projeto->id) }}" class="mb-4">
-                    @csrf
-                    <button type="submit" class="btn btn-primary">Enviar Projeto</button>
-                </form>
-            @elseif ($projeto->status === 'entregue' && !$projeto->napex_aprovado && !$projeto->coordenacao_aprovado)
-                <form method="POST" action="{{ route('projetos.voltar', $projeto->id) }}" class="mb-4">
-                    @csrf
-                    <button type="submit" class="btn btn-warning">Voltar para Edição</button>
-                </form>
-            @endif
-        @endif
+
         <!-- Mensagem de erro, se houver -->
         @if(session('error'))
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -274,14 +263,38 @@
 
 
             <div class="flex justify-center gap-4 mb-8">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">
-                    Atualizar Projeto
-                </button>
-                <a href="{{ route('projetos.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">
+                
+                <!-- Botão Voltar -->
+                <a href="{{ route('projetos.index') }}" class="bg-gray-600 flex hover:bg-gray-700 text-white font-bold gap-2 py-2 px-6 rounded">
+                    <img src="{{ asset('img/site/btn-voltar.png') }}" alt="Enviar projeto" width="20" height="20">
                     Voltar
                 </a>
+                
+                <!-- Atualizar Projeto -->
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white gap-2  flex font-bold py-2 px-6 rounded">
+                    <img src="{{ asset('img/site/btn-atualizar.png') }}" alt="Enviar projeto" width="20" height="20">
+                     Atualizar Projeto
+                </button>
             </div>
         </form>
+                <!-- Botões de enviar projeto -->
+                @if ($userRole === 'aluno')
+                    @if ($projeto->status === 'editando')
+                    <form method="POST" action="{{ route('projetos.enviar', $projeto->id) }}" class="mb-4">
+                        @csrf
+                        <div class="flex justify-center gap-4 mb-8">
+                            <form method="POST" action="{{ route('projetos.enviar', $projeto->id) }}">
+                                @csrf
+                                <button type="submit"
+                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded flex items-center gap-2">
+                                    <img src="{{ asset('img/site/btn-enviar.png') }}" alt="Enviar projeto" width="20" height="20">
+                                    Enviar Projeto
+                                </button>
+                            </form>
+                        </div>
+                    </form>
+                    @endif
+                @endif
     </div>
 
     <script>

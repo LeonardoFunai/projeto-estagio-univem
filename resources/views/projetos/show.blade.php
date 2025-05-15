@@ -24,8 +24,10 @@
 
 
                 <!-- Título + Status -->
-                <h1 class="text-2xl font-bold text-[#251C57] text-center mb-2">Detalhes do Projeto</h1>
-                <p class="text-center text-gray-600 font-medium mb-8">Status: {{ ucfirst($projeto->status) }}</p>
+                <x-slot name="pageTitle">
+                    Detalhes do Projeto de Extensão
+                </x-slot>
+                <p class="text-center text-gray-600 font-medium ">Status: {{ ucfirst($projeto->status) }}</p>
                 
                 <!-- Botão de Editar -->
                 @php
@@ -39,18 +41,24 @@
                 @endphp
 
                 @if ($isAluno || $isProfessor)
-                    <div class="mb-4 flex flex-wrap gap-2">
+                    <div class="mb-4 flex  flex-wrap gap-3">
                         @if ($podeEditar)
-                            <a href="{{ route('projetos.edit', $projeto->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                ✏️ Editar Proposta
+                            <a href="{{ route('projetos.edit', $projeto->id) }}"
+                            class="bg-yellow-600  hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded w-48 flex items-center gap-2">
+                                <img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20" height="20">
+                                Editar Proposta
                             </a>
+
                         @elseif ($podeVoltar)
                             <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
-                                    ⬅️ Voltar para Edição
+                                <button type="submit"
+                                    class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                                    <img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar para edição" width="20" height="20">
+                                    Voltar para Edição
                                 </button>
                             </form>
+
                         @endif
                     </div>
                 @endif
