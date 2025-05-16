@@ -49,7 +49,7 @@
                                     class="form-select form-select-sm h-[36px] text-sm" onchange="this.form.submit()">
                                     <option value="">Selecione</option>
                                     <option value="data_asc" {{ request('ordenar') == 'data_asc' ? 'selected' : '' }}>📅 Data de criação ↑</option>
-                                    <option value="data_desc" {{ request('ordenar') == 'data_desc' ? 'selected' : '' }}>📅 Data de criação ↓</option>
+                                    <option value="data_desc" {{ request('ordenar') == 'data_desc' ? 'selected' : '' }}>📅 Data de criação ↓(Mais Novos)</option>
                                 </select>
                             </form>
                         </div>
@@ -112,12 +112,12 @@
 
                         <!-- Carga horária -->
                         <div>
-                            <label class="block mb-1">Carga Mínima:</label>
+                            <label class="block mb-1">Total Horas Mínima:</label>
                             <input type="number" name="carga_min" value="{{ request('carga_min') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
                         <div>
-                            <label class="block mb-1">Carga Máxima:</label>
+                            <label class="block mb-1">Total Horas Máxima:</label>
                             <input type="number" name="carga_max" value="{{ request('carga_max') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
@@ -187,7 +187,8 @@
                             @foreach ($projetos as $index => $projeto)
 
                                 <tr class="hover:bg-gray-100">
-                                    <td class="py-2 px-6">{{ $index + 1 }}</td>
+                                    <td class="py-2 px-6">{{ ($projetos->currentPage() - 1) * $projetos->perPage() + $index + 1 }}</td>
+
 
                                     <!-- Nome do perfil de cadastro -->
                                     <td class="py-2 px-6" style="max-width: 200px; word-wrap: break-word;">
@@ -221,7 +222,19 @@
                                     </td>
 
                                     <!-- status -->
-                                    <td class="py-2 px-6"  style="max-width: 30px;">{{ ucfirst($projeto->status) }}</td>  
+                                    @php
+                                        $status = $projeto->status;
+                                        $cor = match($status) {
+                                            'editando' => 'text-yellow-800 ',
+                                            'entregue' => 'text-blue-800 ',
+                                            'aprovado' => 'text-green-800',
+                                            default => 'text-gray-700'
+                                        };
+                                    @endphp
+                                    <td class="py-2 px-6 {{ $cor }}" style="max-width: 30px;">
+                                        {{ ucfirst($status) }}
+                                    </td>
+  
 
                                     <!-- Ações -->
                                     <td class="py-2 px-6" style="min-width: 100px;" style="max-width: 100px;"  x-data="{ openModal: false }">
@@ -261,9 +274,10 @@
                                                 @if ($isAluno && $podeEditar)
 
                                                     <!-- {{-- Editar para aluno --}} -->
-                                                    <a href="{{ route('projetos.edit', $projeto->id) }}" title="Editar" class="text-blue-600 hover:underline">
+                                                    <a href="{{ route('projetos.edit', ['id' => $projeto->id, 'origem' => 'index']) }}" title="Editar" class="text-blue-600 hover:underline">
                                                         <img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="26" height="26">
                                                     </a>
+
 
                                                     <!-- {{-- Botão Apagar com modal --}} -->
                                                     <button @click="openModal = true" class="text-red-600   hover:underline">
@@ -320,6 +334,10 @@
                             @endforeach
                         </tbody>
                     </table>
+                    <div class="mt-4">
+                        {{ $projetos->links() }}
+                    </div>
+
                 </div>
 
                 <!-- Comportamento do Filtro -->

@@ -73,6 +73,26 @@
         table, tr, td {
             border: none;
         }
+        <style>
+        @page {
+            margin-top: 120px;
+            margin-bottom: 60px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+        }
+
+        header {
+            position: running(header);
+        }
+
+        footer {
+            position: running(footer);
+        }
+</style>
+
 
     </style>
 </head>
@@ -104,34 +124,60 @@
         <p>Relatório gerado por: <strong>{{ $usuario }}</strong> em {{ now()->format('d/m/Y H:i') }}</p>
     </div>
     @if (!empty($filtros))
-        <div style="text-align: center; margin-top: 5px;">
-            <p><strong>Filtros aplicados:</strong></p>
+        <div style="width: 95%; margin: 10px auto; border-top: 1px solid #000;"></div>
 
-            @if (!empty($filtros['data_inicio_de']) && !empty($filtros['data_inicio_ate']))
-                <p>Data de Início: {{ $filtros['data_inicio_de'] }} até {{ $filtros['data_inicio_ate'] }}</p>
-            @endif
+        <div style="text-align: center; margin-top: 2px;">
+            <p style="font-weight: bold; font-size: 11px;">Filtros aplicados:</p>
 
-            @if (!empty($filtros['data_fim_de']) && !empty($filtros['data_fim_ate']))
-                <p>Data de Fim: {{ $filtros['data_fim_de'] }} até {{ $filtros['data_fim_ate'] }}</p>
-            @endif
+            <div style="text-align: left; margin: 0 auto; width: 95%;">
+                @php
+                    $campos = [];
 
-            @if (!empty($filtros['carga_min']) || !empty($filtros['carga_max']))
-                <p>Carga Horária: {{ $filtros['carga_min'] ?? '0' }}h até {{ $filtros['carga_max'] ?? '∞' }}h</p>
-            @endif
+                    if (!empty($filtros['cadastrado_por']))
+                        $campos[] = "<strong>Cadastrado por:</strong> {$filtros['cadastrado_por']}";
 
-            @if (!empty($filtros['status']) && $filtros['status'] !== '--')
-                <p>Status: {{ ucfirst($filtros['status']) }}</p>
-            @endif
+                    if (!empty($filtros['titulo']))
+                        $campos[] = "<strong>Título:</strong> {$filtros['titulo']}";
 
-            @if (!empty($filtros['aprovado_napex']) && $filtros['aprovado_napex'] !== 'pendente')
-                <p>Aprovação NAPEx: {{ ucfirst($filtros['aprovado_napex']) }}</p>
-            @endif
+                    if (!empty($filtros['data_inicio_de']) && !empty($filtros['data_inicio_ate']))
+                        $campos[] = "<strong>Data de Início:</strong> {$filtros['data_inicio_de']} até {$filtros['data_inicio_ate']}";
 
-            @if (!empty($filtros['aprovado_coordenador']) && $filtros['aprovado_coordenador'] !== 'pendente')
-                <p>Aprovação Coordenador: {{ ucfirst($filtros['aprovado_coordenador']) }}</p>
-            @endif
+                    if (!empty($filtros['data_fim_de']) && !empty($filtros['data_fim_ate']))
+                        $campos[] = "<strong>Data de Fim:</strong> {$filtros['data_fim_de']} até {$filtros['data_fim_ate']}";
+
+                    if (!empty($filtros['carga_min']) || !empty($filtros['carga_max'])) {
+                        $min = $filtros['carga_min'] ?? '0';
+                        $max = $filtros['carga_max'] ?? '∞';
+                        $campos[] = "<strong>Total de Horas:</strong> {$min}h até {$max}h";
+                    }
+
+                    if (!empty($filtros['status']) && $filtros['status'] !== '--')
+                        $campos[] = "<strong>Status:</strong> " . ucfirst($filtros['status']);
+
+                    if (!empty($filtros['aprovado_napex']) && $filtros['aprovado_napex'] !== '--')
+                        $campos[] = "<strong>Aprovação NAPEx:</strong> " . ucfirst($filtros['aprovado_napex']);
+
+                    if (!empty($filtros['aprovado_coordenador']) && $filtros['aprovado_coordenador'] !== '--')
+                        $campos[] = "<strong>Aprovação Coordenador:</strong> " . ucfirst($filtros['aprovado_coordenador']);
+                @endphp
+
+                @foreach(array_chunk($campos, 3) as $linha)
+                    <div style="width: 100%; margin-bottom: 4px;">
+                        @foreach($linha as $coluna)
+                            <div style="display: inline-block; width: 32%; font-size: 11px;">
+                                {!! $coluna !!}
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
+            </div>
         </div>
+
+        <div style="width: 95%; margin: 10px auto; border-bottom: 1px solid #000;"></div>
     @endif
+
+
+
 
     <div style="text-align: center; margin-top: 15px; font-size: 12px;">
         Total de propostas listadas: <strong>{{ count($projetos) }}</strong>

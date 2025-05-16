@@ -265,10 +265,12 @@
             <div class="flex justify-center gap-4 mb-8">
                 
                 <!-- Botão Voltar -->
-                <a href="{{ route('projetos.index') }}" class="bg-gray-600 flex hover:bg-gray-700 text-white font-bold gap-2 py-2 px-6 rounded">
-                    <img src="{{ asset('img/site/btn-voltar.png') }}" alt="Enviar projeto" width="20" height="20">
+                <a href="{{ request('origem') === 'show' ? route('projetos.show', $projeto->id) : route('projetos.index') }}"
+                class="bg-gray-600 flex hover:bg-gray-700 text-white font-bold gap-2 py-2 px-6 rounded">
+                    <img src="{{ asset('img/site/btn-voltar.png') }}" alt="Voltar" width="20" height="20">
                     Voltar
                 </a>
+
                 
                 <!-- Atualizar Projeto -->
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white gap-2  flex font-bold py-2 px-6 rounded">

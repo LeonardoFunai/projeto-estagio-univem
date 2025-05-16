@@ -101,22 +101,27 @@ class ProjetoController extends Controller
             $query->whereDate('data_fim', '<=', request('data_fim_ate'));
         }
         
-        //Ordenação
+        // Ordenação padrão: mais novos primeiro
         $ordenar = request('ordenar');
         if ($ordenar == 'data_asc') {
             $query->orderBy('created_at', 'asc');
-        } elseif ($ordenar == 'data_desc') {
+        } else {
+            // Padrão (inclusive se for 'data_desc' ou nulo): mais novos no topo
             $query->orderBy('created_at', 'desc');
         }
 
-        $projetos = $query->get();
-    
-        $projetos = $projetos->filter(function ($projeto) {
-            $carga = $projeto->atividades->sum('carga_horaria');
-            $min = request('carga_min');
-            $max = request('carga_max');
-            return (!$min || $carga >= $min) && (!$max || $carga <= $max);
+
+        //filtro das cargas
+        $query->whereHas('atividades', function ($q) {
+            $q->selectRaw('projeto_id, SUM(carga_horaria) as soma')
+            ->groupBy('projeto_id')
+            ->havingRaw('? IS NULL OR SUM(carga_horaria) >= ?', [request('carga_min'), request('carga_min')])
+            ->havingRaw('? IS NULL OR SUM(carga_horaria) <= ?', [request('carga_max'), request('carga_max')]);
         });
+        //com paginação
+        $projetos = $query->paginate(10)->appends(request()->query());
+
+
     
         return view('projetos.index', compact('projetos'));
     }
@@ -509,7 +514,7 @@ class ProjetoController extends Controller
             abort(403);
         }
 
-        $query = Projeto::query()->with('user');
+        $query = Projeto::query()->with(['user', 'atividades']);
 
         // Somente status 'entregue' ou 'aprovado'
         $query->whereIn('status', ['entregue', 'aprovado']);
@@ -533,12 +538,20 @@ class ProjetoController extends Controller
             $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
         }
 
-        if ($request->filled('carga_min')) {
-            $query->where('carga_horaria', '>=', $request->carga_min);
-        }
+        // ✅ Corrigido: filtro de carga horária pelas atividades
+        if ($request->filled('carga_min') || $request->filled('carga_max')) {
+            $query->whereHas('atividades', function ($q) use ($request) {
+                $q->selectRaw('projeto_id, SUM(carga_horaria) as soma')
+                ->groupBy('projeto_id');
 
-        if ($request->filled('carga_max')) {
-            $query->where('carga_horaria', '<=', $request->carga_max);
+                if ($request->filled('carga_min')) {
+                    $q->havingRaw('SUM(carga_horaria) >= ?', [$request->carga_min]);
+                }
+
+                if ($request->filled('carga_max')) {
+                    $q->havingRaw('SUM(carga_horaria) <= ?', [$request->carga_max]);
+                }
+            });
         }
 
         if ($request->filled('status') && $request->status !== '--') {
@@ -565,5 +578,6 @@ class ProjetoController extends Controller
 
         return $pdf->download('relatorio_projetos.pdf');
     }
+
     
 }

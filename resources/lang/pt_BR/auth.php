@@ -1,7 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 return [
-    'failed' => 'Estas credenciais não correspondem aos nossos registros.',
-    'password' => 'A senha fornecida está incorreta.',
-    'throttle' => 'Muitas tentativas de login. Por favor, tente novamente em :seconds segundos.',
+    'failed'   => 'Credenciais informadas não correspondem com nossos registros.',
+    'password' => 'A senha está incorreta.',
+    'throttle' => 'Você realizou muitas tentativas de login. Por favor, tente novamente em :seconds segundos.',
 ];

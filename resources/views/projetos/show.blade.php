@@ -9,6 +9,8 @@
         <div class="w-full px-6">
             <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
 
+
+
                 <!-- mensagens de erro e sucesso -->
                 @if (session('error'))
                     <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -23,13 +25,12 @@
                 @endif
 
 
-                <!-- Título + Status -->
+                <!-- Título  -->
                 <x-slot name="pageTitle">
                     Detalhes do Projeto de Extensão
                 </x-slot>
                 <p class="text-center text-gray-600 font-medium ">Status: {{ ucfirst($projeto->status) }}</p>
                 
-                <!-- Botão de Editar -->
                 @php
                     $role = auth()->user()->role;
                     $isAluno = $role === 'aluno';
@@ -41,15 +42,29 @@
                 @endphp
 
                 @if ($isAluno || $isProfessor)
-                    <div class="mb-4 flex  flex-wrap gap-3">
+                    <div class="mb-4 flex flex-wrap gap-3">
                         @if ($podeEditar)
-                            <a href="{{ route('projetos.edit', $projeto->id) }}"
-                            class="bg-yellow-600  hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded w-48 flex items-center gap-2">
+                            {{-- Botão Editar --}}
+                            <a href="{{ route('projetos.edit', ['id' => $projeto->id, 'origem' => 'show']) }}"
+                                class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
                                 <img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20" height="20">
                                 Editar Proposta
                             </a>
 
+
+                            {{-- Botão Enviar (somente aluno) --}}
+                            @if ($isAluno)
+                                <form action="{{ route('projetos.enviar', $projeto->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit"
+                                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                                        <img src="{{ asset('img/site/btn-enviar.png') }}" alt="Enviar projeto" width="20" height="20">
+                                        Enviar Projeto
+                                    </button>
+                                </form>
+                            @endif
                         @elseif ($podeVoltar)
+                            {{-- Botão Voltar para edição --}}
                             <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
                                 @csrf
                                 <button type="submit"
@@ -58,7 +73,6 @@
                                     Voltar para Edição
                                 </button>
                             </form>
-
                         @endif
                     </div>
                 @endif
