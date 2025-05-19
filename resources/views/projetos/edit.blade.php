@@ -48,13 +48,13 @@
                 <label class="block mb-2">Título do Projeto:</label>
                 <input type="text" name="titulo" value="{{ old('titulo', $projeto->titulo) }}"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}" 
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="255"  required>
 
                 <!-- Campo: Período  -->
                 <label class="block mb-2">Período:</label>
                 <input type="text" name="periodo" value="{{ old('periodo', $projeto->periodo) }}"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="50"  required>
                     
                     <!-- Campo: Professor(es) envolvidos -->
                     <label class="block mb-2">Professor(es) envolvidos:</label>
@@ -79,7 +79,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="professores[{{ $index }}][area]" value="{{ $area }}"
+                                <input type="text" name="professores[{{ $index }}][area]" maxlength="100" value="{{ $area }}"
                                     class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
                                 <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
                             </div>
@@ -110,13 +110,13 @@
                             <h4 class="font-semibold mb-2">Aluno {{ $index + 1 }}</h4>
                             <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $nome }}"
                                 class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="100" required>
                             <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $ra }}"
                                 class="w-full border-gray-300 rounded-md mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="50" required>
                             <input type="text" name="alunos[{{ $index }}][curso]" value="{{ $curso }}"
                                 class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="100" required>
                         </div>
                     @endforeach
 
@@ -129,8 +129,8 @@
 
                 <!-- Campo: Público Alvo -->
                 <label class="block mb-2">Público Alvo:</label>
-                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('publico_alvo', $projeto->publico_alvo) }}</textarea>
+                <textarea name="publico_alvo" maxlength="100" class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('publico_alvo', $projeto->publico_alvo) }} </textarea>
 
                 <!-- Campos: Data     -->
                 <label class="block mb-2">Data de Início:</label>
@@ -152,25 +152,25 @@
                 <label class="block mb-2">1. Introdução</label>
                 <textarea name="introducao"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('introducao', $projeto->introducao) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="1000">{{ old('introducao', $projeto->introducao) }}</textarea>
 
                 <!-- Campo: Objetivos do Projeto -->
                 <label class="block mb-2">2. Objetivos do Projeto</label>
                 <textarea name="objetivo_geral"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="1000">{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
 
                 <!-- Campo: Justificativa -->
                 <label class="block mb-2">3. Justificativa</label>
                 <textarea name="justificativa"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('justificativa', $projeto->justificativa) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="1000">{{ old('justificativa', $projeto->justificativa) }}</textarea>
 
                 <!-- Campo: Metodologia -->
                 <label class="block mb-2">4. Metodologia</label>
                 <textarea name="metodologia"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('metodologia', $projeto->metodologia) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="500">{{ old('metodologia', $projeto->metodologia) }}</textarea>
 
                 <!-- Campo: Atividades a serem desenvolvidas -->
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
@@ -188,14 +188,14 @@
                         <div class="mb-4">
                             <h4 class="font-semibold mb-2">Atividade {{ $index + 1 }}</h4>
                             <label class="block mb-1">O que fazer</label>
-                            <textarea name="atividades[{{ $index }}][o_que_fazer]"
+                            <textarea maxlength="1000" name="atividades[{{ $index }}][o_que_fazer]"
                                 class="form-control mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>{{ $oque }}</textarea>
+                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>{{ $oque }} </textarea>
                             <label class="block mb-1">Como fazer</label>
-                            <textarea name="atividades[{{ $index }}][como_fazer]"
+                            <textarea maxlength="1000" name="atividades[{{ $index }}][como_fazer]"
                                 class="form-control mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
                                 {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>{{ $como }}</textarea>
-                            <label class="block mb-1">Carga horária</label>
+                            <label min=1 max=99999 class="block mb-1">Carga horária</label>
                             <input type="number" name="atividades[{{ $index }}][carga_horaria]" value="{{ $carga }}"
                                 class="form-control mb-2 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
                                 {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
@@ -223,7 +223,7 @@
                             $mesSelecionado = is_array($cronograma) ? ($cronograma['mes'] ?? '') : ($cronograma->mes ?? '');
                         @endphp
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $atividade }}"
+                            <input type="text" name="cronograma[{{ $index }}][atividade]" maxlength="100" value="{{ $atividade }}"
                                 class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
                                 {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
 
@@ -231,7 +231,7 @@
                                 class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
                                 {{ $disableAlunoFields ? 'disabled' : '' }} required>
                                 <option value="">Selecione o mês</option>
-                                @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $mes)
+                                @foreach (['Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro'] as $mes)
                                     <option value="{{ $mes }}" {{ $mesSelecionado === $mes ? 'selected' : '' }}>{{ $mes }}</option>
                                 @endforeach
                             </select>
@@ -256,7 +256,7 @@
                 <label class="block mb-2">8. Resultados Esperados</label>
                 <textarea name="resultados_esperados"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="1000">{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
 
             </fieldset>
 
@@ -300,134 +300,94 @@
     </div>
 
     <script>
-        let professorCount = document.querySelectorAll('#professores-wrapper > div').length || 1;
-        let alunoCount = document.querySelectorAll('#alunos-wrapper > div').length || 1;
-        let atividadeCount = document.querySelectorAll('#atividades-wrapper > div').length || 1;
-        let cronogramaCount = document.querySelectorAll('#cronograma-wrapper > div').length || 1;
+    const professorOptions = `
+        <option value="">-- Selecione um professor --</option>
+        ${Array.from(document.querySelector('select[name^="professores["][name$="[id]"]')?.options || [])
+            .slice(1)
+            .map(option => `<option value="${option.value}">${option.text}</option>`)
+            .join('')}
+    `;
 
-        // Adiciona títulos aos blocos já existentes ao carregar
-        window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('#professores-wrapper > div').forEach((div, index) => {
-                if (!div.querySelector('h4')) {
-                    const title = document.createElement('h4');
-                    title.classList.add('font-semibold', 'mb-2');
-                    title.textContent = `Professor ${index + 1}`;
-                    div.prepend(title);
-                }
-            });
-            document.querySelectorAll('#alunos-wrapper > div').forEach((div, index) => {
-                if (!div.querySelector('h4')) {
-                    const title = document.createElement('h4');
-                    title.classList.add('font-semibold', 'mb-2');
-                    title.textContent = `Aluno ${index + 1}`;
-                    div.prepend(title);
-                }
-            });
-            document.querySelectorAll('#atividades-wrapper > div').forEach((div, index) => {
-                if (!div.querySelector('h4')) {
-                    const title = document.createElement('h4');
-                    title.classList.add('font-semibold', 'mb-2');
-                    title.textContent = `Atividade ${index + 1}`;
-                    div.prepend(title);
-
-                    const labels = div.querySelectorAll('textarea, input[type="number"]');
-                    if (labels.length === 3) {
-                        const [oq, como, carga] = labels;
-                        oq.insertAdjacentHTML('beforebegin', '<label class="block mb-1">O que fazer</label>');
-                        como.insertAdjacentHTML('beforebegin', '<label class="block mb-1">Como fazer</label>');
-                        carga.insertAdjacentHTML('beforebegin', '<label class="block mb-1">Carga horária (horas)</label>');
-                    }
-                }
-            });
-        });
-
-        const professorOptions = `
-            <option value="">-- Selecione um professor --</option>
-            ${Array.from(document.querySelector('select[name="professores[0][id]"]').options)
-                .slice(1)
-                .map(option => `<option value="${option.value}">${option.text}</option>`)
-                .join('')}
-        `;
-
-        document.getElementById('add-professor')?.addEventListener('click', () => {
-            if (professorCount < 9) {
-                const div = document.createElement('div');
-                div.classList.add('mb-4');
-                div.innerHTML = `
-                    <h4 class="font-semibold mb-2">Professor ${professorCount + 1}</h4>
-                    <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                        ${professorOptions}
-                    </select>
-                    <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
-                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
-                `;
-                document.getElementById('professores-wrapper').appendChild(div);
-                professorCount++;
+    function atualizarTitulos(wrapperId, prefixo) {
+        const items = document.querySelectorAll(`#${wrapperId} > div`);
+        items.forEach((div, i) => {
+            const title = div.querySelector('h4');
+            if (title && prefixo) {
+                title.textContent = `${prefixo} ${i + 1}`;
             }
         });
+    }
 
-        document.getElementById('add-aluno')?.addEventListener('click', () => {
-            if (alunoCount < 9) {
-                const div = document.createElement('div');
-                div.classList.add('mb-4');
-                div.innerHTML = `
-                    <h4 class="font-semibold mb-2">Aluno ${alunoCount + 1}</h4>
-                    <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
-                    <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" required>
-                    <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" required>
-                    <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
-                `;
-                document.getElementById('alunos-wrapper').appendChild(div);
-                alunoCount++;
-            }
-        });
-
-        document.getElementById('add-atividade')?.addEventListener('click', () => {
+    document.getElementById('add-professor')?.addEventListener('click', () => {
+        const professorCount = document.querySelectorAll('#professores-wrapper > div').length;
+        if (professorCount < 9) {
             const div = document.createElement('div');
             div.classList.add('mb-4');
             div.innerHTML = `
-                <h4 class="font-semibold mb-2">Atividade ${atividadeCount + 1}</h4>
-                <label class="block mb-1">O que fazer</label>
-                <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="form-control mb-2" placeholder="O que fazer?" required></textarea>
-                <label class="block mb-1">Como fazer</label>
-                <textarea name="atividades[${atividadeCount}][como_fazer]" class="form-control mb-2" placeholder="Como fazer?" required></textarea>
-                <label class="block mb-1">Carga horária (horas)</label>
-                <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="form-control mb-2" placeholder="Carga horária" required>
-                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
-            `;
-            document.getElementById('atividades-wrapper').appendChild(div);
-            atividadeCount++;
-        });
-
-        document.getElementById('add-cronograma')?.addEventListener('click', () => {
-            const div = document.createElement('div');
-            div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
-            div.innerHTML = `
-                <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" required>
-                <select name="cronograma[${cronogramaCount}][mes]" class="form-control" required>
-                    <option value="">Selecione o mês</option>
-                    ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('')}
+                <h4 class="font-semibold mb-2">Professor ${professorCount + 1}</h4>
+                <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                    ${professorOptions}
                 </select>
-                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+                <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+                <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('professores-wrapper', 'Professor');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
-            document.getElementById('cronograma-wrapper').appendChild(div);
-            cronogramaCount++;
-        });
+            document.getElementById('professores-wrapper').appendChild(div);
+            atualizarTitulos('professores-wrapper', 'Professor');
+        }
+    });
 
-        document.getElementById('form-projeto').addEventListener('submit', function (e) {
-            const inicio = document.getElementById('data_inicio').value;
-            const fim = document.getElementById('data_fim').value;
-            if (!inicio || !fim || new Date(inicio) > new Date(fim)) {
-                e.preventDefault();
-                alert('A data de início deve ser anterior ou igual à data de fim.');
-            }
-        });
-    </script>
+    document.getElementById('add-aluno')?.addEventListener('click', () => {
+        const alunoCount = document.querySelectorAll('#alunos-wrapper > div').length;
+        if (alunoCount < 9) {
+            const div = document.createElement('div');
+            div.classList.add('mb-4');
+            div.innerHTML = `
+                <h4 class="font-semibold mb-2">Aluno ${alunoCount + 1}</h4>
+                <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
+                <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" required>
+                <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" required>
+                <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('alunos-wrapper', 'Aluno');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+            `;
+            document.getElementById('alunos-wrapper').appendChild(div);
+            atualizarTitulos('alunos-wrapper', 'Aluno');
+        }
+    });
+
+    document.getElementById('add-atividade')?.addEventListener('click', () => {
+        const atividadeCount = document.querySelectorAll('#atividades-wrapper > div').length;
+        const div = document.createElement('div');
+        div.classList.add('mb-4');
+        div.innerHTML = `
+            <h4 class="font-semibold mb-2">Atividade ${atividadeCount + 1}</h4>
+            <label class="block mb-1">O que fazer</label>
+            <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="form-control mb-2" placeholder="O que fazer?" required></textarea>
+            <label class="block mb-1">Como fazer</label>
+            <textarea name="atividades[${atividadeCount}][como_fazer]" class="form-control mb-2" placeholder="Como fazer?" required></textarea>
+            <label class="block mb-1">Carga horária (horas)</label>
+            <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="form-control mb-2" placeholder="Carga horária" required>
+            <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('atividades-wrapper', 'Atividade');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+        `;
+        document.getElementById('atividades-wrapper').appendChild(div);
+        atualizarTitulos('atividades-wrapper', 'Atividade');
+    });
+
+    document.getElementById('add-cronograma')?.addEventListener('click', () => {
+        const cronogramaCount = document.querySelectorAll('#cronograma-wrapper > div').length;
+        const div = document.createElement('div');
+        div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
+        div.innerHTML = `
+            <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" required>
+            <select name="cronograma[${cronogramaCount}][mes]" class="form-control" required>
+                <option value="">Selecione o mês</option>
+                ${['Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro'].map(m => `<option value="${m}">${m}</option>`).join('')}
+            </select>
+            <button type="button" onclick="this.parentNode.remove();" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+        `;
+        document.getElementById('cronograma-wrapper').appendChild(div);
+    });
 
 
-
-
-
+</script>
 
 
 </x-app-layout>

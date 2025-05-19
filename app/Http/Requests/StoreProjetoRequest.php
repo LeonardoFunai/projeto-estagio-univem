@@ -65,7 +65,7 @@ class StoreProjetoRequest extends FormRequest
             // Cronograma
             'cronograma' => 'nullable|array|min:1|max:10',
             'cronograma.*.atividade' => 'required|string|max:100',
-            'cronograma.*.mes' => 'required|string|max:20',
+            'cronograma.*.mes' => 'required|string|in:Fevereiro,Março,Abril,Maio,Junho,Julho,Agosto,Setembro,Outubro,Novembro',
         ];
     }
 
@@ -116,6 +116,8 @@ class StoreProjetoRequest extends FormRequest
             // Cronograma
             'cronograma.*.atividade.required' => 'O nome da atividade no cronograma é obrigatório.',
             'cronograma.*.mes.required' => 'O mês da atividade no cronograma é obrigatório.',
+            'cronograma.*.mes.in' => 'O mês deve ser entre Fevereiro e Novembro',
+
         ];
     }
     public function withValidator($validator)

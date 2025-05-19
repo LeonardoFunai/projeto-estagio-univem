@@ -33,10 +33,10 @@
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
                 <label class="block mb-2">Título do Projeto:</label>
-                <input type="text"  name="titulo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Título do Projeto" value="{{ old('titulo') }}" required>
+                <input type="text"  name="titulo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Título do Projeto" value="{{ old('titulo') }}" maxlength="255" required>
 
                 <label class="block mb-2">Período:</label>
-                <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." value="{{ old('periodo') }}" required>
+                <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." value="{{ old('periodo') }}" maxlength="50" required>
                 
                 <label class="block mb-2">Selecione o Professor Responsável:</label>
                 <p><strong>Professor 1</strong></p>
@@ -48,7 +48,7 @@
                                 <option value="{{ $professor->id }}">{{ $professor->name }} ({{ $professor->email }})</option>
                             @endforeach
                         </select>
-                        <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" value="{{ old('professores.0.area') }}" placeholder="Área (opcional) ">
+                        <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" value="{{ old('professores.0.area') }}" maxlength="100" placeholder="Área (opcional) ">
                     </div>
                 </div>  
 
@@ -59,15 +59,15 @@
                 <p><strong>Aluno 1</strong></p>
                 <div id="alunos-wrapper">
                     <div class="mb-4">
-                        <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" value="{{ old('alunos.0.nome') }}" required>
-                        <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" value="{{ old('alunos.0.ra') }}" required>
-                        <input type="text" name="alunos[0][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" value="{{ old('alunos.0.curso') }}" required>
+                        <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" value="{{ old('alunos.0.nome') }}" maxlength="100" required>
+                        <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" value="{{ old('alunos.0.ra') }}" maxlength="50" required>
+                        <input type="text" name="alunos[0][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" value="{{ old('alunos.0.curso') }}" maxlength="100" required>
                     </div>
                 </div>
                 <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
 
                 <label class="block mb-2">Público Alvo:</label>
-                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4" placeholder="População em Geral">{{ old('publico_alvo') }}</textarea>
+                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-1" placeholder="População em Geral" maxlength="100">{{ old('publico_alvo') }} </textarea>
 
                 <label class="block mb-2">Data de Início:</label>
                 <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_inicio') }}" required>
@@ -80,18 +80,18 @@
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
 
                 <label class="block mb-2">1. Introdução</label>
-                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4">{{ old('introducao') }}</textarea>
+                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('introducao') }}</textarea>
 
                 <label class="block mb-2">2. Objetivos do Projeto</label>
-                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4">{{ old('objetivo_geral') }}</textarea>
+                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('objetivo_geral') }}</textarea>
 
 
                 <label class="block mb-2">3. Justificativa</label>
-                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4">{{ old('justificativa') }}</textarea>
+                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('justificativa') }}</textarea>
 
 
                 <label class="block mb-2">4. Metodologia</label>
-                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4">{{ old('metodologia') }}</textarea>
+                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" maxlength="500">{{ old('metodologia') }}</textarea>
 
 
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
@@ -100,9 +100,9 @@
 
                 <div id="atividades-wrapper">
                     <div class="mb-4">
-                        <textarea name="atividades[0][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required>{{ old('atividades.0.o_que_fazer') }}</textarea>
-                        <textarea name="atividades[0][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required>{{ old('atividades.0.como_fazer') }}</textarea>
-                        <input type="number" name="atividades[0][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" value="{{ old('atividades.0.carga_horaria') }}" required>
+                        <textarea name="atividades[0][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" maxlength="1000" required>{{ old('atividades.0.o_que_fazer') }}</textarea>
+                        <textarea name="atividades[0][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" maxlength="1000" required>{{ old('atividades.0.como_fazer') }}</textarea>
+                        <input type="number" name="atividades[0][carga_horaria]" class="w-full border-gray-300 rounded-md" min=1 max=99999 placeholder="Carga horária" value="{{ old('atividades.0.carga_horaria') }}" required>
                     </div>
                 </div>
                 <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade</button>
@@ -111,9 +111,9 @@
                 <div id="cronograma-wrapper">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <input type="text" name="cronograma[0][atividade]" class="form-control" placeholder="Título da Atividade" value="{{ old('cronograma.0.atividade') }}" required>
-                        <select name="cronograma[0][mes]" class="form-control" required>
+                        <select name="cronograma[0][mes]" class="form-control" maxlength="20" required>
                             <option value="">Selecione o mês</option>
-                            @foreach(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $mes)
+                            @foreach(['Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro'] as $mes)
                                 <option value="{{ $mes }}">{{ $mes }}</option>
                             @endforeach
                         </select>
@@ -125,7 +125,7 @@
                 <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" >{{ old('recursos') }}</textarea>
 
                 <label class="block mb-2">8. Resultados Esperados</label>
-                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4">{{ old('resultados_esperados') }}</textarea>
+                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('resultados_esperados') }}</textarea>
 
             </fieldset>
 

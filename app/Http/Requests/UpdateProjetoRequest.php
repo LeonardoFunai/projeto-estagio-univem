@@ -82,7 +82,8 @@ class UpdateProjetoRequest extends FormRequest
 
             'cronograma' => 'nullable|array',
             'cronograma.*.atividade' => 'required_with:cronograma|string|max:100',
-            'cronograma.*.mes' => 'required_with:cronograma|string|max:20',
+            'cronograma.*.mes' => 'required_with:cronograma|string|in:Fevereiro,Março,Abril,Maio,Junho,Julho,Agosto,Setembro,Outubro,Novembro',
+
         ];
     }
 
