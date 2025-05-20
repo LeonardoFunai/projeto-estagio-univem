@@ -4,11 +4,13 @@
             {{ __('Cadastrar Projeto de Extensão') }}
         </h2>
     </x-slot>
+    
 
     <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
         <x-slot name="pageTitle">
             Cadastrar Projeto de Extensão
         </x-slot>
+        
 
         @if(session('error'))
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -25,11 +27,68 @@
             </div>
         @endif
 
-
+        
         <form id="form-projeto" action="{{ route('projetos.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <fieldset class="mb-8">
+                <!-- Trilha de Status -->
+                <div class="flex items-end justify-center space-x-6 mt-3">
+
+                    {{-- Etapas principais reduzidas --}}
+                    <div class="flex space-x-6 self-center">
+                        @foreach ([
+                            ['label' => 'Proposta Criada', 'classe' => 'atual'],
+                            ['label' => 'Editando', 'classe' => 'futuro'],
+                            ['label' => 'Entregue', 'classe' => 'futuro'],
+                        ] as $i => $etapa)
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center 
+                                    @if($etapa['classe'] === 'atual')
+                                        bg-blue-600 text-white border-blue-800 shadow animate-pulse
+                                    @else
+                                        bg-gray-300 text-gray-600 border-gray-400 shadow-sm
+                                    @endif text-xs font-bold">
+                                    {{ $i + 1 }}
+                                </div>
+                                <span class="mt-1 text-xs text-center">{{ $etapa['label'] }}</span>
+                            </div>
+
+                            @if ($i < 2)
+                                <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 my-auto"></div>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    {{-- seta para aprovações --}}
+                    <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 self-center"></div>
+
+                    {{-- Aprovações empilhadas compactas --}}
+                    <div class="flex flex-col justify-between space-y-4 items-center mt-[-20px]">
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">N</div>
+                            <span class="mt-1 text-xs text-center">NAPEx</span>
+                        </div>
+
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">C</div>
+                            <span class="mt-1 text-xs text-center">Coordenação</span>
+                        </div>
+                    </div>
+
+                    {{-- seta final --}}
+                    <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 self-center"></div>
+
+                    {{-- Aprovado Final compacto --}}
+                    <div class="flex flex-col self-center items-center">
+                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">
+                            ✓
+                        </div>
+                        <span class="mt-1 text-xs font-medium text-center text-gray-400">Aprovado</span>
+                    </div>
+                </div>
+
+
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
 
                 <label class="block mb-2">Título do Projeto:</label>
