@@ -169,7 +169,7 @@
                 <label class="block mb-2 text-lg font-semibold text-blue-700">Cronograma</label>
                 <div id="cronograma-wrapper">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" name="cronograma[0][atividade]" class="form-control" placeholder="Título da Atividade" value="{{ old('cronograma.0.atividade') }}" required>
+                        <input type="text" name="cronograma[0][atividade]" class="form-control" maxlength="100" placeholder="Título da Atividade" value="{{ old('cronograma.0.atividade') }}" required>
                         <select name="cronograma[0][mes]" class="form-control" maxlength="20" required>
                             <option value="">Selecione o mês</option>
                             @foreach(['Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro'] as $mes)

@@ -8,8 +8,8 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('atividades', function (Blueprint $table) {
             $table->id();
-            $table->string('o_que_fazer');
-            $table->string('como_fazer');
+            $table->text('o_que_fazer');
+            $table->text('como_fazer');
             $table->integer('carga_horaria');
             $table->foreignId('projeto_id')->constrained('projetos')->onDelete('cascade');
             $table->timestamps();

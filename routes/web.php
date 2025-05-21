@@ -45,6 +45,11 @@ Route::middleware('auth')->group(function () {
     // 📝 Novas rotas de avaliação específicas para show.blade.php
     Route::post('/projetos/{id}/avaliar-napex', [ProjetoController::class, 'avaliarNapex'])->name('projetos.avaliar.napex');
     Route::post('/projetos/{id}/avaliar-coordenador', [ProjetoController::class, 'avaliarCoordenador'])->name('projetos.avaliar.coordenador');
+
+    // 📄 Gerar proposta pdf
+    Route::get('/projetos/{id}/gerar-pdf', [ProjetoController::class, 'gerarPdf'])->name('projetos.gerarPdf');
+
+
 });
 
 // Inclui rotas de login/register do Breeze

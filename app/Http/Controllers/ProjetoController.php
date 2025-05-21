@@ -14,6 +14,8 @@ use App\Models\Rejeicao;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Illuminate\Support\Facades\Storage;
 
 class ProjetoController extends Controller
 {
@@ -578,6 +580,19 @@ class ProjetoController extends Controller
 
         return $pdf->download('relatorio_projetos.pdf');
     }
+
+    // Função dpf proposta
+    
+
+    public function gerarPdf($id)
+    {
+        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
+
+        $pdf = Pdf::loadView('projetos.pdf', compact('projeto'));
+
+        return $pdf->download("proposta_projeto_{$projeto->id}.pdf");
+    }
+
 
     
 }

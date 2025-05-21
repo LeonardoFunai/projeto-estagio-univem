@@ -8,7 +8,9 @@
         <div class="py-12">
             <div class="w-full px-6">
                 <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
-
+                    <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                    Gerar PDF
+                </a>
 
 
                     <!-- mensagens de erro e sucesso -->
@@ -420,7 +422,7 @@
                         <!-- Form do Napex -->
                         <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
                         @if(request('editar') === 'napex' || is_null($projeto->aprovado_napex))
-                            <form method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
+                            <form id="form-parecer-napex" method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
                                 @csrf
                                 <label>Número do Projeto</label>
                                 <input type="text" name="numero_projeto" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('numero_projeto', $projeto->numero_projeto) }}">
@@ -474,11 +476,13 @@
                                 </tr>
                             </tbody>
                         </table>
-
-                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}"
+                        
+                        <!-- Botão editar  -->
+                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}#form-parecer-napex"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-6">
                             Editar Parecer
                         </a>
+
                         @endif
                     @endif
 
@@ -517,7 +521,7 @@
                         </table>
                         <!-- Form do coordenador -->
                         @if(request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador))
-                            <form method="POST" action="{{ route('projetos.avaliar.coordenador', $projeto->id) }}" class="mb-10">
+                            <form id="form-parecer-coordenador" method="POST" action="{{ route('projetos.avaliar.coordenador', $projeto->id) }}" class="mb-10">
                                 @csrf
                                 <label>Aprovação</label>
                                 <select name="aprovado_coordenador" class="w-full border-gray-300 rounded-md mb-4">
@@ -556,10 +560,13 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}"
+
+                        <!-- Botão de Editar -->
+                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
                             Editar Parecer
                         </a>
+
 
                         @endif
                     @endif
