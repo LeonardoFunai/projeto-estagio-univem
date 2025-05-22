@@ -310,7 +310,7 @@
                 <label class="block mb-2">7. Recursos Necessários</label>
                 <textarea name="recursos"
                     class="w-full border-gray-300 rounded-md mb-4 {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                    {{ $disableAlunoFields ? 'readonly disabled' : '' }}>{{ old('recursos', $projeto->recursos) }}</textarea>
+                    {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="1000">{{ old('recursos', $projeto->recursos) }}</textarea>
 
                 <!-- Campo: Resultados Esperados -->
                 <label class="block mb-2">8. Resultados Esperados</label>

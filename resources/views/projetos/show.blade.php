@@ -8,9 +8,7 @@
         <div class="py-12">
             <div class="w-full px-6">
                 <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
-                    <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
-                    Gerar PDF
-                </a>
+
 
 
                     <!-- mensagens de erro e sucesso -->
@@ -155,6 +153,8 @@
                                         </button>
                                     </form>
                                 @endif
+
+
                             @elseif ($podeVoltar)
                                 {{-- Botão Voltar para edição --}}
                                 <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
@@ -166,13 +166,12 @@
                                     </button>
                                 </form>
                             @endif
+                            <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                                Gerar PDF
+                            </a>
                         </div>
                     @endif
-
-
-
-
-
+                    
                     <!-- TABELA 1 - Detalhes do Projeto -->
                     <div class="overflow-x-auto">
                         <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">

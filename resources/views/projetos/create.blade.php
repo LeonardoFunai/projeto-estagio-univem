@@ -181,7 +181,7 @@
                 <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Cronograma</button>
 
                 <label class="block mb-2">7. Recursos Necessários</label>
-                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" >{{ old('recursos') }}</textarea>
+                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('recursos') }}</textarea>
 
                 <label class="block mb-2">8. Resultados Esperados</label>
                 <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('resultados_esperados') }}</textarea>
