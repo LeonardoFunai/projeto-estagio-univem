@@ -388,7 +388,7 @@
                 <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                     ${professorOptions}
                 </select>
-                <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+                <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional) maxlength="100"">
                 <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('professores-wrapper', 'Professor');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
             document.getElementById('professores-wrapper').appendChild(div);
@@ -403,9 +403,9 @@
             div.classList.add('mb-4');
             div.innerHTML = `
                 <h4 class="font-semibold mb-2">Aluno ${alunoCount + 1}</h4>
-                <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
-                <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" required>
-                <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" required>
+                <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" maxlength="100" required>
+                <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" maxlength="50" required>
+                <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" maxlength="100" required>
                 <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('alunos-wrapper', 'Aluno');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
             `;
             document.getElementById('alunos-wrapper').appendChild(div);
@@ -436,7 +436,7 @@
         const div = document.createElement('div');
         div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
         div.innerHTML = `
-            <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" required>
+            <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" maxlength="100" required>
             <select name="cronograma[${cronogramaCount}][mes]" class="form-control" required>
                 <option value="">Selecione o mês</option>
                 ${['Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro'].map(m => `<option value="${m}">${m}</option>`).join('')}

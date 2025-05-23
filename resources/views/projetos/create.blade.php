@@ -232,7 +232,7 @@
             <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                 ${professorOptions}
             </select>
-            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
+            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional) maxlength="100"">
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('professores-wrapper').appendChild(div);
@@ -245,9 +245,9 @@
         div.classList.add('mb-4');
         div.innerHTML = `
             <h4 class="font-semibold mb-2">Aluno</h4>
-            <input type="text" name="alunos[${index}][nome]" class="form-control mb-2" placeholder="Nome do aluno" required>
-            <input type="text" name="alunos[${index}][ra]" class="form-control mb-2" placeholder="RA" required>
-            <input type="text" name="alunos[${index}][curso]" class="form-control mb-2" placeholder="Curso" required>
+            <input type="text" name="alunos[${index}][nome]" class="form-control mb-2" placeholder="Nome do aluno" maxlength="100" required>
+            <input type="text" name="alunos[${index}][ra]" class="form-control mb-2" placeholder="RA" maxlength="50" required>
+            <input type="text" name="alunos[${index}][curso]" class="form-control mb-2" placeholder="Curso" maxlength="100" required>
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('alunos-wrapper').appendChild(div);
@@ -265,7 +265,7 @@
             <label class="block mb-1">Como fazer</label>
             <textarea name="atividades[${index}][como_fazer]" class="form-control mb-2" required></textarea>
             <label class="block mb-1">Carga horária</label>
-            <input type="number" name="atividades[${index}][carga_horaria]" class="form-control mb-2" required>
+            <input type="number" name="atividades[${index}][carga_horaria]" class="form-control mb-2" maxlength="100" required>
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('atividades-wrapper').appendChild(div);
@@ -311,7 +311,7 @@
             <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                 ${professorOptions}
             </select>
-            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" value="${professor.area ?? ''}" placeholder="Área (opcional)">
+            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" value="${professor.area ?? ''}" placeholder="Área (opcional) maxlength="100" ">
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('professores-wrapper').appendChild(div);
@@ -325,9 +325,9 @@
         div.classList.add('mb-4');
         div.innerHTML = `
             <h4 class="font-semibold mb-2">Aluno ${index + 1}</h4>
-            <input type="text" name="alunos[${index}][nome]" class="form-control mb-2" value="${aluno.nome ?? ''}" placeholder="Nome do aluno" required>
-            <input type="text" name="alunos[${index}][ra]" class="form-control mb-2" value="${aluno.ra ?? ''}" placeholder="RA" required>
-            <input type="text" name="alunos[${index}][curso]" class="form-control mb-2" value="${aluno.curso ?? ''}" placeholder="Curso" required>
+            <input type="text" name="alunos[${index}][nome]" class="form-control mb-2" value="${aluno.nome ?? ''}" placeholder="Nome do aluno" maxlength="100" required>
+            <input type="text" name="alunos[${index}][ra]" class="form-control mb-2" value="${aluno.ra ?? ''}" placeholder="RA" maxlength="50" required>
+            <input type="text" name="alunos[${index}][curso]" class="form-control mb-2" value="${aluno.curso ?? ''}" placeholder="Curso" maxlength="100" required>
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('alunos-wrapper').appendChild(div);
@@ -357,7 +357,7 @@
         const div = document.createElement('div');
         div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
         div.innerHTML = `
-            <input type="text" name="cronograma[${index}][atividade]" class="form-control" value="${item.atividade ?? ''}" placeholder="Título da Atividade" required>
+            <input type="text" name="cronograma[${index}][atividade]" class="form-control" value="${item.atividade ?? ''}" placeholder="Título da Atividade" maxlength="100" required>
             <select name="cronograma[${index}][mes]" class="form-control" required>
                 <option value="">Selecione o mês</option>
                 ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}" ${item.mes === m ? 'selected' : ''}>${m}</option>`).join('')}

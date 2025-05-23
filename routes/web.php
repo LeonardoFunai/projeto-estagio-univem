@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjetoController;
 use App\Http\Controllers\ProfileController;
 
+
 // Redireciona a raiz para a tela de login
 Route::get('/', function () {
     if (auth()->check()) {
@@ -51,6 +52,8 @@ Route::middleware('auth')->group(function () {
 
 
 });
+
+
 
 // Inclui rotas de login/register do Breeze
 require __DIR__.'/auth.php';
