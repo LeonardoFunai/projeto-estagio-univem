@@ -20,8 +20,8 @@ return new class extends Migration {
             $table->text('recursos')->nullable();
             $table->text('resultados_esperados')->nullable();
             $table->string('numero_projeto')->nullable();
-            $table->date('data_recebimento_napex')->nullable();
-            $table->date('data_encaminhamento_parecer')->nullable();
+            $table->date('data_entrega')->nullable();
+            $table->date('data_parecer_napex')->nullable();
             $table->enum('aprovado_napex', ['pendente', 'sim', 'nao'])->default('pendente');
             $table->text('motivo_napex')->nullable();
             $table->enum('aprovado_coordenador', ['pendente', 'sim', 'nao'])->default('pendente');

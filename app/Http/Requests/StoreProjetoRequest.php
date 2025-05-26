@@ -14,8 +14,11 @@ class StoreProjetoRequest extends FormRequest
     public function rules()
     {
         return [
-            'data_recebimento_napex' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
-            'data_encaminhamento_parecer' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+
+            'data_entrega' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+            'data_parecer_napex' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+            'data_parecer_coordenador' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+
 
             // Dados do Projeto
             'titulo' => 'required|string|max:255',
@@ -45,8 +48,8 @@ class StoreProjetoRequest extends FormRequest
 
             // Pareceres NAPEx e Coordenador
             'numero_projeto' => 'nullable|string|max:255',
-            'data_recebimento_napex' => 'nullable|date',
-            'data_encaminhamento_parecer' => 'nullable|date',
+            'data_entrega' => 'nullable|date',
+            'data_parecer_napex' => 'nullable|date',
             'aprovado_napex' => 'nullable|string|in:sim,nao',
             'motivo_napex' => 'nullable|string',
             'aprovado_coordenador' => 'nullable|string|in:sim,nao',
@@ -74,8 +77,7 @@ class StoreProjetoRequest extends FormRequest
     public function messages()
     {
         return [
-            'data_recebimento_napex.regex' => 'A data de recebimento do NAPEx deve estar no formato AAAA-MM-DD com ano de 4 dígitos.',
-            'data_encaminhamento_parecer.regex' => 'A data de encaminhamento deve estar no formato AAAA-MM-DD com ano de 4 dígitos.',
+
 
             // Projeto
             'titulo.required' => 'O título do projeto é obrigatório.',
@@ -99,9 +101,6 @@ class StoreProjetoRequest extends FormRequest
             'numero_projeto.string' => 'O número do projeto deve ser um texto.',
             'aprovado_napex.in' => 'A aprovação do NAPEx deve ser sim ou não.',
             'aprovado_coordenador.in' => 'A aprovação do Coordenador deve ser sim ou não.',
-            'data_recebimento_napex.date' => 'A data de recebimento pelo NAPEx deve ser uma data válida.',
-            'data_encaminhamento_parecer.date' => 'A data de encaminhamento para os pareceres deve ser uma data válida.',
-            'data_parecer_coordenador.date' => 'A data do parecer do coordenador deve ser uma data válida.',
     
             // Arquivo
             'arquivo.file' => 'O arquivo enviado deve ser um arquivo válido.',
@@ -123,12 +122,11 @@ class StoreProjetoRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $datas = [
-                'data_recebimento_napex' => $this->input('data_recebimento_napex'),
-                'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
-                'data_inicio' => $this->input('data_inicio'),
-                'data_fim' => $this->input('data_fim'),
-            ];
+        $datas = [
+            'data_inicio' => $this->input('data_inicio'),
+            'data_fim' => $this->input('data_fim'),
+        ];
+
 
             foreach ($datas as $campo => $valor) {
                 if ($valor && preg_match('/^(\d{4})-\d{2}-\d{2}$/', $valor, $matches)) {

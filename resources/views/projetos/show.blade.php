@@ -166,11 +166,14 @@
                                     </button>
                                 </form>
                             @endif
-                            <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
-                                Gerar PDF
-                            </a>
                         </div>
                     @endif
+                    <div class="mb-4 flex flex-wrap gap-3">
+                        <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                            Gerar PDF
+                        </a>
+                    </div>
+                   
                     
                     <!-- TABELA 1 - Detalhes do Projeto -->
                     <div class="overflow-x-auto">
@@ -242,6 +245,13 @@
                                     <th class="bg-[#251C57] text-white p-4 text-left">Introdução</th>
                                     <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
                                         {{ $projeto->introducao }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Objetivo do Projeto</th>
+                                    <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                        {{ $projeto->objetivo_geral }}
                                     </td>
                                 </tr>
 
@@ -350,15 +360,10 @@
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_recebimento_napex ? \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') : '--' }}
+                                        {{ $projeto->data_entrega ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') : '--' }}
                                     </td>
                                 </tr>
-                                <tr>
-                                    <th class="bg-[#251C57] text-white p-4 text-left">Data de Encaminhamento</th>
-                                    <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_encaminhamento_parecer ? \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') : '--' }}
-                                    </td>
-                                </tr>
+
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Aprovação</th>
                                     <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->aprovado_napex ? ucfirst($projeto->aprovado_napex) : '--' }}</td>
@@ -367,12 +372,24 @@
                                     <th class="bg-[#251C57] text-white p-4 text-left">Motivo</th>
                                     <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->motivo_napex ?? '--' }}</td>
                                 </tr>
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Data do Parecer</th>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ $projeto->data_parecer_napex ? \Carbon\Carbon::parse($projeto->data_parecer_napex)->format('d/m/Y') : '--' }}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
 
                         <h2 class="text-xl font-bold text-[#251C57] mb-2">Parecer do Coordenador de Curso</h2>
                         <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
                             <tbody>
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento</th>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ $projeto->data_entrega ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') : '--' }}
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left w-1/6">Aprovação</th>
                                     <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->aprovado_coordenador ? ucfirst($projeto->aprovado_coordenador) : '--' }}</td>
@@ -426,11 +443,6 @@
                                 <label>Número do Projeto</label>
                                 <input type="text" name="numero_projeto" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('numero_projeto', $projeto->numero_projeto) }}">
 
-                                <label>Data de Recebimento</label>
-                                <input type="date" name="data_recebimento_napex" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_recebimento_napex', $projeto->data_recebimento_napex) }}">
-
-                                <label>Data de Encaminhamento</label>
-                                <input type="date" name="data_encaminhamento_parecer" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_encaminhamento_parecer', $projeto->data_encaminhamento_parecer) }}">
 
                                 <label>Aprovação</label>
                                 <select name="aprovado_napex" class="w-full border-gray-300 rounded-md mb-4">
@@ -456,13 +468,13 @@
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_recebimento_napex ? \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') : '--' }}
+                                        {{ $projeto->data_entrega ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') : '--' }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Data de Encaminhamento</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_encaminhamento_parecer ? \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') : '--' }}
+                                        {{ $projeto->data_parecer_napex ? \Carbon\Carbon::parse($projeto->data_parecer_napex)->format('d/m/Y') : '--' }}
                                     </td>
                                 </tr>
                                 <tr>
@@ -476,12 +488,13 @@
                             </tbody>
                         </table>
                         
-                        <!-- Botão editar  -->
-                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}#form-parecer-napex"
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-6">
-                            Editar Parecer
-                        </a>
-
+                            <!-- Botão editar  -->
+                            @if ($status != 'aprovado')
+                                <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}#form-parecer-napex"
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-6">
+                                    Editar Parecer
+                                </a>
+                            @endif
                         @endif
                     @endif
 
@@ -499,13 +512,13 @@
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_recebimento_napex ? \Carbon\Carbon::parse($projeto->data_recebimento_napex)->format('d/m/Y') : '--' }}
+                                        {{ $projeto->data_entrega ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') : '--' }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Data de Encaminhamento</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        {{ $projeto->data_encaminhamento_parecer ? \Carbon\Carbon::parse($projeto->data_encaminhamento_parecer)->format('d/m/Y') : '--' }}
+                                        {{ $projeto->data_parecer_napex ? \Carbon\Carbon::parse($projeto->data_parecer_napex)->format('d/m/Y') : '--' }}
                                     </td>
                                 </tr>
                                 <tr>
@@ -532,9 +545,6 @@
                                 <label>Motivo</label>
                                 <textarea name="motivo_coordenador" class="w-full border-gray-300 rounded-md mb-4">{{ old('motivo_coordenador', $projeto->motivo_coordenador) }}</textarea>
 
-                                <label>Data do Parecer</label>
-                                <input type="date" name="data_parecer_coordenador" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_parecer_coordenador', $projeto->data_parecer_coordenador) }}">
-
                                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">Enviar Parecer</button>
                             </form>
                         @else
@@ -543,6 +553,12 @@
                         <h2 class="text-xl font-bold text-[#251C57] mb-2">Parecer do Coordenador de Curso</h2>
                         <table class="min-w-full w-full border border-gray-300 rounded-lg mb-4">
                             <tbody>
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Data de Recebimento</th>
+                                    <td class="bg-white p-4 border-b border-gray-300">
+                                        {{ $projeto->data_entrega ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') : '--' }}
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left w-1/4">Aprovação</th>
                                     <td class="bg-white p-4 border-b border-gray-300">{{ $projeto->aprovado_coordenador ? ucfirst($projeto->aprovado_coordenador) : '--' }}</td>
@@ -560,12 +576,13 @@
                             </tbody>
                         </table>
 
-                        <!-- Botão de Editar -->
-                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
-                            Editar Parecer
-                        </a>
-
+                            <!-- Botão de Editar -->
+                        @if($status != 'aprovado')
+                            <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
+                                Editar Parecer
+                            </a>
+                        @endif
 
                         @endif
                     @endif

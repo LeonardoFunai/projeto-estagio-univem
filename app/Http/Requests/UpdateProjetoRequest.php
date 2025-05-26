@@ -25,8 +25,8 @@ class UpdateProjetoRequest extends FormRequest
 
         if ($role === 'napex') {
             return [
-                'data_recebimento_napex' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
-                'data_encaminhamento_parecer' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+                'data_entrega' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+                'data_parecer_napex' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
 
                 'titulo' => 'required|string|max:255',
                 'periodo' => 'required|string|max:50',
@@ -91,8 +91,6 @@ class UpdateProjetoRequest extends FormRequest
     public function messages()
     {
         return [
-            'data_recebimento_napex.regex' => 'A data de recebimento deve estar no formato DD-MM-AAAA.',
-            'data_encaminhamento_parecer.regex' => 'A data de encaminhamento deve estar no formato DD-MM-AAAA.',
 
 
             'titulo.required' => 'O título do projeto é obrigatório.',
@@ -137,11 +135,9 @@ class UpdateProjetoRequest extends FormRequest
 
             // Valida ano e formato das datas
             $datas = [
-                'data_recebimento_napex' => $this->input('data_recebimento_napex'),
-                'data_encaminhamento_parecer' => $this->input('data_encaminhamento_parecer'),
                 'data_inicio' => $this->input('data_inicio'),
                 'data_fim' => $this->input('data_fim'),
-                'data_parecer_coordenador' => $this->input('data_parecer_coordenador'),
+
             ];
 
             foreach ($datas as $campo => $valor) {

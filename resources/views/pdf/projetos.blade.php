@@ -9,6 +9,9 @@
                 margin-top: 120px;
                 margin-bottom: 80px;
             }
+            tbody tr {
+                border-bottom: 1px solid #999;
+            }
 
             body {
                 font-family: Arial, sans-serif;
@@ -87,7 +90,7 @@
     <header>
         <div class="header">
             <table width="100%" style="vertical-align: middle; border: none;">
-                <tr>
+                <tr style = 'border-bottom: none'>
                     <td style="width: 50px;">
                         <img src="{{ public_path('img/site/logo-pdf.png') }}" style="height: 50px;">
                     </td>

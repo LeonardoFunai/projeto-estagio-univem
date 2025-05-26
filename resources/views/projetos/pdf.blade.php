@@ -283,16 +283,21 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td >
-                        <strong>Data recebimento da Proposta de Projeto de Extensão pelo NAPEx</strong>
-                        {{ $projeto->data_recebimento_napex ?? '____/____/______' }}
-                    </td>
-                    <td>
-                        <strong>Data de Encaminhamento da Proposta do Projeto de Extensão para os devidos pareceres</strong>
-                        {{ $projeto->data_encaminhamento_parecer ?? '____/____/______' }}
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <strong>Data recebimento da Proposta de Projeto de Extensão pelo NAPEx</strong><br>
+                    {{ $projeto->data_entrega 
+                        ? \Carbon\Carbon::parse($projeto->data_entrega)->format('d/m/Y') 
+                        : '__/__/__' }}
+                </td>
+                <td>
+                    <strong>Data de Encaminhamento da Proposta do Projeto de Extensão para os devidos pareceres</strong><br>
+                    {{ $projeto->data_parecer_napex 
+                        ? \Carbon\Carbon::parse($projeto->data_parecer_napex)->format('d/m/Y') 
+                        : '__/__/__' }}
+                </td>
+            </tr>
+
 
                 <tr>
                     <td colspan="2">
@@ -303,7 +308,7 @@
 
                         <strong>Exposição de motivos:</strong>
                         {{ $projeto->motivo_napex ?? '' }}
-                        Data {{ formatarData($projeto->data_aprovacao_napex) }}.
+                        Data {{ formatarData($projeto->data_parecer_napex) }}.
                     </td>
                 </tr>
 

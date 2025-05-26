@@ -28,8 +28,8 @@
             'recursos',
             'resultados_esperados',
             'numero_projeto',
-            'data_recebimento_napex',
-            'data_encaminhamento_parecer',
+            'data_entrega',
+            'data_parecer_napex',
             'aprovado_napex',
             'motivo_napex',
             'aprovado_coordenador',
@@ -40,6 +40,12 @@
             'napex_aprovado',        
             'coordenacao_aprovado',
             'professor_id',
+        ];
+
+        protected $casts = [
+        'data_entrega'      => 'datetime',
+        'data_parecer_napex' => 'datetime',
+        'data_parecer_coordenador'    => 'datetime',
         ];
         
         public function alunos()

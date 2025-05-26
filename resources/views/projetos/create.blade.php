@@ -277,7 +277,7 @@
         const div = document.createElement('div');
         div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
         div.innerHTML = `
-            <input type="text" name="cronograma[${index}][atividade]" class="form-control" placeholder="Título da Atividade" required>
+            <input type="text" name="cronograma[${index}][atividade]" class="form-control" placeholder="Título da Atividade" maxlength="100" required>
             <select name="cronograma[${index}][mes]" class="form-control" required>
                 <option value="">Selecione o mês</option>
                 ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('')}

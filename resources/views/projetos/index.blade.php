@@ -264,7 +264,7 @@
                                             @endphp
 
                                             <!-- {{-- Sempre exibe Visualizar --}} -->
-                                            @if($isAluno || $isProfessor)
+                                            @if(($isAluno || $isProfessor) || ($isNapexOrCoord && $status == 'aprovado'))
                                                 <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar" class="text-blue-600 hover:underline">
                                                     <img src="{{ asset('img/site/btn-visualizar.png') }}" alt="Visualizar" width="26" height="26">
                                                 </a>
