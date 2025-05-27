@@ -321,7 +321,12 @@
                                     </td>
                                 </tr>
 
-
+                                <tr>
+                                    <th class="bg-[#251C57] text-white p-4 text-left">Recursos Necessários</th>
+                                    <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                        {{ $projeto->recursos }}
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th class="bg-[#251C57] text-white p-4 text-left">Resultados Esperados</th>
                                     <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">

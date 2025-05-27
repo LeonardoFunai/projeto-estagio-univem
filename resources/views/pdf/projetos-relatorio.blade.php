@@ -120,7 +120,7 @@
     </div>
 
     <div style="text-align: center;">
-        <p>Relatório gerado por: <strong>{{ $usuario }}</strong> em {{ now()->format('d/m/Y H:i') }}</p>
+        <p>Relatório gerado por: <strong>{{ auth()->user()->name; }}</strong> em {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 
     @if (!empty($filtros))

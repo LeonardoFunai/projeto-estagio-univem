@@ -232,7 +232,7 @@
             <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                 ${professorOptions}
             </select>
-            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional) maxlength="100"">
+            <input maxlength="100" type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional) ">
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('professores-wrapper').appendChild(div);
@@ -311,7 +311,7 @@
             <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
                 ${professorOptions}
             </select>
-            <input type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" value="${professor.area ?? ''}" placeholder="Área (opcional) maxlength="100" ">
+            <input maxlength="100" type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md mb-2" value="${professor.area ?? ''}" placeholder="Área (opcional)  ">
             <button type="button" onclick="this.parentNode.remove(); reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
         `;
         document.getElementById('professores-wrapper').appendChild(div);
