@@ -294,29 +294,41 @@
                                     </td>
                                 </tr>
 
-
                                 <tr>
-                                    <th class="bg-[#251C57] text-white p-4 text-left">Cronograma</th>
+                                    <th class="bg-[#251C57] text-white p-4 text-left align-top">Cronograma</th>
                                     <td class="bg-white p-4 border-b border-gray-300">
-                                        @if ($projeto->cronogramas && $projeto->cronogramas->count())
-                                            <table class="table-auto w-full">
-                                                <thead>
+                                        @if ($projeto->cronogramas && $projeto->cronogramas->count() > 0)
+                                            <table class="table-auto w-full text-sm">
+                                                <thead class="bg-gray-100">
                                                     <tr>
-                                                        <th class="text-left py-2 px-3 border-b">Atividade</th>
-                                                        <th class="text-left py-2 px-3 border-b">Mês</th>
+                                                        <th class="text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">Atividade</th>
+                                                        <th class="text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">Período</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($projeto->cronogramas as $cronograma)
-                                                        <tr>
-                                                            <td class="py-2 px-3 border-b">{{ $cronograma->atividade }}</td>
-                                                            <td class="py-2 px-3 border-b">{{ $cronograma->mes }}</td>
+                                                    @foreach ($projeto->cronogramas as $itemCronograma)
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="py-2 px-3 border-b border-gray-200">{{ $itemCronograma->atividade }}</td>
+                                                            <td class="py-2 px-3 border-b border-gray-200">
+                                                                @if (!empty($itemCronograma->mes_inicio) && !empty($itemCronograma->mes_fim))
+                                                                    @if ($itemCronograma->mes_inicio == $itemCronograma->mes_fim)
+                                                                        {{ $itemCronograma->mes_inicio }}
+                                                                    @else
+                                                                        {{ $itemCronograma->mes_inicio }} a {{ $itemCronograma->mes_fim }}
+                                                                    @endif
+                                                                @elseif (!empty($itemCronograma->mes_inicio))
+                                                                    {{-- Caso apenas o mês de início esteja definido --}}
+                                                                    {{ $itemCronograma->mes_inicio }}
+                                                                @else
+                                                                    <span class="text-gray-500">Período não definido</span>
+                                                                @endif
+                                                            </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
                                         @else
-                                            Nenhum cronograma registrado.
+                                            <p class="text-gray-500">Nenhum cronograma registrado.</p>
                                         @endif
                                     </td>
                                 </tr>

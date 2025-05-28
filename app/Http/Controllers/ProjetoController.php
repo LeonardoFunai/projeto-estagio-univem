@@ -262,11 +262,27 @@ class ProjetoController extends Controller
             }
         }
 
-        // Salva os itens do cronograma relacionados, se houver
-        if ($request->has('cronograma')) {
-            foreach ($request->cronograma as $cronogramaItem) { // Renomeado para $cronogramaItem
-                if (!empty($cronogramaItem['atividade']) && !empty($cronogramaItem['mes'])) { // Exemplo
-                    $projeto->cronogramas()->create($cronogramaItem);
+        if ($request->has('cronograma') && is_array($request->cronograma)) {
+            foreach ($request->cronograma as $itemDataCronograma) {
+                // A validação do Laravel já deve ter tratado campos obrigatórios.
+                // Esta verificação !empty() é uma segurança adicional se, por exemplo,
+                // nem todos os campos fossem estritamente 'required' pela validação em todos os cenários.
+                // Se a validação já garante que são 'required', este if pode ser simplificado
+                // ou focar em outras lógicas de negócio, se houver.
+
+                if (!empty($itemDataCronograma['atividade']) &&
+                    !empty($itemDataCronograma['mes_inicio']) &&
+                    !empty($itemDataCronograma['mes_fim'])) {
+
+                    // Cria o item de cronograma associado ao projeto.
+                    // Certifique-se de que seu modelo Cronograma tenha 'atividade', 'mes_inicio', 'mes_fim'
+                    // (e 'projeto_id', que é tratado pela relação) no array $fillable.
+                    $projeto->cronogramas()->create([
+                        'atividade'  => $itemDataCronograma['atividade'],
+                        'mes_inicio' => $itemDataCronograma['mes_inicio'],
+                        'mes_fim'    => $itemDataCronograma['mes_fim'],
+                        // Adicione quaisquer outros campos do cronograma que você precise salvar aqui.
+                    ]);
                 }
             }
         }

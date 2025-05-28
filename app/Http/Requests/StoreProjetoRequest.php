@@ -14,6 +14,7 @@ class StoreProjetoRequest extends FormRequest
     public function rules()
     {
         return [
+            $todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
 
             'data_entrega' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
             'data_parecer_napex' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
@@ -68,7 +69,8 @@ class StoreProjetoRequest extends FormRequest
             // Cronograma
             'cronograma' => 'nullable|array|min:1|max:10',
             'cronograma.*.atividade' => 'required|string|max:100',
-            'cronograma.*.mes' => 'required|string|in:Fevereiro,Março,Abril,Maio,Junho,Julho,Agosto,Setembro,Outubro,Novembro',
+            'cronograma.*.mes_inicio' => 'required|string|in:'.implode(',', $todosOsMeses), // $todosOsMeses precisa estar disponível
+            'cronograma.*.mes_fim' => 'required|string|in:'.implode(',', $todosOsMeses), // Validar também se mes_fim é >= mes_inicio
         ];
     }
 

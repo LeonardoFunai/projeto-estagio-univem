@@ -271,38 +271,95 @@
                 @endif
 
                 <!-- Campo: Cronograma -->
-                <label class="block mb-2">6. Cronograma</label>
+                <label class="block mb-2 text-lg font-semibold text-blue-700">6. Cronograma</label>
                 <div id="cronograma-wrapper">
                     @php
-                        $cronogramaVelho = old('cronograma', $projeto->cronogramas->toArray());
+                        // Garante que $projeto->cronogramas seja uma coleção (mesmo que vazia)
+                        // e mapeia para o formato esperado, incluindo mes_inicio e mes_fim
+                        $cronogramasDoProjeto = $projeto->cronogramas ? $projeto->cronogramas->map(function($c) {
+                            return [
+                                // 'id' => $c->id, // Mantenha se você usa o ID do cronograma no frontend
+                                'atividade' => $c->atividade,
+                                'mes_inicio' => $c->mes_inicio, // Assumindo que seu modelo Cronograma agora tem mes_inicio
+                                'mes_fim' => $c->mes_fim       // Assumindo que seu modelo Cronograma agora tem mes_fim
+                            ];
+                        })->toArray() : [];
+                        $cronogramaVelho = old('cronograma', $cronogramasDoProjeto);
                     @endphp
 
-                    @foreach ($cronogramaVelho as $index => $cronograma)
-                        @php
-                            $atividade = is_array($cronograma) ? ($cronograma['atividade'] ?? '') : ($cronograma->atividade ?? '');
-                            $mesSelecionado = is_array($cronograma) ? ($cronograma['mes'] ?? '') : ($cronograma->mes ?? '');
-                        @endphp
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <input type="text" name="cronograma[{{ $index }}][atividade]" maxlength="100" value="{{ $atividade }}"
-                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'readonly disabled' : '' }} required>
+                    @if (!empty($cronogramaVelho))
+                        @foreach ($cronogramaVelho as $index => $cronogramaItem)
+                            @php
+                                // Acessa os dados de forma segura, seja de old() (array) ou do modelo (objeto)
+                                $atividadeValue = $cronogramaItem['atividade'] ?? '';
+                                $mesInicioSelecionado = $cronogramaItem['mes_inicio'] ?? '';
+                                $mesFimSelecionado = $cronogramaItem['mes_fim'] ?? '';
+                            @endphp
+                            <div class="border p-4 rounded-md mb-4 cronograma-item">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-semibold">Atividade do Cronograma {{ $index + 1 }}</h4>
+                                    @if(!$disableAlunoFields)
+                                        <button type="button" onclick="this.closest('.cronograma-item').remove(); reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                                    @endif
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                    <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $atividadeValue }}"
+                                        class="form-input w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'bg-gray-100 opacity-70 cursor-not-allowed' : '' }}"
+                                        {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="100" required placeholder="Título da Atividade">
 
-                            <select name="cronograma[{{ $index }}][mes]"
-                                class="w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
-                                {{ $disableAlunoFields ? 'disabled' : '' }} required>
-                                <option value="">Selecione o mês</option>
-                                @foreach (['Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro'] as $mes)
-                                    <option value="{{ $mes }}" {{ $mesSelecionado === $mes ? 'selected' : '' }}>{{ $mes }}</option>
-                                @endforeach
-                            </select>
+                                    <select name="cronograma[{{ $index }}][mes_inicio]"
+                                            class="form-select w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'bg-gray-100 opacity-70 cursor-not-allowed' : '' }}"
+                                            {{ $disableAlunoFields ? 'disabled' : '' }} required>
+                                        <option value="">-- Mês de Início --</option>
+                                        @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
+                                            <option value="{{ $m }}" {{ $mesInicioSelecionado === $m ? 'selected' : '' }}>{{ $m }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <select name="cronograma[{{ $index }}][mes_fim]"
+                                            class="form-select w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'opacity-50' : '' }}"
+                                            {{ $disableAlunoFields ? 'disabled' : '' }} required>
+                                        <option value="">-- Mês de Fim --</option>
+                                        @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
+                                            <option value="{{ $m }}" {{ $mesFimSelecionado === $m ? 'selected' : '' }}>{{ $m }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        {{-- Opcional: Mostrar o primeiro item vazio se não houver dados 'old' nem do projeto --}}
+                        {{-- Se você quiser que o primeiro item sempre apareça, mesmo na edição de um projeto sem cronogramas,
+                            você pode descomentar e adaptar o bloco abaixo, similar ao formulário de criação.
+                            Caso contrário, o wrapper começará vazio e o usuário usará o botão "+ Adicionar".
+                        <div class="border p-4 rounded-md mb-4 cronograma-item">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-semibold">Atividade do Cronograma 1</h4>
+                                Nenhum botão de remover para o primeiro item se ele for estático
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                <input type="text" name="cronograma[0][atividade]" class="form-input w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'bg-gray-100 opacity-70 cursor-not-allowed' : '' }}" {{ $disableAlunoFields ? 'readonly disabled' : '' }} maxlength="100" required placeholder="Título da Atividade">
+                                <select name="cronograma[0][mes_inicio]" class="form-select w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'bg-gray-100 opacity-70 cursor-not-allowed' : '' }}" {{ $disableAlunoFields ? 'disabled' : '' }} required>
+                                    <option value="">-- Mês de Início --</option>
+                                    @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
+                                        <option value="{{ $m }}">{{ $m }}</option>
+                                    @endforeach
+                                </select>
+                                <select name="cronograma[0][mes_fim]" class="form-select w-full border-gray-300 rounded-md {{ $disableAlunoFields ? 'bg-gray-100 opacity-70 cursor-not-allowed' : '' }}" {{ $disableAlunoFields ? 'disabled' : '' }} required>
+                                    <option value="">-- Mês de Fim --</option>
+                                    @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
+                                        <option value="{{ $m }}">{{ $m }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                    @endforeach
+                        --}}
+                    @endif
                 </div>
 
-                <!-- Botão: Adicionar novo cronograma -->
                 @if(!$disableAlunoFields)
                     <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">
-                        + Adicionar Cronograma
+                        + Adicionar Atividade ao Cronograma
                     </button>
                 @endif
 
@@ -360,94 +417,162 @@
     </div>
 
     <script>
-    const professorOptions = `
-        <option value="">-- Selecione um professor --</option>
-        ${Array.from(document.querySelector('select[name^="professores["][name$="[id]"]')?.options || [])
-            .slice(1)
-            .map(option => `<option value="${option.value}">${option.text}</option>`)
-            .join('')}
-    `;
+        // Contadores para garantir índices únicos ao adicionar dinamicamente ANTES da reindexação
+        // A contagem real para exibição (Aluno 1, Aluno 2) e para os índices do array após remoção
+        // será feita pela função reindexarCampos baseada nos elementos existentes.
+        let initialProfessorCount = {{ count(old('professores', $projeto->professores->toArray())) }};
+        let initialAlunoCount = {{ count(old('alunos', $projeto->alunos->toArray())) }};
+        let initialAtividadeCount = {{ count(old('atividades', $projeto->atividades->toArray())) }};
+        let initialCronogramaCount = {{ count(old('cronograma', $projeto->cronogramas->toArray())) }};
 
-    function atualizarTitulos(wrapperId, prefixo) {
-        const items = document.querySelectorAll(`#${wrapperId} > div`);
-        items.forEach((div, i) => {
-            const title = div.querySelector('h4');
-            if (title && prefixo) {
-                title.textContent = `${prefixo} ${i + 1}`;
+        // Opções de professores (do seu script original, mas mais robusto se o select não existir inicialmente)
+        const selectProfessoresEl = document.querySelector('select[name^="professores["][name$="[id]"]');
+        const professorOptions = selectProfessoresEl ? `
+            <option value="">-- Selecione um professor --</option>
+            ${Array.from(selectProfessoresEl.options)
+                .slice(1) // Pula a primeira opção "-- Selecione um professor --" do original
+                .map(option => `<option value="${option.value}">${option.text}</option>`)
+                .join('')}
+        ` : '<option value="">Professores não carregados</option>';
+
+        // Lista de todos os meses para os selects do cronograma
+        const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
+
+        function reindexarCampos(wrapperId, prefixoH4, nameBase) {
+            const items = document.querySelectorAll(`#${wrapperId} > .mb-4, #${wrapperId} > .cronograma-item`); // Suporta ambas as classes
+            items.forEach((div, i) => {
+                const h4 = div.querySelector('h4');
+                if (h4 && prefixoH4) {
+                    h4.textContent = `${prefixoH4} ${i + 1}`;
+                } else if (h4 && wrapperId === 'cronograma-wrapper' && !prefixoH4) {
+                    h4.textContent = `Atividade do Cronograma ${i + 1}`;
+                }
+
+                const inputsEselects = div.querySelectorAll('input[name], select[name], textarea[name]');
+                inputsEselects.forEach(field => {
+                    const nameAttr = field.getAttribute('name');
+                    const matches = nameAttr.match(/\[\d+\]\[(\w+)]$/); // Captura a chave final
+                    if (matches && matches[1]) {
+                        field.setAttribute('name', `${nameBase}[${i}][${matches[1]}]`);
+                    }
+                });
+            });
+        }
+
+        document.getElementById('add-professor')?.addEventListener('click', () => {
+            const wrapper = document.getElementById('professores-wrapper');
+            const currentItemCount = wrapper.querySelectorAll('.mb-4').length; // Conta os itens existentes
+            if (currentItemCount < 9) { // Limite de exemplo
+                const div = document.createElement('div');
+                div.classList.add('mb-4', 'border', 'p-3', 'rounded-md'); // Adicionando classes para consistência
+                // Usamos currentItemCount para o próximo índice, pois a reindexação ajustará
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold">Professor ${currentItemCount + 1}</h4>
+                        <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    </div>
+                    <select name="professores[${currentItemCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
+                        ${professorOptions}
+                    </select>
+                    <input type="text" name="professores[${currentItemCount}][area]" class="w-full border-gray-300 rounded-md" maxlength="100" placeholder="Área (opcional)">
+                `;
+                wrapper.appendChild(div);
+                reindexarCampos('professores-wrapper', 'Professor', 'professores');
             }
         });
-    }
 
-    document.getElementById('add-professor')?.addEventListener('click', () => {
-        const professorCount = document.querySelectorAll('#professores-wrapper > div').length;
-        if (professorCount < 9) {
+        document.getElementById('add-aluno')?.addEventListener('click', () => {
+            const wrapper = document.getElementById('alunos-wrapper');
+            const currentItemCount = wrapper.querySelectorAll('.mb-4').length;
+            if (currentItemCount < 9) { // Limite de exemplo
+                const div = document.createElement('div');
+                div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold">Aluno ${currentItemCount + 1}</h4>
+                        <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    </div>
+                    <input type="text" name="alunos[${currentItemCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" maxlength="100" required>
+                    <input type="text" name="alunos[${currentItemCount}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" maxlength="50" required>
+                    <input type="text" name="alunos[${currentItemCount}][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" maxlength="100" required>
+                `;
+                wrapper.appendChild(div);
+                reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
+            }
+        });
+
+        document.getElementById('add-atividade')?.addEventListener('click', () => {
+            const wrapper = document.getElementById('atividades-wrapper');
+            const currentItemCount = wrapper.querySelectorAll('.mb-4').length;
             const div = document.createElement('div');
-            div.classList.add('mb-4');
+            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
             div.innerHTML = `
-                <h4 class="font-semibold mb-2">Professor ${professorCount + 1}</h4>
-                <select name="professores[${professorCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                    ${professorOptions}
-                </select>
-                <input type="text" name="professores[${professorCount}][area]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional) maxlength="100"">
-                <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('professores-wrapper', 'Professor');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-semibold">Atividade ${currentItemCount + 1}</h4>
+                    <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                </div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">O que fazer?</label>
+                <textarea name="atividades[${currentItemCount}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" maxlength="1000" required></textarea>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Como fazer?</label>
+                <textarea name="atividades[${currentItemCount}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" maxlength="1000" required></textarea>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Carga horária (horas):</label>
+                <input type="number" name="atividades[${currentItemCount}][carga_horaria]" class="w-full border-gray-300 rounded-md" min="1" max="99999" placeholder="Carga horária" required>
             `;
-            document.getElementById('professores-wrapper').appendChild(div);
-            atualizarTitulos('professores-wrapper', 'Professor');
-        }
-    });
+            wrapper.appendChild(div);
+            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
+        });
 
-    document.getElementById('add-aluno')?.addEventListener('click', () => {
-        const alunoCount = document.querySelectorAll('#alunos-wrapper > div').length;
-        if (alunoCount < 9) {
-            const div = document.createElement('div');
-            div.classList.add('mb-4');
-            div.innerHTML = `
-                <h4 class="font-semibold mb-2">Aluno ${alunoCount + 1}</h4>
-                <input type="text" name="alunos[${alunoCount}][nome]" class="form-control mb-2" placeholder="Nome do aluno" maxlength="100" required>
-                <input type="text" name="alunos[${alunoCount}][ra]" class="form-control mb-2" placeholder="RA" maxlength="50" required>
-                <input type="text" name="alunos[${alunoCount}][curso]" class="form-control mb-2" placeholder="Curso" maxlength="100" required>
-                <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('alunos-wrapper', 'Aluno');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
+        // MODIFICADO: Adicionar Cronograma com Mês de Início e Mês de Fim
+        document.getElementById('add-cronograma')?.addEventListener('click', () => {
+            const wrapper = document.getElementById('cronograma-wrapper');
+            const currentItemCount = wrapper.querySelectorAll('.cronograma-item').length;
+            const divWrapper = document.createElement('div');
+            divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
+
+            divWrapper.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-semibold">Atividade do Cronograma ${currentItemCount + 1}</h4>
+                    <button type="button" onclick="this.closest('.cronograma-item').remove(); reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                    <input type="text" name="cronograma[${currentItemCount}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade do Cronograma" maxlength="100" required>
+                    <select name="cronograma[${currentItemCount}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
+                        <option value="">-- Mês de Início --</option>
+                        ${mesesOptionsHtml}
+                    </select>
+                    <select name="cronograma[${currentItemCount}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
+                        <option value="">-- Mês de Fim --</option>
+                        ${mesesOptionsHtml}
+                    </select>
+                </div>
             `;
-            document.getElementById('alunos-wrapper').appendChild(div);
-            atualizarTitulos('alunos-wrapper', 'Aluno');
-        }
-    });
+            wrapper.appendChild(divWrapper);
+            reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
+        });
 
-    document.getElementById('add-atividade')?.addEventListener('click', () => {
-        const atividadeCount = document.querySelectorAll('#atividades-wrapper > div').length;
-        const div = document.createElement('div');
-        div.classList.add('mb-4');
-        div.innerHTML = `
-            <h4 class="font-semibold mb-2">Atividade ${atividadeCount + 1}</h4>
-            <label class="block mb-1">O que fazer</label>
-            <textarea name="atividades[${atividadeCount}][o_que_fazer]" class="form-control mb-2" placeholder="O que fazer?" required></textarea>
-            <label class="block mb-1">Como fazer</label>
-            <textarea name="atividades[${atividadeCount}][como_fazer]" class="form-control mb-2" placeholder="Como fazer?" required></textarea>
-            <label class="block mb-1">Carga horária (horas)</label>
-            <input type="number" name="atividades[${atividadeCount}][carga_horaria]" class="form-control mb-2" placeholder="Carga horária" required>
-            <button type="button" onclick="this.parentNode.remove(); atualizarTitulos('atividades-wrapper', 'Atividade');" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
-        `;
-        document.getElementById('atividades-wrapper').appendChild(div);
-        atualizarTitulos('atividades-wrapper', 'Atividade');
-    });
+        // Validação de Data (do seu script original)
+        document.getElementById('form-projeto')?.addEventListener('submit', function (e) {
+            const inicio = document.getElementById('data_inicio').value;
+            const fim = document.getElementById('data_fim').value;
+            if (inicio && fim && new Date(inicio) > new Date(fim)) {
+                e.preventDefault();
+                alert('A data de início deve ser anterior ou igual à data de término.');
+            }
+        });
 
-    document.getElementById('add-cronograma')?.addEventListener('click', () => {
-        const cronogramaCount = document.querySelectorAll('#cronograma-wrapper > div').length;
-        const div = document.createElement('div');
-        div.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-4');
-        div.innerHTML = `
-            <input type="text" name="cronograma[${cronogramaCount}][atividade]" class="form-control" placeholder="Título da Atividade" maxlength="100" required>
-            <select name="cronograma[${cronogramaCount}][mes]" class="form-control" required>
-                <option value="">Selecione o mês</option>
-                ${['Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro'].map(m => `<option value="${m}">${m}</option>`).join('')}
-            </select>
-            <button type="button" onclick="this.parentNode.remove();" class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded">Remover</button>
-        `;
-        document.getElementById('cronograma-wrapper').appendChild(div);
-    });
+        // Chama reindexar para todos os campos no carregamento inicial para garantir que os H4s
+        // e os nomes dos campos dos itens carregados pelo PHP/Blade estejam corretos.
+        // É importante que o HTML gerado pelo Blade para os itens existentes também
+        // tenha a classe 'cronograma-item' (para cronogramas) ou 'mb-4' (para os outros) no div principal do item.
+        document.addEventListener('DOMContentLoaded', function() {
+            reindexarCampos('professores-wrapper', 'Professor', 'professores');
+            reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
+            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
+            reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
+        });
 
-
-</script>
+    </script>
 
 
 </x-app-layout>
