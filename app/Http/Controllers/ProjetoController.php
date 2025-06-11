@@ -165,12 +165,9 @@ class ProjetoController extends Controller
     public function create()
     {
         // Verifica se o usuário autenticado é um aluno
-        if (auth()->user()->role !== 'aluno') {
-            abort(403, 'Apenas alunos podem criar projetos.'); // Retorna erro 403 (Proibido)
-        }
+        $this->authorize('create', Projeto::class); // Checa a permissão. Lança 403 se falhar.
 
-        // Busca todos os usuários com papel de 'professor' para popular um seletor no formulário
-        $professores = User::where('role', 'professor')->orderBy('name')->get(); // Adicionado orderBy
+        $professores = User::where('role', 'professor')->orderBy('name')->get();
         return view('projetos.create', compact('professores'));
     }
 
@@ -184,9 +181,9 @@ class ProjetoController extends Controller
     public function store(StoreProjetoRequest $request)
     {
         // Verifica se o usuário autenticado é um aluno
-        if (auth()->user()->role !== 'aluno') {
-            abort(403, 'Apenas alunos podem cadastrar projetos.');
-        }
+        // A Policy 'create' é reutilizada aqui, pois a permissão é a mesma.
+        $this->authorize('create', Projeto::class);
+
 
         $data = $request->validated(); // Obtém os dados validados do request
         $data['status'] = 'editando'; // Define o status inicial do projeto
@@ -300,6 +297,10 @@ class ProjetoController extends Controller
     public function show($id)
     {
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user'])->findOrFail($id);
+
+        // Adicione esta linha para verificar a permissão ANTES de mostrar a view.
+        $this->authorize('view', $projeto);
+
         return view('projetos.show', compact('projeto'));
     }
 
@@ -313,53 +314,17 @@ class ProjetoController extends Controller
     public function edit($id)
     {
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
-        $user = auth()->user();
-        $userRole = $user->role;
-
-        // Regra de negócio: Bloqueia edição se NAPEx ou Coordenador já aprovou o projeto
-        if ($projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
-            // Adiciona verificação para permitir que NAPEx/Coordenador editem campos específicos de avaliação mesmo após aprovação de um deles
-            // Esta lógica de redirecionamento pode ser muito restritiva se eles precisarem corrigir algo no parecer.
-            // Talvez uma view de "avaliação" separada seja melhor do que o "edit" geral.
-            // Por ora, mantendo a lógica original:
-            if (!in_array($userRole, ['napex', 'coordenador'])) { // Permite que napex/coord vejam o form mesmo aprovado por um, mas não editem campos do projeto.
-                 return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto já possui aprovação e não pode mais ser editado por você.');
-            }
-        }
         
-        // Lógica de permissão específica para alunos
-        if ($userRole === 'aluno') {
-            if ($projeto->user_id !== $user->id) { // Aluno só pode editar seus próprios projetos
-                return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para editar este projeto.');
-            }
-            if ($projeto->status === 'entregue' || $projeto->status === 'aprovado') { // Aluno não pode editar se já entregue ou aprovado
-                return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto foi entregue ou aprovado e não pode mais ser editado.');
-            }
-        }
-
-        // Lógica de permissão específica para professores
-        if ($userRole === 'professor') {
-            $isProfessorLinked = $projeto->professores->contains('user_id', $user->id);
-            if (!$isProfessorLinked) { // Professor só edita projetos aos quais está vinculado
-                return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para editar este projeto.');
-            }
-            // Professor (assim como aluno) não pode editar se o projeto já foi 'entregue' ou 'aprovado'.
-            // A aprovação por NAPEx/Coordenador já bloqueia acima.
-            if ($projeto->status === 'entregue' || $projeto->status === 'aprovado') {
-                 return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto foi entregue ou aprovado e não pode mais ser editado.');
-            }
-        }
+        // A Policy 'update' já contém toda a lógica de quem pode editar e quando.
+        $this->authorize('update', $projeto);
         
-        // Busca todos os usuários com papel de 'professor' para o formulário de edição
-        $professores = User::where('role', 'professor')->orderBy('name')->get(); // Renomeado para evitar conflito com $projeto->professores
-
-        return view('projetos.edit', compact('projeto', 'professores')); // Passa a variável renomeada
+        $professores = User::where('role', 'professor')->orderBy('name')->get();
+        return view('projetos.edit', compact('projeto', 'professores'));
     }
 
     /**
      * Atualiza um projeto existente no banco de dados.
-     * Utiliza UpdateProjetoRequest para validação.
-     * Adota a estratégia de "delete and recreate" para relações (alunos, professores, etc.).
+     * Utiliza UpdateProjetoRequest para validação e a ProjetoPolicy para autorização.
      *
      * @param  \App\Http\Requests\UpdateProjetoRequest  $request
      * @param  string  $id
@@ -367,117 +332,72 @@ class ProjetoController extends Controller
      */
     public function update(UpdateProjetoRequest $request, $id)
     {
-        $projeto = Projeto::with('professores')->findOrFail($id); // Carrega relação para verificação
-        $user = auth()->user();
-        $userRole = $user->role;
-    
-        // Lógica de permissão para atualização (similar ao edit)
-        // Aluno não pode atualizar se status for 'entregue' ou 'aprovado' ou se não for o dono.
-        if ($userRole === 'aluno') {
-            if ($projeto->user_id !== $user->id) {
-                 return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para atualizar este projeto.');
-            }
-            if ($projeto->status === 'entregue' || $projeto->status === 'aprovado') {
-                return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto foi entregue ou aprovado e não pode mais ser atualizado.');
-            }
-        }
-        // Professor não pode atualizar se não estiver vinculado, ou se status for 'entregue' ou 'aprovado'.
-        if ($userRole === 'professor') {
-            $isProfessorLinked = $projeto->professores->contains('user_id', $user->id);
-            if (!$isProfessorLinked) {
-                return redirect()->route('projetos.index')->with('error', 'Você não tem permissão para atualizar este projeto.');
-            }
-            if ($projeto->status === 'entregue' || $projeto->status === 'aprovado') {
-                return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto foi entregue ou aprovado e não pode mais ser atualizado.');
-            }
-        }
+        // 1. Carrega o projeto que será atualizado
+        $projeto = Projeto::with('professores')->findOrFail($id);
 
-        // NAPEX e Coordenador podem ter campos específicos que eles podem atualizar (campos de avaliação).
-        // Outros campos do projeto podem ser bloqueados para eles aqui se necessário,
-        // dependendo das regras de negócio para quem pode alterar o quê após a entrega.
-        // A validação em UpdateProjetoRequest deve refletir isso.
-
-        $data = $request->validated(); // Obtém dados validados
-
-        // Sanitização para campos de data que podem vir vazios ou com formato incorreto do formulário
-        // e não são obrigatórios pela UpdateProjetoRequest para todos os cenários.
-        // Se UpdateProjetoRequest já garante o formato YYYY-MM-DD para esses campos quando presentes, esta sanitização pode ser redundante.
-        foreach (['data_entrega', 'data_parecer_napex', 'data_parecer_coordenador'] as $campo) {
-            if (isset($data[$campo]) && !empty($data[$campo]) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $data[$campo])) {
-                // Se o campo está presente, não está vazio, mas não bate com YYYY-MM-DD, anula para evitar erro no BD.
-                // Ou poderia tentar converter para YYYY-MM-DD se o formato de entrada for conhecido e diferente.
-                unset($data[$campo]);
-            } elseif (isset($data[$campo]) && empty($data[$campo])) {
-                // Se o campo foi enviado como vazio, garante que seja nulo no banco.
-                $data[$campo] = null;
-            }
-        }
+        // 2. Autoriza a ação usando a ProjetoPolicy.
+        //    Esta única linha substitui todos os 'if's de permissão.
+        $this->authorize('update', $projeto);
         
-        $projeto->update($data); // Atualiza os dados principais do projeto
+        // 3. Pega os dados validados do formulário
+        $data = $request->validated();
+        
+        // 4. Atualiza os campos principais do projeto
+        $projeto->update($data);
     
-        // Estratégia "Delete and recreate" para atualizar relações.
-        // Pode ser otimizado com sync() ou updateOrCreate() para cenários mais complexos,
-        // mas para formulários que reenviam todos os itens, delete/recreate é mais simples.
-
+        // 5. Atualiza as relações (alunos, professores, etc.)
+        //    A lógica de "deletar e recriar" é mantida.
+        
         // Atualizar alunos
-        if ($userRole === 'aluno' || $userRole === 'admin') { // Apenas aluno criador (ou admin) pode mudar alunos
-            $projeto->alunos()->delete();
-            if ($request->has('alunos')) {
-                foreach ($request->alunos as $alunoData) {
-                     if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) {
-                        $projeto->alunos()->create($alunoData);
-                     }
+        $projeto->alunos()->delete();
+        if ($request->has('alunos')) {
+            foreach ($request->alunos as $alunoData) {
+                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) {
+                    $projeto->alunos()->create($alunoData);
                 }
             }
         }
     
-        // Atualizar professores (similarmente, controle de quem pode alterar)
-        if ($userRole === 'aluno' || $userRole === 'admin') {
-            $projeto->professores()->delete();
-            if ($request->has('professores')) {
-                $professorIds = []; // Para verificar duplicidade
-                foreach ($request->professores as $professorData) {
-                    if (empty($professorData['id'])) continue;
+        // Atualizar professores
+        $projeto->professores()->delete();
+        if ($request->has('professores')) {
+            $professorIds = [];
+            foreach ($request->professores as $professorData) {
+                if (empty($professorData['id'])) continue;
 
-                    if (in_array($professorData['id'], $professorIds)) {
-                        return redirect()->back()->withInput()->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
-                    }
-                    $professorIds[] = $professorData['id'];
+                if (in_array($professorData['id'], $professorIds)) {
+                    return redirect()->back()->withInput()->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
+                }
+                $professorIds[] = $professorData['id'];
     
-                    $userProfessor = User::find($professorData['id']);
-                    if ($userProfessor) {
-                        $projeto->professores()->create([
-                            'user_id' => $userProfessor->id,
-                            'nome' => $userProfessor->name,
-                            'email' => $userProfessor->email,
-                            'area' => $professorData['area'] ?? null,
-                        ]);
-                    }
+                $userProfessor = User::find($professorData['id']);
+                if ($userProfessor) {
+                    $projeto->professores()->create([
+                        'user_id' => $userProfessor->id,
+                        'nome' => $userProfessor->name,
+                        'email' => $userProfessor->email,
+                        'area' => $professorData['area'] ?? null,
+                    ]);
                 }
             }
         }
     
-        // Atualizar atividades (similarmente, controle de quem pode alterar)
-        if ($userRole === 'aluno' || $userRole === 'admin') {
-            $projeto->atividades()->delete();
-            if ($request->has('atividades')) {
-                foreach ($request->atividades as $atividadeData) {
-                    if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
-                        $projeto->atividades()->create($atividadeData);
-                    }
+        // Atualizar atividades
+        $projeto->atividades()->delete();
+        if ($request->has('atividades')) {
+            foreach ($request->atividades as $atividadeData) {
+                if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
+                    $projeto->atividades()->create($atividadeData);
                 }
             }
         }
     
-        // Atualizar cronograma (similarmente, controle de quem pode alterar)
-        if ($userRole === 'aluno' || $userRole === 'admin') {
-            $projeto->cronogramas()->delete();
-            if ($request->has('cronograma')) {
-                foreach ($request->cronograma as $cronogramaItem) {
-                    if (!empty($cronogramaItem['atividade']) && !empty($cronogramaItem['mes'])) {
-                        $projeto->cronogramas()->create($cronogramaItem);
-                    }
-                }
+        // Atualizar cronograma
+        $projeto->cronogramas()->delete();
+        if ($request->has('cronograma') && is_array($request->cronograma)) {
+            foreach ($request->cronograma as $cronogramaItem) {
+                // A validação já garante que os campos existem
+                $projeto->cronogramas()->create($cronogramaItem);
             }
         }
     
@@ -493,11 +413,10 @@ class ProjetoController extends Controller
      */
 public function avaliarNapex(Request $request, $id)
 {
-    if (auth()->user()->role !== 'napex') {
-        abort(403, 'Apenas NAPEx pode avaliar nesta etapa.');
-    }
-
     $projeto = Projeto::findOrFail($id);
+
+    // Usa o método 'approveByNapex' da sua Policy
+    $this->authorize('approveByNapex', $projeto);
 
     if ($projeto->status !== 'entregue') {
         return redirect()->route('projetos.show', $projeto->id)
@@ -549,11 +468,10 @@ public function avaliarNapex(Request $request, $id)
      */
  public function avaliarCoordenador(Request $request, $id)
 {
-    if (auth()->user()->role !== 'coordenador') {
-        abort(403, 'Apenas Coordenador pode avaliar nesta etapa.');
-    }
-
     $projeto = Projeto::findOrFail($id);
+
+    // Usa o método 'approveByCoordinator' da sua Policy
+    $this->authorize('approveByCoordinator', $projeto);
 
     if ($projeto->status !== 'entregue') {
         return redirect()->route('projetos.show', $projeto->id)
@@ -635,44 +553,34 @@ public function avaliarNapex(Request $request, $id)
     }
 
     /**
-     * Exclui um projeto. Apenas o aluno que criou pode excluir.
+     * Exclui um projeto.
+     * A autorização é tratada pela ProjetoPolicy.
      *
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
+        // 1. Carrega o projeto que será excluído
         $projeto = Projeto::findOrFail($id);
-        $user = auth()->user();
 
-        // Verifica se o usuário é o dono do projeto e tem o papel 'aluno'
-        // Ou se é um admin/papel com permissão global de exclusão
-        if (!($user->role === 'aluno' && $projeto->user_id === $user->id) /* && $user->role !== 'admin' */) {
-            // Adicionar verificação de admin se necessário: || $user->role === 'admin'
-            abort(403, 'Você não tem permissão para excluir este projeto.');
-        }
+        // 2. Autoriza a exclusão usando a ProjetoPolicy.
+        //    Esta única linha substitui AMBOS os 'if's de permissão que você tinha antes.
+        $this->authorize('delete', $projeto);
 
-        // Adicionalmente, pode-se verificar se o projeto já foi aprovado ou está em fase de avaliação,
-        // para impedir a exclusão nesses casos, dependendo da regra de negócio.
-        if ($projeto->status === 'aprovado' || $projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
-            return redirect()->route('projetos.index')->with('error', 'Projetos em avaliação ou já aprovados não podem ser excluídos.');
-        }
-
-
+        // 3. Executa a exclusão (sua lógica original é mantida)
         try {
-            // Lógica para deletar arquivos associados do storage, se houver
-            // if ($projeto->arquivo && Storage::disk('public')->exists(str_replace('arquivos_projetos/', '', $projeto->arquivo))) {
-            //    Storage::disk('public')->delete(str_replace('arquivos_projetos/', '', $projeto->arquivo));
-            // }
-            // Nota: O código atual salva em public_path(), não em storage/app/public. A lógica de deleção seria diferente.
+            // Lógica para deletar arquivos associados
             if ($projeto->arquivo && file_exists(public_path($projeto->arquivo))) {
-                 unlink(public_path($projeto->arquivo));
+                unlink(public_path($projeto->arquivo));
             }
 
-            $projeto->delete(); // Deleta o projeto e suas relações em cascata (se configurado no DB/model)
+            $projeto->delete(); // Deleta o projeto e suas relações em cascata
+
             return redirect()->route('projetos.index')->with('success', 'Projeto excluído com sucesso!');
 
         } catch (\Exception $e) {
+            // Opcional: Logar o erro para depuração
             // Log::error("Erro ao excluir projeto {$id}: " . $e->getMessage());
             return redirect()->route('projetos.index')->with('error', 'Erro ao excluir o projeto.');
         }
@@ -686,28 +594,22 @@ public function avaliarNapex(Request $request, $id)
      */
     public function enviarProjeto($id)
     {
+        // 1. Carrega o projeto
         $projeto = Projeto::findOrFail($id);
-        $user = auth()->user();
+        
+        // 2. Autoriza a ação usando a Policy.
+        //    A sua policy 'submit' já verifica o dono do projeto e o status 'editando'.
+        $this->authorize('submit', $projeto);
 
-        // Permissão: apenas o aluno dono do projeto e se o projeto estiver 'editando' ou 'rejeitado' (para re-entrega)
-        if (!($user->role === 'aluno' && $projeto->user_id === $user->id)) {
-            abort(403, 'Você não tem permissão para enviar este projeto.');
-        }
-        if (!in_array($projeto->status, ['editando', 'rejeitado'])) { // 'rejeitado' pode ser um status se desejar
-            return redirect()->route('projetos.show', $projeto->id)->with('error', 'Este projeto não pode ser enviado no estado atual.');
-        }
-
+        // 3. Executa a ação (o resto do seu código)
         $projeto->status = 'entregue';
-        $projeto->data_entrega = now(); // Registra a data/hora da entrega
-        // Ao entregar, as aprovações anteriores devem ser resetadas?
-        // Se um projeto foi rejeitado e está sendo reenviado, sim.
+        $projeto->data_entrega = now();
         $projeto->aprovado_napex = 'pendente';
         $projeto->motivo_napex = null;
         $projeto->data_parecer_napex = null;
         $projeto->aprovado_coordenador = 'pendente';
         $projeto->motivo_coordenador = null;
         $projeto->data_parecer_coordenador = null;
-        // $projeto->numero_projeto = null; // Se o número só é dado na aprovação final
 
         $projeto->save();
         
@@ -721,39 +623,25 @@ public function avaliarNapex(Request $request, $id)
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
+/**
+     * Permite que um projeto 'entregue' (mas ainda não avaliado) volte para 'editando'.
+     * A autorização é tratada pela ProjetoPolicy@revertToEditing.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function voltarParaEdicao($id)
     {
+        // 1. Carrega o projeto
         $projeto = Projeto::findOrFail($id);
-        $user = auth()->user();
 
-        // Permissão: Aluno dono, ou professor vinculado, ou NAPEX/Coordenador/Admin
-        $canReturn = false;
-        if ($user->role === 'aluno' && $projeto->user_id === $user->id) {
-            $canReturn = true;
-        } elseif ($user->role === 'professor' && $projeto->professores->contains('user_id', $user->id)) {
-            $canReturn = true;
-        } elseif (in_array($user->role, ['napex', 'coordenador', 'admin'])) { // Adicionado admin
-            $canReturn = true;
-        }
-
-        if (!$canReturn) {
-            abort(403, 'Você não tem permissão para realizar esta ação.');
-        }
+        // 2. Autoriza a ação usando a nova regra 'revertToEditing' na Policy.
+        //    Esta linha substitui todo o bloco de 'if's de permissão e estado.
+        $this->authorize('revertToEditing', $projeto);
     
-        // Impede retorno à edição se já tiver sido aprovado por NAPEx ou Coordenação, ou se o status final for 'aprovado'
-        if ($projeto->status === 'aprovado' || $projeto->aprovado_napex === 'sim' || $projeto->aprovado_coordenador === 'sim') {
-            return redirect()->route('projetos.show', $projeto->id)->with('error', 'Não é possível voltar para edição após uma aprovação ou se o projeto já está aprovado.');
-        }
-        
-        // Permite voltar para edição apenas se o status for 'entregue' (ou talvez 'rejeitado' se for um fluxo diferente)
-        if ($projeto->status !== 'entregue') {
-             return redirect()->route('projetos.show', $projeto->id)->with('error', 'Apenas projetos com status "entregue" (e não avaliados) podem voltar para edição.');
-        }
-    
+        // 3. Executa a ação principal (lógica mantida)
         $projeto->status = 'editando';
         $projeto->data_entrega = null; // Limpa a data de entrega
-        // As rejeições anteriores (se houver) devem ser mantidas para histórico.
-        // As aprovações parciais são implicitamente 'pendente' se o status volta para 'editando'.
         $projeto->save();
     
         return redirect()->route('projetos.edit', $projeto->id)->with('success', 'Projeto liberado para edição novamente.');
@@ -779,25 +667,22 @@ public function avaliarNapex(Request $request, $id)
     
     /**
      * Exporta uma lista filtrada de projetos para um arquivo PDF.
-     * Acessível apenas para NAPEx e Coordenadores.
+     * A autorização é tratada pela ProjetoPolicy@exportGeneralPdf.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function exportarPdf(Request $request)
     {
-        // Verifica permissão de acesso
-        if (!in_array(auth()->user()->role, ['napex', 'coordenador', 'admin'])) { // Adicionado admin
-            abort(403, 'Acesso negado a esta funcionalidade.');
-        }
+        // 1. Autoriza a ação usando a Policy. Substitui o 'if'.
+        $this->authorize('exportGeneralPdf', Projeto::class);
 
-        // Inicia a query com eager loading
-        $query = Projeto::query()->with(['user', 'atividades', 'professores']); // Adicionado professores
+        // 2. O restante da sua lógica para buscar dados e gerar o PDF é mantido.
+        $query = Projeto::query()->with(['user', 'atividades', 'professores']);
 
-        // Filtro base: Somente status 'entregue' ou 'aprovado' para relatórios
         $query->whereIn('status', ['entregue', 'aprovado']);
 
-        // Aplicação dos filtros da requisição
+        // Aplicação dos filtros da requisição (código original mantido)
         if ($request->filled('titulo')) {
             $query->where('titulo', 'like', '%' . $request->titulo . '%');
         }
@@ -808,7 +693,6 @@ public function avaliarNapex(Request $request, $id)
             });
         }
 
-        // Filtros de data
         if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
             $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
         } elseif ($request->filled('data_inicio_de')) {
@@ -816,7 +700,6 @@ public function avaliarNapex(Request $request, $id)
         } elseif ($request->filled('data_inicio_ate')) {
             $query->whereDate('data_inicio', '<=', $request->data_inicio_ate);
         }
-
 
         if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
             $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
@@ -826,7 +709,6 @@ public function avaliarNapex(Request $request, $id)
             $query->whereDate('data_fim', '<=', $request->data_fim_ate);
         }
 
-        // Filtro de carga horária (corrigido e melhorado)
         if ($request->filled('carga_min') || $request->filled('carga_max')) {
             $query->whereHas('atividades', function ($q) use ($request) {
                 $q->selectRaw('projeto_id, SUM(carga_horaria) as soma_carga_horaria')
@@ -841,7 +723,6 @@ public function avaliarNapex(Request $request, $id)
             });
         }
 
-        // Filtros de status e aprovações (com '--' para "todos")
         if ($request->filled('status') && !in_array($request->status, ['--', 'todos', null], true) ) {
             $query->where('status', $request->status);
         }
@@ -854,19 +735,18 @@ public function avaliarNapex(Request $request, $id)
             $query->where('aprovado_coordenador', $request->aprovado_coordenador);
         }
 
-        $projetos = $query->orderBy('created_at', 'desc')->get(); // Ordena por padrão
-        $filtros = $request->except(['_token']); // Pega todos os filtros, exceto o token CSRF
-        $usuarioLogado = auth()->user()->name; // Nome do usuário que gerou o relatório
+        $projetos = $query->orderBy('created_at', 'desc')->get();
+        $filtros = $request->except(['_token']);
+        $usuarioLogado = auth()->user()->name;
 
-        // Gera o PDF passando os dados para a view 'pdf.projetos-relatorio' (ou nome similar)
-        $pdf = Pdf::loadView('pdf.projetos-relatorio', [ // Sugestão de nome para a view do relatório
+        $pdf = Pdf::loadView('pdf.projetos-relatorio', [
             'projetos' => $projetos,
             'filtros' => $filtros,
             'usuarioLogado' => $usuarioLogado,
             'dataGeracao' => now()->format('d/m/Y H:i:s')
         ]);
-        // Opções de PDF (tamanho, orientação)
-        $pdf->setPaper('a4', 'portrait'); // Ex: Paisagem para tabelas largas
+        
+        $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download('relatorio_projetos_extensionistas.pdf');
     }
@@ -879,20 +759,18 @@ public function avaliarNapex(Request $request, $id)
      */
     public function gerarPdf($id)
     {
-        // Carrega o projeto com todas as suas relações necessárias para o PDF
+        // 1. Carrega o projeto
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'user', 'rejeicoes'])->findOrFail($id);
 
-        // Define o locale para pt_BR para formatação de datas no PDF, se ainda não global
-        // Carbon::setLocale('pt_BR'); // Melhor se configurado globalmente no AppServiceProvider
+        // 2. VERIFICA A PERMISSÃO!
+        //    Usa a regra 'view' da sua ProjetoPolicy para garantir que o usuário pode ver (e portanto baixar) este projeto.
+        $this->authorize('view', $projeto);
 
-        // Gera o PDF usando a view 'projetos.pdf' e os dados do projeto
+        // 3. Se a autorização passar, o resto do código é executado normalmente.
         $pdf = Pdf::loadView('projetos.pdf', compact('projeto'));
 
-        // Define um nome de arquivo para o download
         $nomeArquivo = "proposta_extensionista_{$projeto->id}.pdf";
-        // Sanitiza o nome do arquivo (opcional, mas bom para remover caracteres problemáticos)
         $nomeArquivo = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $nomeArquivo);
-
 
         return $pdf->download($nomeArquivo);
     }
