@@ -10,6 +10,7 @@ use App\Models\Atividade;
 use App\Models\Cronograma;
 use App\Models\User; // Necessário para buscar usuários (ex: professores)
 use App\Models\Rejeicao; // Para registrar rejeições de projetos
+use App\Models\Curso;
 
 // Requests para validação de formulários
 use App\Http\Requests\StoreProjetoRequest;
@@ -164,11 +165,12 @@ class ProjetoController extends Controller
      */
     public function create()
     {
-        // Verifica se o usuário autenticado é um aluno
-        $this->authorize('create', Projeto::class); // Checa a permissão. Lança 403 se falhar.
+        $this->authorize('create', Projeto::class);
 
         $professores = User::where('role', 'professor')->orderBy('name')->get();
-        return view('projetos.create', compact('professores'));
+        $cursos = Curso::orderBy('nome')->get(); // Busca os cursos do banco de dados
+
+        return view('projetos.create', compact('professores', 'cursos'));
     }
 
     /**
@@ -311,15 +313,18 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function edit($id)
+    public function edit(string $id)
     {
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas'])->findOrFail($id);
-        
-        // A Policy 'update' já contém toda a lógica de quem pode editar e quando.
+        $projeto = Projeto::with(['professores', 'alunos', 'atividades', 'cronogramas'])->findOrFail($id);
         $this->authorize('update', $projeto);
-        
+
         $professores = User::where('role', 'professor')->orderBy('name')->get();
-        return view('projetos.edit', compact('projeto', 'professores'));
+        
+        // <<< ADICIONE ESTA LINHA >>>
+        $cursos = Curso::orderBy('nome')->get(); // Busca todos os cursos do banco
+
+        // <<< ADICIONE 'cursos' AO COMPACT >>>
+        return view('projetos.edit', compact('projeto', 'professores', 'cursos'));
     }
 
     /**

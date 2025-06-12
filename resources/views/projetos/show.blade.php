@@ -218,7 +218,7 @@
                                         @if ($projeto->alunos && $projeto->alunos->count())
                                             <ul class="list-disc pl-5">
                                                 @foreach ($projeto->alunos as $aluno)
-                                                    <li><strong>{{ $aluno->nome }}</strong> — RA: {{ $aluno->ra }} — Curso: {{ $aluno->curso }}</li>
+                                                    <li><strong>{{ $aluno->nome }}</strong> — RA: {{ $aluno->ra }} — Curso: {{ $aluno->curso->nome }}</li>
                                                 @endforeach
                                             </ul>
                                         @else

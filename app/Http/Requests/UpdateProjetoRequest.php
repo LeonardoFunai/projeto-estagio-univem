@@ -45,15 +45,15 @@ class UpdateProjetoRequest extends FormRequest
 
             // Professores
             // required_without_all:alunos,atividades,cronograma é um exemplo se você quiser que PELO MENOS UM grupo seja preenchido
-            'professores' => 'nullable|array|min:0|max:9', 
+            'professores' => 'nullable|array|min:1', 
             'professores.*.id' => 'required|integer|exists:users,id',
             'professores.*.area' => 'nullable|string|max:100',
 
             // Alunos
-            'alunos' => 'nullable|array|min:0|max:9', // Pode ser nulo se não houver alunos
+            'alunos' => 'nullable|array|min:1', 
             'alunos.*.nome' => 'required|string|max:100',
             'alunos.*.ra' => 'required|string|max:50',
-            'alunos.*.curso' => 'required|string|max:100',
+            'alunos.*.curso_id' => ['required', 'integer', 'exists:cursos,id'],
 
             // Descrição do Projeto com limites definidos
             'publico_alvo' => 'nullable|string|max:100',
@@ -147,16 +147,15 @@ class UpdateProjetoRequest extends FormRequest
             'professores.*.area.string' => 'A área do professor deve ser um texto.',
             'professores.*.area.max' => 'A área do professor não pode ter mais de :max caracteres.',
 
+        
             // Alunos
-            'alunos.required' => 'Adicione pelo menos um aluno ao projeto.', // Se 'required' para base
+            'alunos.required' => 'Adicione pelo menos um aluno ao projeto.',
             'alunos.min' => 'É obrigatório adicionar pelo menos :min aluno(s).',
-            'alunos.max' => 'Você pode adicionar no máximo :max aluno(s).',
-            'alunos.*.nome.required' => 'O nome do aluno é obrigatório.', // Usado com 'required_with:alunos'
-            'alunos.*.nome.max' => 'O nome do aluno não pode ter mais de :max caracteres.',
-            'alunos.*.ra.required' => 'O RA do aluno é obrigatório.', // Usado com 'required_with:alunos'
-            'alunos.*.ra.max' => 'O RA do aluno não pode ter mais de :max caracteres.',
-            'alunos.*.curso.required' => 'O curso do aluno é obrigatório.', // Usado com 'required_with:alunos'
-            'alunos.*.curso.max' => 'O curso do aluno não pode ter mais de :max caracteres.',
+            'alunos.*.nome.required' => 'O nome do aluno é obrigatório.',
+            'alunos.*.ra.required' => 'O RA do aluno é obrigatório.',
+            'alunos.*.curso_id.required' => 'A seleção do curso do aluno é obrigatória.',
+            'alunos.*.curso_id.integer'  => 'O ID do curso deve ser um número.',
+            'alunos.*.curso_id.exists'   => 'O curso selecionado é inválido.',
 
             // Descrição do Projeto
             'publico_alvo.max' => 'O campo "Público Alvo" não pode ter mais de :max caracteres.',
@@ -229,7 +228,7 @@ class UpdateProjetoRequest extends FormRequest
             'professores.*.area' => 'área do professor',
             'alunos.*.nome' => 'nome do aluno',
             'alunos.*.ra' => 'RA do aluno',
-            'alunos.*.curso' => 'curso do aluno',
+            'alunos.*.curso_id' => 'curso do aluno',
             'publico_alvo' => 'público alvo',
             'introducao' => 'introdução',
             'objetivo_geral' => 'objetivo geral',

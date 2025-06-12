@@ -13,9 +13,13 @@ class Aluno extends Model
         'projeto_id',
         'nome',
         'ra',
-        'curso',
+        'curso_id',
     ];
 
+    public function curso()
+    {
+        return $this->belongsTo(Curso::class);
+    }
     public function projeto()
     {
         return $this->belongsTo(Projeto::class);

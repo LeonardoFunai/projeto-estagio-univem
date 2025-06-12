@@ -419,12 +419,6 @@
                 <tr>
                     <td colspan="2" class="text-content"><strong>8 - Resultados Esperados:</strong><br>{!! nl2br(e($projeto->resultados_esperados)) !!}</td>
                 </tr>
-                <tr>
-                    <td colspan="2" class="signature-section"><strong>Assinatura do(s) aluno(s) Participante(s):</strong></td>
-                </tr>
-                <tr>
-                    <td colspan="2" class="signature-section"><strong>Assinatura do(s) professor(es) Participante(s):</strong></td>
-                </tr>
             </tbody>
         </table>
 
@@ -455,7 +449,7 @@
                         <br><br><strong>Exposição de motivos:</strong><br>
                         <div class="text-content">{!! nl2br(e($projeto->motivo_napex ?? '________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________')) !!}</div>
                         <br>Data: {{ formatarDataPortuguesPdfParaArquivo($projeto->data_parecer_napex, $traducaoMesesEnParaPt) }}.
-                        <div class="signature-section" style="margin-top:10px; padding-bottom:10px;"><strong>Assinatura NAPEx:</strong></div>
+                        
                     </td>
                 </tr>
                 <tr>
@@ -467,7 +461,7 @@
                         <br><br><strong>Exposição de motivos:</strong><br>
                         <div class="text-content">{!! nl2br(e($projeto->motivo_coordenador ?? '________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________')) !!}</div>
                         <br>Data: {{ formatarDataPortuguesPdfParaArquivo($projeto->data_parecer_coordenador, $traducaoMesesEnParaPt) }}.
-                        <div class="signature-section" style="margin-top:10px; padding-bottom:10px;"><strong>Assinatura Coordenador(a) do Curso:</strong></div>
+                        
                     </td>
                 </tr>
             </tbody>

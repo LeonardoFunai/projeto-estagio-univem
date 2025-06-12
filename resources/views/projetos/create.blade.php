@@ -121,7 +121,14 @@
                         <div class="mb-4">
                             <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" value="{{ old('alunos.0.nome') }}" maxlength="100" required>
                             <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" value="{{ old('alunos.0.ra') }}" maxlength="50" required>
-                            <input type="text" name="alunos[0][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" value="{{ old('alunos.0.curso') }}" maxlength="100" required>
+                            <select name="alunos[0][curso_id]" class="w-full border-gray-300 rounded-md" required>
+                                <option value="">-- Selecione um curso --</option>
+                                @foreach($cursos as $curso)
+                                    <option value="{{ $curso->id }}" {{ old('alunos.0.curso_id') == $curso->id ? 'selected' : '' }}>
+                                        {{ $curso->nome }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
@@ -211,13 +218,23 @@
             </div>
         </div>
     @endcan
+
     <script>
         let professorCount = 1;
         let alunoCount = 1;
         let atividadeCount = 1;
-        let cronogramaCount = 1; // Usado para dar um ID único aos novos elementos do cronograma
+        let cronogramaCount = 1;
 
-        // Opções de professores (já existentes no seu script)
+        // =========================================================================
+        // ALTERAÇÃO 1: CAPTURAR OBJETOS DE CURSO DO BLADE
+        // =========================================================================
+        // Transforma a coleção $cursos (com id e nome) do PHP em um array de objetos JavaScript.
+        const todosOsCursos = @json($cursos ?? []);
+        
+        // Cria o HTML para as opções do select, usando o ID do curso como 'value' e o NOME como texto.
+        const cursosOptionsHtml = todosOsCursos.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+
+        // Opções de professores (código original, mantido)
         const professorOptions = `
             <option value="">-- Selecione um professor --</option>
             ${Array.from(document.querySelector('select[name="professores[0][id]"]').options)
@@ -226,24 +243,21 @@
                 .join('')}
         `;
 
-        // Lista de todos os meses para os selects do cronograma
+        // Lista de todos os meses (código original, mantido)
         const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
         const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
 
+        // Função reindexarCampos (código original, mantida sem alterações)
         function reindexarCampos(wrapperId, prefixoH4, nameBase) {
-            // Seleciona os divs diretos dentro do wrapper. Se os itens do cronograma estiverem aninhados de forma diferente, ajuste o seletor.
-            // Vamos assumir que cada item do cronograma é um 'div' direto dentro de 'cronograma-wrapper'
             const items = document.querySelectorAll(`#${wrapperId} > div`);
             items.forEach((div, i) => {
-                const h4 = div.querySelector('h4'); // Busca por um h4 dentro do item
-                if (h4 && prefixoH4) { // Só atualiza se h4 existir e prefixoH4 for fornecido
+                const h4 = div.querySelector('h4');
+                if (h4 && prefixoH4) {
                     h4.textContent = `${prefixoH4} ${i + 1}`;
                 }
-
                 const inputsEselects = div.querySelectorAll('input[name], select[name], textarea[name]');
                 inputsEselects.forEach(field => {
                     const nameAttr = field.getAttribute('name');
-                    // Regex para capturar a chave final (ex: 'atividade', 'mes_inicio', 'mes_fim')
                     const matches = nameAttr.match(/\[\d+\]\[(\w+)]$/);
                     if (matches && matches[1]) {
                         field.setAttribute('name', `${nameBase}[${i}][${matches[1]}]`);
@@ -252,11 +266,11 @@
             });
         }
 
-        // Adicionar Professor (sem alterações, conforme o seu script)
+        // Adicionar Professor (código original, mantido sem alterações)
         document.getElementById('add-professor')?.addEventListener('click', () => {
-            const index = professorCount++; // Usa o contador para o índice do array
+            const index = professorCount++;
             const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md'); // Adicionei borda para consistência visual
+            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
             div.innerHTML = `
                 <div class="flex justify-between items-center mb-2">
                     <h4 class="font-semibold">Professor ${document.querySelectorAll('#professores-wrapper > div').length + 1}</h4>
@@ -268,12 +282,12 @@
                 <input maxlength="100" type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
             `;
             document.getElementById('professores-wrapper').appendChild(div);
-            // A reindexação do H4 já está na função reindexarCampos se o prefixo for passado.
-            // O professorCount é para garantir índices únicos ao adicionar, a reindexação ajusta para a sequência correta após remoção.
             reindexarCampos('professores-wrapper', 'Professor', 'professores');
         });
 
-        // Adicionar Aluno (sem alterações, conforme o seu script)
+        // =========================================================================
+        // ALTERAÇÃO 2: ATUALIZAR A FUNÇÃO DE ADICIONAR ALUNO (USANDO CURSO_ID)
+        // =========================================================================
         document.getElementById('add-aluno')?.addEventListener('click', () => {
             const index = alunoCount++;
             const div = document.createElement('div');
@@ -285,13 +299,17 @@
                 </div>
                 <input type="text" name="alunos[${index}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" maxlength="100" required>
                 <input type="text" name="alunos[${index}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" maxlength="50" required>
-                <input type="text" name="alunos[${index}][curso]" class="w-full border-gray-300 rounded-md" placeholder="Curso" maxlength="100" required>
+                
+                <select name="alunos[${index}][curso_id]" class="w-full border-gray-300 rounded-md" required>
+                    <option value="">-- Selecione um curso --</option>
+                    ${cursosOptionsHtml}
+                </select>
             `;
             document.getElementById('alunos-wrapper').appendChild(div);
             reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
         });
 
-        // Adicionar Atividade (sem alterações, conforme o seu script)
+        // Adicionar Atividade (código original, mantido sem alterações)
         document.getElementById('add-atividade')?.addEventListener('click', () => {
             const index = atividadeCount++;
             const div = document.createElement('div');
@@ -312,13 +330,11 @@
             reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
         });
 
-        // MODIFICADO: Adicionar Cronograma com Mês de Início e Mês de Fim
+        // Adicionar Cronograma (código original, mantido sem alterações)
         document.getElementById('add-cronograma')?.addEventListener('click', () => {
-            const index = cronogramaCount++; // Garante um índice único para o novo item
+            const index = cronogramaCount++;
             const divWrapper = document.createElement('div');
-            // Adiciona a classe 'cronograma-item' para que reindexarCampos possa selecioná-lo corretamente.
             divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
-
             divWrapper.innerHTML = `
                 <div class="flex justify-between items-center mb-2">
                     <h4 class="font-semibold">Atividade do Cronograma ${document.querySelectorAll('#cronograma-wrapper > div.cronograma-item').length +1}</h4>
@@ -340,24 +356,24 @@
             reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
         });
 
-        // Validação de Data (sem alterações, conforme o seu script)
+        // Validação de Data (código original, mantido sem alterações)
         document.getElementById('form-projeto').addEventListener('submit', function (e) {
             const inicio = document.getElementById('data_inicio').value;
             const fim = document.getElementById('data_fim').value;
-            if (inicio && fim && new Date(inicio) > new Date(fim)) { // Adicionado verificação se inicio e fim existem
+            if (inicio && fim && new Date(inicio) > new Date(fim)) {
                 e.preventDefault();
                 alert('A data de início deve ser anterior ou igual à data de término.');
             }
         });
 
-        // Dados antigos para repopulação (sem alterações, conforme o seu script)
+        // --- DADOS ANTIGOS PARA REPOPULAÇÃO ---
         const oldProfessores = @json(old('professores', []));
         const oldAlunos = @json(old('alunos', []));
         const oldAtividades = @json(old('atividades', []));
         const oldCronograma = @json(old('cronograma', []));
 
-        // Recria Professores (ajustado para usar o contador correto ao adicionar e o seletor de H4)
-        if (oldProfessores.length > 1) { // Se há mais que o primeiro professor (que já está no HTML)
+        // Recria Professores (código original, mantido sem alterações)
+        if (oldProfessores.length > 1) {
             oldProfessores.slice(1).forEach((professor) => {
                 const index = professorCount++;
                 const div = document.createElement('div');
@@ -378,29 +394,40 @@
             reindexarCampos('professores-wrapper', 'Professor', 'professores');
         }
 
-
-        // Recria Alunos (ajustado para usar o contador correto ao adicionar e o seletor de H4)
+        // =========================================================================
+        // ALTERAÇÃO 3: ATUALIZAR A RECRIAÇÃO DE ALUNOS (USANDO CURSO_ID)
+        // =========================================================================
         if (oldAlunos.length > 1) {
             oldAlunos.slice(1).forEach((aluno) => {
                 const index = alunoCount++;
                 const div = document.createElement('div');
                 div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
+
+                // Gera o HTML das opções, comparando o 'c.id' da lista de cursos
+                // com o 'aluno.curso_id' que veio do formulário antigo.
+                const oldCursosOptionsHtml = todosOsCursos.map(c => 
+                    `<option value="${c.id}" ${c.id == aluno.curso_id ? 'selected' : ''}>${c.nome}</option>`
+                ).join('');
+
                 div.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold">Aluno ${document.querySelectorAll('#alunos-wrapper > div').length +1}</h4>
+                        <h4 class="font-semibold">Aluno ${document.querySelectorAll('#alunos-wrapper > div').length + 1}</h4>
                         <button type="button" onclick="this.closest('.mb-4').remove(); alunoCount--; reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
                     </div>
                     <input type="text" name="alunos[${index}][nome]" class="w-full border-gray-300 rounded-md mb-2" value="${aluno.nome ?? ''}" placeholder="Nome do aluno" maxlength="100" required>
                     <input type="text" name="alunos[${index}][ra]" class="w-full border-gray-300 rounded-md mb-2" value="${aluno.ra ?? ''}" placeholder="RA" maxlength="50" required>
-                    <input type="text" name="alunos[${index}][curso]" class="w-full border-gray-300 rounded-md" value="${aluno.curso ?? ''}" placeholder="Curso" maxlength="100" required>
+                    
+                    <select name="alunos[${index}][curso_id]" class="w-full border-gray-300 rounded-md" required>
+                        <option value="">-- Selecione um curso --</option>
+                        ${oldCursosOptionsHtml}
+                    </select>
                 `;
                 document.getElementById('alunos-wrapper').appendChild(div);
             });
             reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
         }
 
-
-        // Recria Atividades (ajustado para usar o contador correto ao adicionar e o seletor de H4)
+        // Recria Atividades (código original, mantido sem alterações)
         if (oldAtividades.length > 1) {
             oldAtividades.slice(1).forEach((atividade) => {
                 const index = atividadeCount++;
@@ -423,11 +450,10 @@
             reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
         }
 
-        // MODIFICADO: Recria Cronogramas com Mês de Início e Mês de Fim
-        // O primeiro item (índice 0) já é tratado pelo Blade com old(), então começamos do segundo item de oldCronograma
+        // Recria Cronogramas (código original, mantido sem alterações)
         if (oldCronograma && oldCronograma.length > 1) {
             oldCronograma.slice(1).forEach((item) => {
-                const index = cronogramaCount++; // Usa o contador para o índice do array
+                const index = cronogramaCount++;
                 const divWrapper = document.createElement('div');
                 divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
 
@@ -459,13 +485,6 @@
             });
             reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
         }
-
-        // Chama reindexar para todos os campos no carregamento inicial para garantir que os H4s dos itens 0 estejam corretos
-        // se eles tiverem um H4 estático que precise do número.
-        // Se o primeiro item não tiver H4 ou o H4 for fixo (ex: "Professor 1"), não precisa.
-        // Pelo seu HTML original, parece que "Professor 1", "Aluno 1", "Atividade 1" são estáticos.
-        // A reindexação é mais crucial após adicionar/remover.
-        // A lógica de H4 que adicionei nos blocos 'add' e 'old' dinâmicos já tenta manter a contagem visualmente.
     </script>
 
 

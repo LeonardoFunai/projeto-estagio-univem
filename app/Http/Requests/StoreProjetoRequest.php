@@ -21,6 +21,7 @@ class StoreProjetoRequest extends FormRequest
      */
     public function rules(): array
     {
+
         $todosOsMeses = [
             'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -44,10 +45,11 @@ class StoreProjetoRequest extends FormRequest
             'professores.*.area' => 'nullable|string|max:100',
 
             // Alunos
-            'alunos' => 'required|array|min:1|max:9',
+            'alunos' => 'required|array|min:1',
             'alunos.*.nome' => 'required|string|max:100',
             'alunos.*.ra' => 'required|string|max:50',
-            'alunos.*.curso' => 'required|string|max:100',
+            'alunos.*.curso_id' => ['required', 'integer', 'exists:cursos,id'],
+
 
             // Descrição do Projeto com limites definidos
             'publico_alvo' => 'nullable|string|max:100',
@@ -121,8 +123,8 @@ class StoreProjetoRequest extends FormRequest
             'alunos.*.nome.max' => 'O nome do aluno não pode ter mais de :max caracteres.',
             'alunos.*.ra.required' => 'O RA do aluno é obrigatório.',
             'alunos.*.ra.max' => 'O RA do aluno não pode ter mais de :max caracteres.',
-            'alunos.*.curso.required' => 'O curso do aluno é obrigatório.',
-            'alunos.*.curso.max' => 'O curso do aluno não pode ter mais de :max caracteres.',
+            'alunos.*.curso_id.required' => 'A seleção do curso do aluno é obrigatória.',
+            'alunos.*.curso_id.exists'   => 'O curso selecionado é inválido.',
 
             // Descrição do Projeto
             'publico_alvo.max' => 'O campo "Público Alvo" não pode ter mais de :max caracteres.',
