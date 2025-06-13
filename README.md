@@ -64,5 +64,52 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento localmente.
 
 **1. Clonar o Repositório**
 ```bash
-git clone [https://github.com/LeonardoFunai/projeto-estagio-univem.git](https://github.com/LeonardoFunai/projeto-estagio-univem.git)
+git clone https://github.com/LeonardoFunai/projeto-estagio-univem.git
 cd projeto-estagio-univem
+
+**2. Instalar as Dependências do PHP**
+```bash
+composer install
+
+3. Configurar o Arquivo de Ambiente
+Copie o arquivo de exemplo para criar seu próprio arquivo de configuração local.
+
+```bash
+cp .env.example .env
+
+4. Configurar o Banco de Dados no .env
+Abra o arquivo .env recém-criado e atualize as variáveis de banco de dados (DB_*) com as credenciais do seu servidor local.
+
+```Shell
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=univem_projetos
+DB_USERNAME=root
+DB_PASSWORD=
+
+Importante: Crie um banco de dados vazio com o nome que você definiu em DB_DATABASE (neste exemplo, univem_projetos).
+
+5. Gerar a Chave da Aplicação
+
+```Bash
+php artisan key:generate
+
+6. Executar as Migrações e Seeders
+Este comando irá criar todas as tabelas no banco de dados e popular com dados iniciais (usuários, cursos, etc.).
+
+```Bash
+php artisan migrate:fresh --seed
+
+7. Instalar as Dependências do NPM e Compilar os Assets
+
+```Bash
+npm install
+npm run dev
+
+8. Iniciar o Servidor de Desenvolvimento
+
+```Bash
+php artisan serve
+
+Pronto! 🎉 A aplicação estará acessível em seu navegador no endereço: http://127.0.0.1:8000.
