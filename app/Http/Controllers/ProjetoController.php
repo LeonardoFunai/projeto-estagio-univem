@@ -36,7 +36,7 @@ class ProjetoController extends Controller
     public function index()
     {
         // Inicia a query base para projetos, já carregando algumas relações para otimização (eager loading)
-        $query = Projeto::with(['atividades', 'user', 'professores']);
+        $query = Projeto::with(['atividades', 'user', 'professores','alunos.curso']);
     
         $user = auth()->user(); // Obtém o usuário autenticado
     
@@ -52,6 +52,7 @@ class ProjetoController extends Controller
                 $q->where('user_id', $user->id); // Filtra pela tabela 'professores' relacionada ao projeto
             });
         }
+
     
         // NAPEX e Coordenadores têm uma lógica de filtro de status específica
         if (in_array($user->role, ['napex', 'coordenador'])) {
@@ -69,11 +70,20 @@ class ProjetoController extends Controller
             }
         }
 
-        // Aplica filtros gerais da requisição, se presentes
-        if (request('cadastrado_por')) {
-            // Filtra pelo nome do usuário que cadastrou o projeto
-            $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . request('cadastrado_por') . '%');
+        //  Aplica filtros gerais da requisição, se presentes
+        // if (request('cadastrado_por')) {
+        //     // Filtra pelo nome do usuário que cadastrou o projeto
+        //     $query->whereHas('user', function ($q) {
+        //         $q->where('name', 'like', '%' . request('cadastrado_por') . '%');
+        //     });
+        // }
+
+        // BLOCO DE FILTRO POR CURSO
+        if (request()->filled('curso_id')) {
+            // A única mudança é aqui: de where() para whereIn()
+            // O request('curso_id') agora é um array de IDs.
+            $query->whereHas('alunos', function ($q) {
+                $q->whereIn('curso_id', request('curso_id'));
             });
         }
     
@@ -153,8 +163,10 @@ class ProjetoController extends Controller
         
         // Pagina os resultados e anexa os parâmetros da query atual aos links de paginação
         $projetos = $query->paginate(10)->appends(request()->query());
+
+         $cursos = Curso::orderBy('nome')->get();
     
-        return view('projetos.index', compact('projetos'));
+        return view('projetos.index', compact('projetos', 'cursos'));
     }
     
     /**
@@ -677,25 +689,29 @@ public function avaliarNapex(Request $request, $id)
      * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function exportarPdf(Request $request)
+public function exportarPdf(Request $request)
     {
-        // 1. Autoriza a ação usando a Policy. Substitui o 'if'.
+        // 1. Autorização (mantida)
         $this->authorize('exportGeneralPdf', Projeto::class);
 
-        // 2. O restante da sua lógica para buscar dados e gerar o PDF é mantido.
-        $query = Projeto::query()->with(['user', 'atividades', 'professores']);
+        // 2. Query otimizada para carregar as relações necessárias, incluindo alunos e seus cursos
+        $query = Projeto::query()->with(['user', 'atividades', 'professores', 'alunos.curso']);
 
+        // Filtro de status padrão para o relatório (mantido)
         $query->whereIn('status', ['entregue', 'aprovado']);
 
-        // Aplicação dos filtros da requisição (código original mantido)
-        if ($request->filled('titulo')) {
-            $query->where('titulo', 'like', '%' . $request->titulo . '%');
+        // === INÍCIO DAS ALTERAÇÕES NO FILTRO ===
+
+        // 3. Adicionado filtro por ID do curso (para múltiplos cursos)
+        if ($request->filled('curso_id')) {
+            $query->whereHas('alunos', function ($q) use ($request) {
+                $q->whereIn('curso_id', $request->curso_id);
+            });
         }
 
-        if ($request->filled('cadastrado_por')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
-            });
+        // Aplicação dos outros filtros da requisição (mantidos)
+        if ($request->filled('titulo')) {
+            $query->where('titulo', 'like', '%' . $request->titulo . '%');
         }
 
         if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
@@ -741,8 +757,15 @@ public function avaliarNapex(Request $request, $id)
         }
 
         $projetos = $query->orderBy('created_at', 'desc')->get();
+        
         $filtros = $request->except(['_token']);
         $usuarioLogado = auth()->user()->name;
+
+        // 4. Busca os NOMES dos cursos filtrados para exibir no cabeçalho do PDF
+        if (!empty($filtros['curso_id'])) {
+            $nomesCursos = Curso::whereIn('id', $filtros['curso_id'])->pluck('nome')->implode(', ');
+            $filtros['nomes_cursos'] = $nomesCursos;
+        }
 
         $pdf = Pdf::loadView('pdf.projetos-relatorio', [
             'projetos' => $projetos,

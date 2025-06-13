@@ -285,7 +285,7 @@
                 <tr>
                     <td>{{ $aluno->nome_completo ?? $aluno->nome }}</td>
                     <td>{{ $aluno->ra }}</td>
-                    <td>{{ $aluno->curso }}</td>
+                    <td>{{ $aluno->curso->nome ?? 'N/A' }}</td>
                 </tr>
                 @empty
                 <tr>
