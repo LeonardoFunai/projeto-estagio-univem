@@ -44,9 +44,13 @@
                         <!-- Ordenar -->
                         <div class="flex items-center gap-2">
                             <label for="ordenar" class="text-sm fw-bold mb-0">Ordenar por:</label>
-                            <form method="GET" action="{{ route('projetos.index') }}">
-                                <select name="ordenar" id="ordenar"
-                                    class="form-select form-select-sm h-[36px] text-sm" onchange="this.form.submit()">
+                            <form method="GET" action="{{ route('projetos.index') }}" id="form-ordenar">
+                                {{-- Adicionado: Campos ocultos para manter os filtros atuais --}}
+                                @foreach (request()->except(['ordenar', 'page']) as $key => $value)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endforeach
+
+                                <select name="ordenar" id="ordenar" class="form-select form-select-sm h-[36px] text-sm" onchange="this.form.submit()">
                                     <option value="">Selecione</option>
                                     <option value="data_asc" {{ request('ordenar') == 'data_asc' ? 'selected' : '' }}>📅 Data de criação ↑</option>
                                     <option value="data_desc" {{ request('ordenar') == 'data_desc' ? 'selected' : '' }}>📅 Data de criação ↓(Mais Novos)</option>
@@ -79,6 +83,7 @@
                     <!-- Filtro -->
                     <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <!-- Cadastrado por -->
+                         <input type="hidden" name="ordenar" value="{{ request('ordenar') }}">
                         <div>
                             <label class="block mb-1">Cadastrado por:</label>
                             <input type="text" name="cadastrado_por" value="{{ request('cadastrado_por') }}" class="w-full border-gray-300 rounded-md py-0.5">
