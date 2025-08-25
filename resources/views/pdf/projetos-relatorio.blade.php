@@ -1,5 +1,4 @@
-    @php use Illuminate\Support\Str;  @endphp
-    
+    @php use Illuminate\Support\Str; @endphp
     <!DOCTYPE html>
     <html lang="pt-br">
     <head>
@@ -135,9 +134,8 @@
                 @php
                     $campos = [];
 
-                    if (!empty($filtros['nomes_cursos'])) {
-                        $campos[] = "<strong>Cursos:</strong> " . $filtros['nomes_cursos'];
-                    }
+                    if (!empty($filtros['cadastrado_por']))
+                        $campos[] = "<strong>Cadastrado por:</strong> {$filtros['cadastrado_por']}";
 
                     if (!empty($filtros['titulo']))
                         $campos[] = "<strong>Título:</strong> {$filtros['titulo']}";
@@ -188,7 +186,7 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Cursos</th>
+                <th>Cadastrado por</th>
                 <th>Título</th>
                 <th>Data Início</th>
                 <th>Data Fim</th>
