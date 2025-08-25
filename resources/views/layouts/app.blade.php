@@ -27,7 +27,6 @@
     </head>
     <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;">
 
-        <!-- Barra roxa escura superior -->
         <div style="background-color: #251c57; color: white; padding: 15px 20px; font-size: 0.85rem;">
             <div class="container d-flex justify-content-between align-items-center ps-5">
                 <div>
@@ -42,7 +41,6 @@
         </div>
 
 
-        <!-- Faixa azul clara inclinada -->
         <div style="
             background-color: #28aee3;
             clip-path: polygon(3% 0, 100% 0, 100% 100%, 0% 100%);
@@ -52,19 +50,17 @@
             z-index: 20;
             width: 50%;
             margin-left: auto;
-
-
         ">
             <div style="color: white;" class="container d-flex justify-content-start align-items-center ">
                 <a href="{{ route('projetos.index') }}" class="btn custom-btn me-2">Lista de Propostas</a> |
 
-                @if(auth()->user()->role == 'aluno')
+                
+                @can('create', App\Models\Projeto::class)
                     <a href="{{ route('projetos.create') }}" class="btn custom-btn me-2">Nova Proposta</a>  |
-                @endif
+                @endcan
 
                 <a href="{{ route('profile.edit') }}" class="btn custom-btn me-2">
                     {{ auth()->user()->name }}
-
                 </a>  |
 
                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
@@ -76,13 +72,10 @@
         </div>
 
 
-        <!-- Parte branca com logo e título -->
         <div class="bg-white shadow-sm sticky top-[0px] z-40 border-b py-2"> 
             <div class="container d-flex align-items-center justify-content-between flex-wrap gap-4">
                 <div class="d-flex align-items-center gap-4 ps-4">
-                    <!-- Logo -->
                     <img src="{{ asset('img/site/logo-univem.png') }}" alt="Logo Univem" style="height:60px; width:250px;">
-                    <!-- Título -->
                     <div class="text-blue-800 fw-bold text-xl ms-5">
                         {{ $pageTitle ?? '' }}
                     </div>
@@ -90,24 +83,16 @@
             </div>
         </div>
 
-
-
-
-            <!-- Conteúdo principal -->
             <main class="container pt-2">
 
                 {{ $slot }}
             </main>
 
-            <!-- Rodapé -->
             <footer class="text-center py-3" style="background-color: #29abe2; color: white;">
                 <div class="container">
                     <p class="mb-0">&copy; {{ date('Y') }} Centro Universitário Eurípides de Marília - UNIVEM</p>
                 </div>
             </footer>
-
-
-
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>

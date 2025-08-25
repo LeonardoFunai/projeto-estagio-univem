@@ -83,16 +83,18 @@ class ProjetoPolicy
      */
     public function revertToEditing(User $user, Projeto $projeto): bool
     {
-        // 1. O projeto deve estar no estado correto para ser revertido.
+        // 1. O projeto deve estar no estado correto para ser revertido:
+        //    - Status 'entregue'
+        //    - E ainda não pode ter sido aprovado por nenhum dos avaliadores.
         $isRevertableState = $projeto->status === 'entregue' &&
-                               $projeto->aprovado_napex !== 'sim' &&
-                               $projeto->aprovado_coordenador !== 'sim';
+                            $projeto->aprovado_napex !== 'sim' &&
+                            $projeto->aprovado_coordenador !== 'sim';
 
         if (!$isRevertableState) {
             return false;
         }
 
-        // 2. O usuário deve ter a permissão para reverter.
+        // 2. Apenas o aluno que criou ou um professor vinculado podem reverter.
         if ($user->role === 'aluno' && $user->id === $projeto->user_id) {
             return true;
         }
@@ -101,11 +103,7 @@ class ProjetoPolicy
             return true;
         }
         
-        // Vamos manter a regra original que permite NAPEX e Coordenador reverterem também.
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            return true;
-        }
-
+        // Se não for nenhum dos casos acima, a permissão é negada.
         return false;
     }
 
