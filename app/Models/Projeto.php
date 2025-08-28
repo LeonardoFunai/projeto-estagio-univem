@@ -82,5 +82,10 @@
         {
             return $this->hasMany(Rejeicao::class);
         }
+
+        public function resultado()
+        {
+            return $this->hasOne(Resultado::class);
+        }
     }
 

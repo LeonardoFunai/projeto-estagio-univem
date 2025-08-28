@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjetoController;
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\ResultadoController;
 
 // Redireciona a raiz para a tela de login
 Route::get('/', function () {
@@ -35,7 +35,17 @@ Route::middleware('auth')->group(function () {
     Route::put('/projetos/{id}', [ProjetoController::class, 'update'])->name('projetos.update');
     Route::get('/projetos/{id}/arquivo', [ProjetoController::class, 'downloadArquivo'])->name('projetos.download');
     
-
+    /*
+    |--------------------------------------------------------------------------
+    | Rotas de Resultados
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+    Route::get('/projetos/{projeto}/resultados/create', [ResultadoController::class, 'create'])->name('resultados.create');
+    Route::post('/projetos/{projeto}/resultados', [ResultadoController::class, 'store'])->name('resultados.store');
+    Route::get('/resultados/{resultado}', [ResultadoController::class, 'show'])->name('resultados.show');
+    Route::get('/resultados/{resultado}/edit', [ResultadoController::class, 'edit'])->name('resultados.edit');
+    Route::put('/resultados/{resultado}', [ResultadoController::class, 'update'])->name('resultados.update');
 
 
     // 📤 Fluxo de envio, edição e parecer

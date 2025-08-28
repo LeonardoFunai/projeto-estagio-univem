@@ -33,129 +33,137 @@ class ProjetoController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
-    {
-        // Inicia a query base para projetos, já carregando algumas relações para otimização (eager loading)
-        $query = Projeto::with(['atividades', 'user', 'professores']);
-    
-        $user = auth()->user(); // Obtém o usuário autenticado
-    
-        // Filtra projetos com base no papel do usuário
-        if ($user->role === 'aluno') {
-            // Alunos veem apenas os projetos que eles criaram
-            $query->where('user_id', $user->id);
-        }
-    
-        if ($user->role === 'professor') {
-            // Professores veem projetos aos quais estão vinculados
-            $query->whereHas('professores', function ($q) use ($user) {
-                $q->where('user_id', $user->id); // Filtra pela tabela 'professores' relacionada ao projeto
-            });
-        }
-    
-        // NAPEX e Coordenadores têm uma lógica de filtro de status específica
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            // Se um status específico ('entregue' ou 'aprovado') foi passado na URL
-            if (request()->filled('status')) {
-                if (in_array(request('status'), ['entregue', 'aprovado'])) {
-                    $query->where('status', request('status'));
-                } else {
-                    // Se um status inválido foi passado, mostra os permitidos por padrão para esses perfis
-                    $query->whereIn('status', ['entregue', 'aprovado']);
-                }
+    // Em app/Http/Controllers/ProjetoController.php
+
+public function index(Request $request)
+{
+    // ALTERADO: Adicionado 'resultado' para carregar a relação de resultados e otimizar a view
+    $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
+
+    $user = auth()->user();
+
+    // Filtros por papel (lógica original mantida)
+    if ($user->role === 'aluno') {
+        $query->where('user_id', $user->id);
+    }
+
+    if ($user->role === 'professor') {
+        $query->whereHas('professores', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+    }
+
+    // Lógica para NAPEX e Coordenadores (lógica original mantida)
+    if (in_array($user->role, ['napex', 'coordenador'])) {
+        if ($request->filled('status')) {
+            if (in_array($request('status'), ['entregue', 'aprovado'])) {
+                $query->where('status', $request('status'));
             } else {
-                // Se nenhum status foi passado, mostra os permitidos por padrão
                 $query->whereIn('status', ['entregue', 'aprovado']);
             }
+        } else {
+            $query->whereIn('status', ['entregue', 'aprovado']);
         }
+    }
 
-        // Aplica filtros gerais da requisição, se presentes
-        if (request('cadastrado_por')) {
-            // Filtra pelo nome do usuário que cadastrou o projeto
-            $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . request('cadastrado_por') . '%');
+    // --- SEÇÃO DE FILTROS GERAIS (Aprimorada) ---
+
+    // NOVO: Filtro principal pela ETAPA do projeto
+    if ($request->filled('etapa') && $request->etapa != 'todas') {
+        $query->where('etapa', $request->etapa);
+    }
+
+    // Filtros por campos de texto (lógica original mantida)
+    if ($request->filled('cadastrado_por')) {
+        $query->whereHas('user', function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
+        });
+    }
+
+    if ($request->filled('titulo')) {
+        $query->where('titulo', 'like', '%' . $request->titulo . '%');
+    }
+
+    if ($request->filled('periodo')) {
+        $query->where('periodo', 'like', '%' . $request->periodo . '%');
+    }
+
+    // ALTERADO: O filtro de status agora é CONTEXTUAL à ETAPA selecionada
+    if ($request->filled('status') && $request->status != 'todos') {
+        $etapaSelecionada = $request->etapa;
+        $statusSelecionado = $request->status;
+
+        if ($etapaSelecionada === 'Resultado') {
+            // Se filtra pela etapa de Resultado, o status se aplica à tabela de resultados
+            $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
+                $q->where('status', $statusSelecionado);
             });
+        } else {
+            // Caso contrário (etapa Proposta ou Todas), o status se aplica à tabela de projetos
+            // A condição `!in_array(...)` evita conflito com a lógica de NAPEX/Coord
+            if (!in_array($user->role, ['napex', 'coordenador'])) {
+                $query->where('projetos.status', $statusSelecionado);
+            }
         }
+    }
     
-        if (request('titulo')) {
-            $query->where('titulo', 'like', '%' . request('titulo') . '%');
-        }
-    
-        if (request('periodo')) {
-            $query->where('periodo', 'like', '%' . request('periodo') . '%');
-        }
-    
-        // Este filtro de status é mais genérico e pode ser aplicado por outros papéis ou sobrescrever o anterior
-        // É importante notar que o filtro de status para napex/coordenador já foi aplicado.
-        // Se este request('status') vier de um filtro geral, pode causar comportamento inesperado
-        // se não for a intenção. Idealmente, a lógica de status deveria ser mais centralizada ou condicionada.
-        if (request('status') && !in_array($user->role, ['napex', 'coordenador'])) { // Adicionado condição para não conflitar
-             $query->where('status', request('status'));
-        }
-    
-        if (request('aprovado_napex') === 'sim') {
+    // ALTERADO: Filtros de aprovação também são contextuais à ETAPA
+    if ($request->filled('aprovado_napex') && $request->aprovado_napex === 'sim') {
+        if ($request->etapa === 'Resultado') {
+            $query->whereHas('resultado', fn($q) => $q->where('aprovado_napex', 'sim'));
+        } else {
             $query->where('aprovado_napex', 'sim');
         }
-    
-        if (request('aprovado_coordenador') === 'sim') {
+    }
+
+    if ($request->filled('aprovado_coordenador') && $request->aprovado_coordenador === 'sim') {
+        if ($request->etapa === 'Resultado') {
+            $query->whereHas('resultado', fn($q) => $q->where('aprovado_coordenador', 'sim'));
+        } else {
             $query->where('aprovado_coordenador', 'sim');
         }
-    
-        // Filtro para projetos com aprovação final (ambos napex e coordenador)
-        if (request('aprovacao_final') === 'sim') {
-            $query->where('aprovado_napex', 'sim')->where('aprovado_coordenador', 'sim');
-        }
-    
-        // Filtro de intervalo para data_inicio
-        if (request('data_inicio_de') && request('data_inicio_ate')) {
-            $query->whereBetween('data_inicio', [request('data_inicio_de'), request('data_inicio_ate')]);
-        } elseif (request('data_inicio_de')) {
-            $query->whereDate('data_inicio', '>=', request('data_inicio_de'));
-        } elseif (request('data_inicio_ate')) {
-            $query->whereDate('data_inicio', '<=', request('data_inicio_ate'));
-        }
-    
-        // Filtro de intervalo para data_fim
-        if (request('data_fim_de') && request('data_fim_ate')) {
-            $query->whereBetween('data_fim', [request('data_fim_de'), request('data_fim_ate')]);
-        } elseif (request('data_fim_de')) {
-            $query->whereDate('data_fim', '>=', request('data_fim_de'));
-        } elseif (request('data_fim_ate')) {
-            $query->whereDate('data_fim', '<=', request('data_fim_ate'));
-        }
-        
-        // Lógica de ordenação dos resultados
-        $ordenar = request('ordenar');
-        if ($ordenar == 'data_asc') {
-            $query->orderBy('created_at', 'asc'); // Mais antigos primeiro
-        } else {
-            // Padrão (se 'data_desc' ou nulo): mais novos no topo
-            $query->orderBy('created_at', 'desc');
-        }
-
-        // Filtro de carga horária total do projeto (soma das cargas horárias das atividades)
-        // Utiliza whereHas para filtrar projetos com base na soma das cargas horárias de suas atividades.
-        // Os havingRaw permitem aplicar condições na soma (SUM) calculada.
-        // A verificação 'IS NULL OR ...' permite que o filtro seja opcional (se carga_min/max não for passado, não filtra por ele).
-        if (request()->filled('carga_min') || request()->filled('carga_max')) { // Executa apenas se um dos filtros de carga foi enviado
-            $query->whereHas('atividades', function ($q) {
-                $q->selectRaw('projeto_id, SUM(carga_horaria) as soma_carga_horaria') // Nome do alias corrigido para clareza
-                  ->groupBy('projeto_id');
-                
-                if (request()->filled('carga_min')) {
-                    $q->havingRaw('SUM(carga_horaria) >= ?', [request('carga_min')]);
-                }
-                if (request()->filled('carga_max')) {
-                    $q->havingRaw('SUM(carga_horaria) <= ?', [request('carga_max')]);
-                }
-            });
-        }
-        
-        // Pagina os resultados e anexa os parâmetros da query atual aos links de paginação
-        $projetos = $query->paginate(10)->appends(request()->query());
-    
-        return view('projetos.index', compact('projetos'));
     }
+    
+    // Lógica original mantida para os demais filtros
+    if ($request->filled('aprovacao_final') && $request->aprovacao_final === 'sim') {
+        $query->where('aprovado_napex', 'sim')->where('aprovado_coordenador', 'sim');
+    }
+
+    if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
+        $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
+    }
+
+    if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
+        $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
+    }
+    
+    if ($request->filled('carga_min') || $request->filled('carga_max')) {
+        $query->whereHas('atividades', function ($q) use ($request) {
+            $q->selectRaw('projeto_id, SUM(carga_horaria) as soma_carga_horaria')
+              ->groupBy('projeto_id');
+            
+            if ($request->filled('carga_min')) {
+                $q->havingRaw('SUM(carga_horaria) >= ?', [$request->carga_min]);
+            }
+            if ($request->filled('carga_max')) {
+                $q->havingRaw('SUM(carga_horaria) <= ?', [$request->carga_max]);
+            }
+        });
+    }
+
+    // Lógica de ordenação mantida
+    $ordenar = $request->input('ordenar', 'data_desc');
+    if ($ordenar == 'data_asc') {
+        $query->orderBy('created_at', 'asc');
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    // Paginação mantida
+    $projetos = $query->paginate(10)->appends($request->query());
+
+    return view('projetos.index', compact('projetos'));
+}
     
     /**
      * Exibe o formulário para criação de um novo projeto.
@@ -453,6 +461,7 @@ public function avaliarNapex(Request $request, $id)
         // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
         if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
             $projeto->status = 'aprovado';
+            $projeto->etapa = 'Resultado'; 
         }
         // Se $projeto->aprovado_coordenador !== 'sim' (ou seja, está 'pendente' ou 'nao'),
         // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
@@ -504,6 +513,7 @@ public function avaliarNapex(Request $request, $id)
         // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
         if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
             $projeto->status = 'aprovado';
+            $projeto->etapa = 'Resultado'; 
         }
         // Se $projeto->aprovado_napex !== 'sim' (ou seja, está 'pendente' ou 'nao'),
         // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
