@@ -41,11 +41,10 @@ class Kernel extends HttpKernel
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'role' => \App\Http\Middleware\CheckRole::class,
+        'prevent.caching' => \App\Http\Middleware\PreventCaching::class,
 
 
-        // 🔒 Aqui você pode adicionar depois:
-        // 'role.aluno' => \App\Http\Middleware\RoleAluno::class,
-        // 'role.napex' => \App\Http\Middleware\RoleNapex::class,
-        // 'role.coordenador' => \App\Http\Middleware\RoleCoordenador::class,
+
     ];
+
 }

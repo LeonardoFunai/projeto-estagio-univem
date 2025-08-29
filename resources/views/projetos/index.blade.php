@@ -344,33 +344,44 @@
                                                 @endif
 
 
+
+                                           
+
                                             {{-- ======================= ETAPA RESULTADO ======================= --}}
                                             @elseif ($projeto->etapa === 'Resultado')
-                                                        
-                                                        <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Original"><img src="{{ asset('img/site/btn-visualizar.png') }}" alt="Visualizar Proposta" width="26"></a>
+                                                
+                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Original"><img src="{{ asset('img/site/btn-visualizar.png') }}" alt="Visualizar Proposta" width="26"></a>
 
-                                                        @if ($projeto->resultado)
-                                                            @php
-                                                                // Condições da ETAPA RESULTADO
-                                                                $resultadoEnviado = $projeto->resultado->status === 'enviado';
-                                                                // CORREÇÃO AQUI: Aluno pode editar se estiver como rascunho OU reprovado
-                                                                $podeEditarResultado = in_array($projeto->resultado->status, ['rascunho', 'reprovado']);
-                                                            @endphp
+                                                @if ($projeto->resultado)
+                                                    @php
+                                                        $resultadoEnviado = $projeto->resultado->status === 'enviado';
+                                                        $podeEditarResultado = in_array($projeto->resultado->status, ['rascunho', 'reprovado']);
+                                                        $podeVoltar = $resultadoEnviado && $projeto->resultado->aprovado_napex === 'pendente' && $projeto->resultado->aprovado_coordenador === 'pendente';
+                                                    @endphp
 
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Resultado" class="text-blue-600 hover:underline font-semibold whitespace-nowrap">Ver Resultado</a>
+                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Resultado" class="text-blue-600 hover:underline font-semibold whitespace-nowrap">Ver Resultado</a>
 
-                                                            @if ($isAluno && $podeEditarResultado)
-                                                                <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Resultado" class="text-green-700 hover:underline font-semibold whitespace-nowrap">Editar Resultado</a>
-                                                            @endif
-                                                            
-                                                            @if ($isNapexOrCoord && $resultadoEnviado)
-                                                                <a href="{{ route('resultados.show', $projeto->resultado) }}" class="text-green-700 hover:underline font-semibold">Análise/Parecer</a>
-                                                            @endif
-                                                        @else
-                                                            @if ($isAluno)
-                                                                <a href="{{ route('resultados.create', $projeto) }}" class="text-green-700 hover:underline font-bold whitespace-nowrap">Adicionar Resultado</a>
-                                                            @endif
-                                                        @endif
+                                                    @if ($isAluno && $podeEditarResultado)
+                                                        <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Resultado"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="26"></a>
+                                                    @endif
+                                                    
+                                                    @if ($isAluno && $podeVoltar)
+                                                        <form action="{{ route('resultados.voltarParaRascunho', $projeto->resultado) }}" method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja voltar este relatório para o modo de edição?')">
+                                                            @csrf
+                                                            <button type="submit" class="text-yellow-600 hover:underline">
+                                                                <img src="{{ asset('img/site/btn-voltar-editar.png') }}" title="Voltar para Edição" alt="Voltar" width="24">
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                    @if ($isNapexOrCoord && $resultadoEnviado)
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" class="text-green-700 hover:underline font-semibold">Análise/Parecer</a>
+                                                    @endif
+                                                @else
+                                                    @if ($isAluno)
+                                                        <a href="{{ route('resultados.create', $projeto) }}" class="text-green-700 hover:underline font-bold whitespace-nowrap">Adicionar Resultado</a>
+                                                    @endif
+                                                @endif
 
                                             {{-- ======================= ETAPA CONCLUÍDO ======================= --}}
                                             @elseif ($projeto->etapa === 'Concluído')

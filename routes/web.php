@@ -37,7 +37,7 @@ Route::middleware('auth')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
-    | Rotas de Resultados
+    | Rotas de Resultados 
     |--------------------------------------------------------------------------
     */
     Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
@@ -46,6 +46,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/resultados/{resultado}', [ResultadoController::class, 'show'])->name('resultados.show');
     Route::get('/resultados/{resultado}/edit', [ResultadoController::class, 'edit'])->name('resultados.edit');
     Route::put('/resultados/{resultado}', [ResultadoController::class, 'update'])->name('resultados.update');
+    Route::post('/resultados/{resultado}/enviar', [ResultadoController::class, 'enviar'])->name('resultados.enviar');
+    Route::post('/resultados/{resultado}/voltar-rascunho', [ResultadoController::class, 'voltarParaRascunho'])->name('resultados.voltarParaRascunho');
+    Route::post('/resultados/{resultado}/avaliar', [ResultadoController::class, 'avaliar'])->name('resultados.avaliar');
 
 
     // 📤 Fluxo de envio, edição e parecer

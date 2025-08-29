@@ -27,7 +27,7 @@
 
                     <!-- Título  -->
                     <x-slot name="pageTitle">
-                        Detalhes do Projeto de Extensão
+                        Detalhes da Proposta de Extensão
                     </x-slot>
 
                     <!--Trilha do Status -->

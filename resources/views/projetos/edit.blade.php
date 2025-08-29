@@ -343,18 +343,7 @@
             </div>
         </form>
 
-        @can('submit', $projeto)
-            <div class="flex justify-center gap-4 mb-8">
-                <form method="POST" action="{{ route('projetos.enviar', $projeto->id) }}">
-                    @csrf
-                    <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded flex items-center gap-2">
-                        <img src="{{ asset('img/site/btn-enviar.png') }}" alt="Enviar projeto" width="20" height="20">
-                        Enviar Projeto
-                    </button>
-                </form>
-            </div>
-        @endcan
+
     </div>
 
     <script>

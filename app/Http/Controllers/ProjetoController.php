@@ -162,7 +162,12 @@ public function index(Request $request)
     // Paginação mantida
     $projetos = $query->paginate(10)->appends($request->query());
 
-    return view('projetos.index', compact('projetos'));
+    $response = response(view('projetos.index', compact('projetos')));
+    $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    $response->header('Pragma', 'no-cache');
+    $response->header('Expires', '0');
+
+    return $response;
 }
     
     /**
@@ -311,7 +316,12 @@ public function index(Request $request)
         // Adicione esta linha para verificar a permissão ANTES de mostrar a view.
         $this->authorize('view', $projeto);
 
-        return view('projetos.show', compact('projeto'));
+            $response = response(view('projetos.show', compact('projeto')));
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+
+            return $response;
     }
 
     /**
@@ -659,7 +669,7 @@ public function avaliarNapex(Request $request, $id)
         $projeto->data_entrega = null; // Limpa a data de entrega
         $projeto->save();
     
-        return redirect()->route('projetos.edit', $projeto->id)->with('success', 'Projeto liberado para edição novamente.');
+        return redirect()->route('projetos.edit', $projeto)->with('success', 'A proposta voltou para o modo de edição.');  
     }
     
     /**
