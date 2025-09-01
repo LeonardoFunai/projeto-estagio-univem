@@ -51,4 +51,8 @@ class Resultado extends Model
     {
         return $this->belongsTo(Projeto::class);
     }
+    public function rejeicoes()
+    {
+        return $this->hasMany(RejeicaoResultado::class);
+    }
 }

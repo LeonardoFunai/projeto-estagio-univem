@@ -20,6 +20,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex items-center space-x-4">
+
                 <!-- Botão de Voltar para edição -->
                 @if ($isAluno && $podeVoltar)
                     <form action="{{ route('resultados.voltarParaRascunho', $resultado) }}" method="POST" onsubmit="return confirm('Tem certeza? A ação removerá o relatório da fila de avaliação e você precisará enviá-lo novamente.')">
@@ -54,6 +55,7 @@
 
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                
                 <h3 class="text-lg font-bold text-gray-800 mb-4">IDENTIFICAÇÃO DO PROJETO</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
@@ -107,57 +109,99 @@
                 </div>
             </div>
 
+
+
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">PARECERES DA AVALIAÇÃO</h3>
                 <div class="space-y-6">
                     
                     <div>
                         <h4 class="font-semibold">Parecer do NAPEX</h4>
-                        @if(auth()->user()->role === 'napex' && $resultado->aprovado_napex === 'pendente')
+                        @php
+                            // Condição para mostrar o formulário: ser do perfil e a avaliação não estar finalizada
+                            $podeAvaliarNapex = auth()->user()->role === 'napex' && !in_array($resultado->status, ['aprovado', 'reprovado']);
+                        @endphp
+
+                        @if($podeAvaliarNapex)
                             <form action="{{ route('resultados.avaliar', $resultado) }}" method="POST" class="mt-2">
                                 @csrf
-                                <textarea name="parecer" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Digite seu parecer..." required></textarea>
+                                {{-- O campo é pré-preenchido com o parecer existente --}}
+                                <textarea name="parecer" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" required>{{ old('parecer', $resultado->parecer_napex) }}</textarea>
                                 <div class="mt-2 flex items-center gap-4">
+                                    {{-- O select é pré-selecionado com a decisão existente --}}
                                     <select name="aprovacao" class="border-gray-300 rounded-md shadow-sm" required>
                                         <option value="">-- Decisão --</option>
-                                        <option value="sim">Aprovar</option>
-                                        <option value="nao">Reprovar</option>
+                                        <option value="sim" {{ $resultado->aprovado_napex == 'sim' ? 'selected' : '' }}>Aprovar</option>
+                                        <option value="nao" {{ $resultado->aprovado_napex == 'nao' ? 'selected' : '' }}>Reprovar</option>
                                     </select>
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-xs uppercase hover:bg-blue-700">Enviar Parecer</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-xs uppercase hover:bg-blue-700">Salvar Parecer</button>
                                 </div>
                             </form>
                         @else
                             <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap">{{ $resultado->parecer_napex ?? 'Aguardando avaliação.' }}</p>
                             @if($resultado->aprovado_napex !== 'pendente')
-                                <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_napex === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">{{ ucfirst($resultado->aprovado_napex) }}</span></p>
+                               <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_napex === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
+                                    {{ $resultado->aprovado_napex === 'sim' ? 'Aprovado' : 'Não Aprovado' }}
+                                </span></p>
                             @endif
                         @endif
                     </div>
 
                     <div>
                         <h4 class="font-semibold">Parecer da Coordenação</h4>
-                        @if(auth()->user()->role === 'coordenador' && $resultado->aprovado_coordenador === 'pendente')
+                        @php
+                            $podeAvaliarCoord = auth()->user()->role === 'coordenador' && !in_array($resultado->status, ['aprovado', 'reprovado']);
+                        @endphp
+
+                        @if($podeAvaliarCoord)
                             <form action="{{ route('resultados.avaliar', $resultado) }}" method="POST" class="mt-2">
                                 @csrf
-                                <textarea name="parecer" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Digite seu parecer..." required></textarea>
+                                <textarea name="parecer" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" required>{{ old('parecer', $resultado->parecer_coordenador) }}</textarea>
                                 <div class="mt-2 flex items-center gap-4">
                                     <select name="aprovacao" class="border-gray-300 rounded-md shadow-sm" required>
                                         <option value="">-- Decisão --</option>
-                                        <option value="sim">Aprovar</option>
-                                        <option value="nao">Reprovar</option>
+                                        <option value="sim" {{ $resultado->aprovado_coordenador == 'sim' ? 'selected' : '' }}>Aprovar</option>
+                                        <option value="nao" {{ $resultado->aprovado_coordenador == 'nao' ? 'selected' : '' }}>Reprovar</option>
                                     </select>
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-xs uppercase hover:bg-blue-700">Enviar Parecer</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-xs uppercase hover:bg-blue-700">Salvar Parecer</button>
                                 </div>
                             </form>
                         @else
-                             <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap">{{ $resultado->parecer_coordenador ?? 'Aguardando avaliação.' }}</p>
-                             @if($resultado->aprovado_coordenador !== 'pendente')
-                                <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_coordenador === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">{{ ucfirst($resultado->aprovado_coordenador) }}</span></p>
+                            <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap">{{ $resultado->parecer_coordenador ?? 'Aguardando avaliação.' }}</p>
+                            @if($resultado->aprovado_coordenador !== 'pendente')
+                               <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_coordenador === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
+                                    {{ $resultado->aprovado_coordenador === 'sim' ? 'Aprovado' : 'Não Aprovado' }}
+                                </span></p>
                             @endif
                         @endif
                     </div>
                 </div>
             </div>
+            @if ($resultado->rejeicoes->isNotEmpty())
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">HISTÓRICO DE REJEIÇÕES</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                    <th class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Avaliador</th>
+                                    <th class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Motivo da Rejeição</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach ($resultado->rejeicoes->sortByDesc('created_at') as $rejeicao)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ $rejeicao->created_at->format('d/m/Y H:i') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ $rejeicao->user->name }} ({{ ucfirst($rejeicao->user->role) }})</td>
+                                        <td class="px-6 py-4 whitespace-pre-wrap">{{ $rejeicao->motivo }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

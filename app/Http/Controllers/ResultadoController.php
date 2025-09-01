@@ -6,6 +6,8 @@ use App\Models\Projeto;
 use App\Models\Resultado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\StoreResultadoRequest; 
+use App\Models\RejeicaoResultado;
 
 class ResultadoController extends Controller
 {
@@ -14,7 +16,7 @@ class ResultadoController extends Controller
      */
     public function create(Projeto $projeto)
     {
-        // ... (código do create continua o mesmo)
+        
         if (auth()->user()->id !== $projeto->user_id) {
             abort(403, 'Acesso não autorizado.');
         }
@@ -30,21 +32,10 @@ class ResultadoController extends Controller
     /**
      * Salva o novo relatório de resultados no banco de dados.
      */
-    public function store(Request $request, Projeto $projeto)
+    public function store(StoreResultadoRequest $request, Projeto $projeto)
     {
-        // CORREÇÃO AQUI: Lista de validação completa
-        $validatedData = $request->validate([
-            'atividades_desenvolvidas' => 'required|string',
-            'comunidade_externa' => 'nullable|string',
-            'parceiro_organizacao' => 'nullable|string|max:255',
-            'parceiro_endereco' => 'nullable|string|max:255',
-            'parceiro_cnpj' => 'nullable|string|max:20',
-            'parceiro_responsavel' => 'nullable|string|max:255',
-            'parceiro_tipo_participacao' => 'nullable|string|max:255',
-            'anexos_descricao' => 'nullable|string',
-            'fotos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'videos.*' => 'nullable|file|mimes:mp4,mov,avi,wmv|max:10240',
-        ]);
+        
+        $validatedData = $request->validated();
 
         $dadosParaSalvar = $validatedData;
         $dadosParaSalvar['projeto_id'] = $projeto->id;
@@ -65,8 +56,14 @@ class ResultadoController extends Controller
      */
     public function show(Resultado $resultado)
     {
-        
-        $resultado->load('projeto.user');
+        $user = auth()->user();
+        if (in_array($user->role, ['napex', 'coordenador'])) {
+            // Se o avaliador tentar ver um resultado que não está na sua fila (ex: rascunho, reprovado), bloqueie.
+            if (!in_array($resultado->status, ['enviado', 'aprovado'])) {
+                abort(403, 'Acesso não autorizado para este status de resultado.');
+            }
+        }
+        $resultado->load('projeto.user', 'rejeicoes.user');
         $response = response(view('resultados.show', compact('resultado')));
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
@@ -80,7 +77,6 @@ class ResultadoController extends Controller
      */
     public function edit(Resultado $resultado)
     {
-        // ... (código do edit continua o mesmo)
         $projeto = $resultado->projeto;
         if (auth()->user()->id !== $projeto->user_id || !in_array($resultado->status, ['rascunho', 'reprovado'])) {
             abort(403, 'Acesso não autorizado ou ação não permitida no status atual.');
@@ -88,49 +84,37 @@ class ResultadoController extends Controller
         return view('resultados.edit', compact('resultado'));
     }
 
-
-
-
-    public function update(Request $request, Resultado $resultado)
+    /**
+     * Atualiza um resultado existente no banco de dados.
+     */
+    public function update(StoreResultadoRequest $request, Resultado $resultado)
     {
-        // A lógica de autorização e validação continuam as mesmas...
-        $projeto = $resultado->projeto;
-        if (auth()->user()->id !== $projeto->user_id || !in_array($resultado->status, ['rascunho', 'reprovado'])) {
-            abort(403, 'Acesso não autorizado.');
-        }
-
-            $validatedData = $request->validate([
-                'atividades_desenvolvidas' => 'required|string',
-                'comunidade_externa' => 'nullable|string',
-                'parceiro_organizacao' => 'nullable|string|max:255',
-                'parceiro_endereco' => 'nullable|string|max:255',
-                'parceiro_cnpj' => 'nullable|string|max:20',
-                'parceiro_responsavel' => 'nullable|string|max:255',
-                'parceiro_tipo_participacao' => 'nullable|string|max:255',
-                'anexos_descricao' => 'nullable|string',
-                'fotos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'videos.*' => 'nullable|file|mimes:mp4,mov,avi,wmv|max:10240',
-            ]);
         
-        // Ação principal: Apenas atualiza os dados. Não mexe mais no status.
+        $validatedData = $request->validated();
+        
         $resultado->update($validatedData);
 
+        if ($resultado->status === 'reprovado') {
+            $resultado->status = 'enviado';
+            $resultado->aprovado_napex = 'pendente';
+            $resultado->parecer_napex = null;
+            $resultado->aprovado_coordenador = 'pendente';
+            $resultado->parecer_coordenador = null;
+            $resultado->save();
+        }
+    
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados atualizado com sucesso!');
     }
-
-
 
     /**
      * Submete o resultado para avaliação.
      */
     public function enviar(Resultado $resultado)
     {
-        // Segurança: Garante que só o dono pode enviar.
         if (auth()->user()->id !== $resultado->projeto->user_id) {
             abort(403);
         }
         
-        // Altera o status para 'enviado' e limpa avaliações antigas (caso seja um reenvio)
         $resultado->status = 'enviado';
         $resultado->aprovado_napex = 'pendente';
         $resultado->parecer_napex = null;
@@ -146,17 +130,12 @@ class ResultadoController extends Controller
      */
     public function voltarParaRascunho(Resultado $resultado)
     {
-        // Segurança: Garante que só o dono pode realizar a ação.
         if (auth()->user()->id !== $resultado->projeto->user_id) {
             abort(403);
         }
-
-        // VERIFICAÇÃO ADICIONADA: A ação só é permitida se o status for 'enviado'.
         if ($resultado->status !== 'enviado') {
             return back()->with('error', 'Esta ação não é permitida no status atual do relatório.');
         }
-
-        // REGRA DE BLOQUEIO: Verifica se já houve alguma aprovação.
         if ($resultado->aprovado_napex === 'sim' || $resultado->aprovado_coordenador === 'sim') {
             return back()->with('error', 'Não é possível voltar para edição pois o relatório já foi avaliado.');
         }
@@ -167,65 +146,60 @@ class ResultadoController extends Controller
         return redirect()->route('resultados.edit', $resultado)->with('success', 'O relatório de resultados voltou para o modo de edição.');
     }
 
-
+    
 
     /**
-     * Salva o parecer de um avaliador (NAPEX ou Coordenador).
+     * Salva ou atualiza o parecer de um avaliador (NAPEX ou Coordenador).
      */
     public function avaliar(Request $request, Resultado $resultado)
     {
-        // 1. Validação: Garante que o parecer e a decisão foram enviados.
-        $request->validate([
-            'parecer' => 'required|string|min:10',
-            'aprovacao' => 'required|in:sim,nao',
-        ]);
+
+
+
+        if (in_array($resultado->status, ['aprovado', 'reprovado'])) {
+            return back()->with('error', 'A avaliação para este relatório já foi finalizada.');
+        }
 
         $user = auth()->user();
         $role = $user->role;
 
-        // 2. Autorização e Lógica de salvamento:
-        // Verifica o perfil do usuário e salva o parecer no campo correto.
+      
         if ($role === 'napex') {
-            if ($resultado->aprovado_napex !== 'pendente') {
-                return back()->with('error', 'Este resultado já foi avaliado pelo NAPEX.');
-            }
             $resultado->parecer_napex = $request->parecer;
             $resultado->aprovado_napex = $request->aprovacao;
         } elseif ($role === 'coordenador') {
-            if ($resultado->aprovado_coordenador !== 'pendente') {
-                return back()->with('error', 'Este resultado já foi avaliado pela Coordenação.');
-            }
             $resultado->parecer_coordenador = $request->parecer;
             $resultado->aprovado_coordenador = $request->aprovacao;
         } else {
-            // Se um usuário não autorizado tentar acessar, retorna um erro.
             return back()->with('error', 'Você não tem permissão para avaliar.');
         }
 
-        // 3. Lógica de Atualização de Status Geral:
-        // Após salvar o parecer individual, o sistema verifica o estado geral da avaliação.
+       
         $aprovadoNapex = $resultado->aprovado_napex;
         $aprovadoCoord = $resultado->aprovado_coordenador;
 
         if ($aprovadoNapex === 'nao' || $aprovadoCoord === 'nao') {
-            // Se QUALQUER UM reprovar, o status do resultado vira 'reprovado'
-            // e o aluno será notificado para corrigir.
             $resultado->status = 'reprovado';
 
-        } elseif ($aprovadoNapex === 'sim' && $aprovadoCoord === 'sim') {
-            // Se AMBOS aprovarem, o status do resultado vira 'aprovado'
-            $resultado->status = 'aprovado';
+          
+            if ($request->aprovacao === 'nao') {
+                RejeicaoResultado::create([
+                    'resultado_id' => $resultado->id,
+                    'user_id' => $user->id, 
+                    'motivo' => $request->parecer, 
+                ]);
+            }
+           
 
-            // E a ETAPA do projeto pai finalmente avança para 'Concluído'
+        } elseif ($aprovadoNapex === 'sim' && $aprovadoCoord === 'sim') {
+            $resultado->status = 'aprovado';
             $projeto = $resultado->projeto;
             $projeto->etapa = 'Concluído';
             $projeto->save();
         }
-        // Se apenas um aprovou e o outro está pendente, o status do resultado continua 'enviado'.
-
+        
         $resultado->save();
 
-        // 4. Redirecionamento: Volta para a tela de visualização com mensagem de sucesso.
-        return redirect()->route('resultados.show', $resultado)->with('success', 'Parecer enviado com sucesso!');
+        return redirect()->route('resultados.show', $resultado)->with('success', 'Parecer salvo com sucesso!');
     }
 }
