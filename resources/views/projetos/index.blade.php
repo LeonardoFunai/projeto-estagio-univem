@@ -63,7 +63,7 @@
                     @if (in_array(auth()->user()->role, ['napex', 'coordenador']))
                         <a href="{{ route('projetos.exportarPdf', request()->query()) }}"
                             class="inline-flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white font-bold px-4 h-[36px] rounded text-sm">
-                            📄 Gerar Relatório em PDF
+                            📄 EXPORTAR TABELA EM PDF
                         </a>
                     @endif
 
@@ -182,14 +182,14 @@
                             <tr class="bg-[#251C57] text-white">
                                 <th class="py-1 px-4 text-left">#</th>
                                 <!-- <th class="py-1 px-4 text-left">Cadastrado por</th> -->
-                                <th class="py-1 px-4 text-left">Título</th>
-                                <th class="py-1 px-4 text-left">Data Início</th>
-                                <th class="py-1 px-4 text-left">Data Fim</th>
-                                <th class="py-1 px-4 text-left">Etapa</th>
-                                <th class="py-1 px-4 text-left">Aprovação NAPEx</th>
-                                <th class="py-1 px-4 text-left">Aprovação Coordenador</th>
-                                <th class="py-1 px-4 text-left">Status</th> 
-                                <th class="py-1 px-4 text-left" colspan="2">Detalhes/Ações</th>
+                                <th class="py-1 px-4 text-center">Título</th>
+                                <th class="py-1 px-4 text-center">Data Início</th>
+                                <th class="py-1 px-4 text-center">Data Fim</th>
+                                <th class="py-1 px-4 text-center">Etapa</th>
+                                <th class="py-1 px-4 text-center">Aprovação NAPEx</th>
+                                <th class="py-1 px-4 text-center">Aprovação Coordenador</th>
+                                <th class="py-1 px-4 text-center">Status</th> 
+                                <th class="py-1 px-4 text-center" colspan="2">Detalhes/Ações</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -197,7 +197,7 @@
                             @foreach ($projetos as $index => $projeto)
 
                                 <tr class="hover:bg-gray-100">
-                                    <td class="py-2 px-6">{{ ($projetos->currentPage() - 1) * $projetos->perPage() + $index + 1 }}</td>
+                                    <td class="py-2 px-6 text-center">{{ ($projetos->currentPage() - 1) * $projetos->perPage() + $index + 1 }}</td>
 
 
                                     <!-- Nome do perfil de cadastro
@@ -207,24 +207,24 @@
 
 
                                     <!-- Título -->
-                                    <td class="py-2 px-6" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
+                                    <td class="py-2 px-6 text-center" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
                                         {{ $projeto->titulo }}
                                     </td>
 
 
                                     <!-- Dat Início -->
-                                    <td class="py-2 px-6" >{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
+                                    <td class="py-2 px-6 text-center" >{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
 
                                     <!-- Data Fim -->
-                                    <td class="py-2 px-6">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
+                                    <td class="py-2 px-6 text-center">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
 
                                     <!-- Etapa -->
-                                    <td class="py-2 px-6 font-bold">
+                                    <td class="py-2 px-6 font-bold text-center">
                                         {{ $projeto->etapa }}
                                     </td>
 
                                     <!-- Aprovação Napex -->
-                                    <td class="py-2 px-6" style="max-width: 50px;">
+                                    <td class="py-2 px-6 text-center" style="max-width: 50px;">
                                         @php
                                             $aprovacao = 'N/A'; // Define um valor padrão
                                             if ($projeto->etapa === 'Proposta') {
@@ -243,7 +243,7 @@
                                     </td>
 
                                     <!-- Aprovação Coord -->
-                                    <td class="py-2 px-6" style="max-width: 50px;">
+                                    <td class="py-2 px-6 text-center" style="max-width: 50px;">
                                         @php
                                             $aprovacao = 'N/A'; // Define um valor padrão
                                             if ($projeto->etapa === 'Proposta') {
@@ -285,7 +285,7 @@
                                             $cor = 'text-green-800 font-bold';
                                         }
                                     @endphp
-                                    <td class="py-2 px-6 {{ $cor }}" style="max-width: 30px;">
+                                    <td class="py-2 px-6 text-center {{ $cor }}" style="max-width: 30px;">
                                         {{ ucfirst($status) }}
                                     </td>
   
@@ -331,19 +331,19 @@
 
                                                         {{-- --- AÇÕES FIXAS --- --}}
                                                         @if ($propostaAprovada)
-                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Proposta</a>
+                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
                                                         @endif
 
                                                         {{-- --- AÇÕES DA ETAPA PROPOSTA --- --}}
                                                         @if ($projeto->etapa === 'Proposta')
                                                             @if ($propostaEmEdicao)
-                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Proposta</a>
+                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
                                                                 <a href="{{ route('projetos.edit', $projeto->id) }}" title="Editar Proposta" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20"></a>
                                                                 @if($role === 'aluno')
                                                                     <button @click="openModal = true" title="Apagar Proposta" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-apagar.png') }}" alt="Apagar" width="20"></button>
                                                                 @endif
                                                             @elseif ($propostaEntregue)
-                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Proposta</a>
+                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
                                                                 {{-- [NOVA CONDIÇÃO] O botão de voltar só aparece se NENHUMA avaliação foi feita --}}
                                                                 @if($podeVoltarProposta)
                                                                     <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" class="inline-block"> @csrf
@@ -356,14 +356,14 @@
                                                         {{-- --- AÇÕES DA ETAPA RESULTADO --- --}}
                                                         @if ($projeto->etapa === 'Resultado')
                                                             @if ($resultadoExiste)
-                                                                <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Relatório</a>
+                                                                <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
                                                                 @if ($resultadoEmRascunho)
-                                                                    <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="26"></a>
+                                                                    <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="39"></a>
                                                                 @elseif ($resultadoEnviado)
                                                                     {{-- [NOVA CONDIÇÃO] O botão de voltar só aparece se NENHUMA avaliação foi feita --}}
                                                                     @if($podeVoltarResultado)
                                                                         <form action="{{ route('resultados.voltarParaRascunho', $projeto->resultado) }}" method="POST" class="inline-block"> @csrf
-                                                                            <button type="submit" title="Voltar Relatório para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="22"></button>
+                                                                            <button type="submit" title="Voltar Relatório para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="20"></button>
                                                                         </form>
                                                                     @endif
                                                                 @endif
@@ -374,7 +374,7 @@
 
                                                         {{-- --- AÇÕES DA ETAPA CONCLUÍDO --- --}}
                                                         @if ($projeto->etapa === 'Concluído')
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Relatório</a>
+                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
                                                         @endif
 
                                                     {{-- ================================================================= --}}
@@ -383,7 +383,7 @@
                                                     @elseif ($isNapexOuCoord)
                                                         
                                                         @if ($propostaAprovada)
-                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Proposta</a>
+                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
                                                         @endif
 
                                                         @if ($propostaEntregue)
@@ -395,7 +395,7 @@
                                                         @endif
 
                                                         @if ($resultadoAprovado)
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Relatório</a>
+                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
                                                         @endif
                                                         
                                                     @endif

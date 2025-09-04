@@ -6,7 +6,7 @@ use App\Models\Projeto;
 use App\Models\Resultado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Requests\StoreResultadoRequest; 
+use App\Http\Requests\StoreResultadoRequest;
 use App\Models\RejeicaoResultado;
 
 class ResultadoController extends Controller
@@ -16,16 +16,17 @@ class ResultadoController extends Controller
      */
     public function create(Projeto $projeto)
     {
-        
-        if (auth()->user()->id !== $projeto->user_id) {
-            abort(403, 'Acesso não autorizado.');
-        }
+        // Policy: Verifica se o usuário logado pode criar um resultado para ESTE projeto.
+        $this->authorize('create', [Resultado::class, $projeto]);
+
+        // Lógica de negócio (continua no controller)
         if ($projeto->etapa !== 'Resultado') {
             return redirect()->route('projetos.index')->with('error', 'Só é possível adicionar resultados a projetos na Etapa de Resultado.');
         }
         if ($projeto->resultado) {
             return redirect()->route('resultados.edit', $projeto->resultado)->with('info', 'Este projeto já possui um relatório de resultados. Você pode editá-lo aqui.');
         }
+
         return view('resultados.create', compact('projeto'));
     }
 
@@ -34,18 +35,15 @@ class ResultadoController extends Controller
      */
     public function store(StoreResultadoRequest $request, Projeto $projeto)
     {
-        
+        // Policy: A autorização é feita pelo FormRequest, que deve chamar a policy 'create'.
+        $this->authorize('create', [Resultado::class, $projeto]);
+
         $validatedData = $request->validated();
+        $dadosParaSalvar = $validatedData + [
+            'projeto_id' => $projeto->id,
+            'status' => 'rascunho',
+        ];
 
-        $dadosParaSalvar = $validatedData;
-        $dadosParaSalvar['projeto_id'] = $projeto->id;
-        $dadosParaSalvar['status'] = 'rascunho';
-
-        // Lógica de upload de arquivos...
-        if ($request->hasFile('fotos')) {
-            // ...
-        }
-        
         Resultado::create($dadosParaSalvar);
 
         return redirect()->route('projetos.index')->with('success', 'Rascunho do Relatório de Resultados salvo com sucesso!');
@@ -56,13 +54,9 @@ class ResultadoController extends Controller
      */
     public function show(Resultado $resultado)
     {
-        $user = auth()->user();
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            // Se o avaliador tentar ver um resultado que não está na sua fila (ex: rascunho, reprovado), bloqueie.
-            if (!in_array($resultado->status, ['enviado', 'aprovado'])) {
-                abort(403, 'Acesso não autorizado para este status de resultado.');
-            }
-        }
+        // Policy: Verifica se o usuário pode ver este resultado.
+        $this->authorize('view', $resultado);
+
         $resultado->load('projeto.user', 'rejeicoes.user');
         $response = response(view('resultados.show', compact('resultado')));
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -77,10 +71,9 @@ class ResultadoController extends Controller
      */
     public function edit(Resultado $resultado)
     {
-        $projeto = $resultado->projeto;
-        if (auth()->user()->id !== $projeto->user_id || !in_array($resultado->status, ['rascunho', 'reprovado'])) {
-            abort(403, 'Acesso não autorizado ou ação não permitida no status atual.');
-        }
+        // Policy: Verifica se o usuário pode atualizar (editar) este resultado.
+        $this->authorize('update', $resultado);
+
         return view('resultados.edit', compact('resultado'));
     }
 
@@ -89,10 +82,10 @@ class ResultadoController extends Controller
      */
     public function update(StoreResultadoRequest $request, Resultado $resultado)
     {
-        
-        $validatedData = $request->validated();
-        
-        $resultado->update($validatedData);
+        // Policy: A autorização é feita pelo FormRequest, que deve chamar a policy 'update'.
+        $this->authorize('update', $resultado);
+
+        $resultado->update($request->validated());
 
         if ($resultado->status === 'reprovado') {
             $resultado->status = 'enviado';
@@ -102,7 +95,7 @@ class ResultadoController extends Controller
             $resultado->parecer_coordenador = null;
             $resultado->save();
         }
-    
+
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados atualizado com sucesso!');
     }
 
@@ -111,10 +104,9 @@ class ResultadoController extends Controller
      */
     public function enviar(Resultado $resultado)
     {
-        if (auth()->user()->id !== $resultado->projeto->user_id) {
-            abort(403);
-        }
-        
+        // Policy: Verifica se o usuário tem permissão para enviar para avaliação.
+        $this->authorize('sendForEvaluation', $resultado);
+
         $resultado->status = 'enviado';
         $resultado->aprovado_napex = 'pendente';
         $resultado->parecer_napex = null;
@@ -130,15 +122,8 @@ class ResultadoController extends Controller
      */
     public function voltarParaRascunho(Resultado $resultado)
     {
-        if (auth()->user()->id !== $resultado->projeto->user_id) {
-            abort(403);
-        }
-        if ($resultado->status !== 'enviado') {
-            return back()->with('error', 'Esta ação não é permitida no status atual do relatório.');
-        }
-        if ($resultado->aprovado_napex === 'sim' || $resultado->aprovado_coordenador === 'sim') {
-            return back()->with('error', 'Não é possível voltar para edição pois o relatório já foi avaliado.');
-        }
+        // Policy: Verifica se o usuário tem permissão para reverter para rascunho.
+        $this->authorize('revertToDraft', $resultado);
 
         $resultado->status = 'rascunho';
         $resultado->save();
@@ -146,51 +131,40 @@ class ResultadoController extends Controller
         return redirect()->route('resultados.edit', $resultado)->with('success', 'O relatório de resultados voltou para o modo de edição.');
     }
 
-    
-
     /**
      * Salva ou atualiza o parecer de um avaliador (NAPEX ou Coordenador).
      */
     public function avaliar(Request $request, Resultado $resultado)
     {
-
-
-
-        if (in_array($resultado->status, ['aprovado', 'reprovado'])) {
-            return back()->with('error', 'A avaliação para este relatório já foi finalizada.');
-        }
+        // Policy: Verifica se o usuário pode avaliar.
+        $this->authorize('evaluate', $resultado);
 
         $user = auth()->user();
         $role = $user->role;
 
-      
+        
         if ($role === 'napex') {
             $resultado->parecer_napex = $request->parecer;
             $resultado->aprovado_napex = $request->aprovacao;
         } elseif ($role === 'coordenador') {
             $resultado->parecer_coordenador = $request->parecer;
             $resultado->aprovado_coordenador = $request->aprovacao;
-        } else {
-            return back()->with('error', 'Você não tem permissão para avaliar.');
         }
 
-       
+
         $aprovadoNapex = $resultado->aprovado_napex;
         $aprovadoCoord = $resultado->aprovado_coordenador;
 
         if ($aprovadoNapex === 'nao' || $aprovadoCoord === 'nao') {
             $resultado->status = 'reprovado';
-
-          
+        
             if ($request->aprovacao === 'nao') {
                 RejeicaoResultado::create([
                     'resultado_id' => $resultado->id,
-                    'user_id' => $user->id, 
-                    'motivo' => $request->parecer, 
+                    'user_id' => $user->id,
+                    'motivo' => $request->parecer,
                 ]);
             }
-           
-
         } elseif ($aprovadoNapex === 'sim' && $aprovadoCoord === 'sim') {
             $resultado->status = 'aprovado';
             $projeto = $resultado->projeto;

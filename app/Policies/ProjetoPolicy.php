@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Projeto;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use App\Models\Resultado;
 
 class ProjetoPolicy
 {
