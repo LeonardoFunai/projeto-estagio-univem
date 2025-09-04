@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str; 
+@endphp
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -103,25 +107,47 @@
                             <textarea id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 rounded-md shadow-sm">{{ old('comunidade_externa', $resultado->comunidade_externa) }}</textarea>
                         </div>
 
+{{-- Em: resources/views/resultados/edit.blade.php --}}
+
                         <div class="mt-8 p-4 border border-gray-200 rounded-md">
-                             <h3 class="text-lg font-bold text-gray-800 mb-4">Anexos</h3>
-                             <div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Gerenciar Anexos</h3>
+
+                            {{-- 1. LISTA DE ANEXOS ATUAIS COM OPÇÃO DE DELETAR --}}
+                            @if ($resultado->anexos->isNotEmpty())
+                                <div class="mb-6">
+                                    <p class="font-semibold text-sm text-gray-800 mb-2">Anexos Atuais:</p>
+                                    <div class="space-y-2">
+                                        @foreach ($resultado->anexos as $anexo)
+                                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                                <a href="{{ Storage::url($anexo->path) }}" target="_blank" class="text-blue-600 hover:underline truncate" title="{{ $anexo->nome_original }}">
+                                                    {{ Str::limit($anexo->nome_original, 40) }}
+                                                </a>
+                                                {{-- Checkbox para marcar para deleção --}}
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" name="anexos_a_deletar[]" value="{{ $anexo->id }}" id="delete_anexo_{{ $anexo->id }}" class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500">
+                                                    <label for="delete_anexo_{{ $anexo->id }}" class="ml-2 text-sm text-red-600">Excluir</label>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- 2. CAMPO PARA DESCRIÇÃO DOS ANEXOS (JÁ EXISTENTE E CORRETO) --}}
+                            <div>
                                 <x-input-label for="anexos_descricao" value="Descrição dos Anexos" />
-                                <p class="text-sm text-gray-500 mb-2">Descreva brevemente os arquivos que você está enviando (Ex: Fotos do evento, vídeo de apresentação, etc.).</p>
+                                <p class="text-sm text-gray-500 mb-2">Você pode atualizar a descrição ou deixar como está.</p>
                                 <x-text-input id="anexos_descricao" name="anexos_descricao" type="text" class="mt-1 block w-full" :value="old('anexos_descricao', $resultado->anexos_descricao)" />
-                             </div>
-                             <div class="mt-4">
-                                <x-input-label for="fotos" value="Upload de Novas Fotos (Opcional)" />
-                                <input id="fotos" name="fotos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
-                                <x-input-error :messages="$errors->get('fotos.*')" class="mt-2" />
                             </div>
+
+                            {{-- 3. CAMPO PARA ADICIONAR NOVOS ANEXOS (UNIFICADO) --}}
                             <div class="mt-4">
-                                <x-input-label for="videos" value="Upload de Novos Vídeos (Opcional)" />
-                                <input id="videos" name="videos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
-                                <x-input-error :messages="$errors->get('videos.*')" class="mt-2" />
+                                <x-input-label for="anexos" value="Adicionar Novos Arquivos (Opcional)" />
+                                <p class="text-sm text-gray-500 mb-2">Selecione novos arquivos para incluir no relatório. Os arquivos atuais serão mantidos, a menos que marcados para "Excluir".</p>
+                                <input id="anexos" name="anexos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
+                                <x-input-error :messages="$errors->get('anexos.*')" class="mt-2" />
                             </div>
                         </div>
-
                     </form>
 
                     <div class="flex items-center justify-end mt-6 space-x-4">

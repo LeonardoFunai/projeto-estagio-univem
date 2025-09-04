@@ -81,16 +81,16 @@
                                 <p class="text-sm text-gray-500 mb-2">Descreva brevemente os arquivos que você está enviando (Ex: Fotos do evento, vídeo de apresentação, etc.).</p>
                                 <x-text-input id="anexos_descricao" name="anexos_descricao" type="text" class="mt-1 block w-full" :value="old('anexos_descricao')" />
                              </div>
-                             <div class="mt-4">
-                                <x-input-label for="fotos" value="Upload de Fotos (Múltiplos arquivos permitidos)" />
-                                <input id="fotos" name="fotos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
-                                <x-input-error :messages="$errors->get('fotos.*')" class="mt-2" />
-                            </div>
+    
                             <div class="mt-4">
-                                <x-input-label for="videos" value="Upload de Vídeos (Múltiplos arquivos permitidos)" />
-                                <input id="videos" name="videos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
-                                <x-input-error :messages="$errors->get('videos.*')" class="mt-2" />
+                                <x-input-label for="anexos" value="Upload de Arquivos (Múltiplos arquivos permitidos)" />
+                                <p class="text-sm text-gray-500 mb-2">Envie os arquivos comprobatórios do seu relatório (Ex: Fotos, vídeos, PDFs, etc.). Você pode selecionar múltiplos arquivos de uma vez.</p>
+                                
+                                <input id="anexos" name="anexos[]" type="file" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 mt-1"/>
+                                
+                                <x-input-error :messages="$errors->get('anexos.*')" class="mt-2" />
                             </div>
+                            
                         </div>
 
                         <div class="flex items-center justify-end mt-6">

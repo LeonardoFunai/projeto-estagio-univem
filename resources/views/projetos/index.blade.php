@@ -185,9 +185,9 @@
                                 <th class="py-1 px-4 text-center">Título</th>
                                 <th class="py-1 px-4 text-center">Data Início</th>
                                 <th class="py-1 px-4 text-center">Data Fim</th>
-                                <th class="py-1 px-4 text-center">Etapa</th>
                                 <th class="py-1 px-4 text-center">Aprovação NAPEx</th>
                                 <th class="py-1 px-4 text-center">Aprovação Coordenador</th>
+                                <th class="py-1 px-4 text-center">Etapa</th>
                                 <th class="py-1 px-4 text-center">Status</th> 
                                 <th class="py-1 px-4 text-center" colspan="2">Detalhes/Ações</th>
                             </tr>
@@ -218,10 +218,6 @@
                                     <!-- Data Fim -->
                                     <td class="py-2 px-6 text-center">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
 
-                                    <!-- Etapa -->
-                                    <td class="py-2 px-6 font-bold text-center">
-                                        {{ $projeto->etapa }}
-                                    </td>
 
                                     <!-- Aprovação Napex -->
                                     <td class="py-2 px-6 text-center" style="max-width: 50px;">
@@ -255,6 +251,11 @@
                                             }
                                         @endphp
                                         {{ $aprovacao === 'sim' ? 'Sim' : ($aprovacao === 'nao' ? 'Não' : 'Pendente') }}
+                                    </td>
+
+                                    <!-- Etapa -->
+                                    <td class="py-2 px-6 font-bold text-center">
+                                        {{ $projeto->etapa }}
                                     </td>
 
                                     <!-- status -->

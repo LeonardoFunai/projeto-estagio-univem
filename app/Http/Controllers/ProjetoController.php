@@ -33,130 +33,124 @@ class ProjetoController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    // Em app/Http/Controllers/ProjetoController.php
 
-// Em app/Http/Controllers/ProjetoController.php
 
-public function index(Request $request)
-{
-    // Inicia a query base, já carregando a relação com 'resultado' para otimização
-    $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
+    public function index(Request $request)
+    {
+        // Inicia a query base, já carregando a relação com 'resultado' para otimização
+        $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    // Filtros por papel (lógica para aluno e professor mantida)
-    if ($user->role === 'aluno') {
-        $query->where('user_id', $user->id);
-    }
+        // Filtros por papel (lógica para aluno e professor mantida)
+        if ($user->role === 'aluno') {
+            $query->where('user_id', $user->id);
+        }
 
-    if ($user->role === 'professor') {
-        $query->whereHas('professores', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        });
-    }
-
-    // --- LÓGICA DE VISUALIZAÇÃO PARA AVALIADORES (ATUALIZADA) ---
-    // Este bloco garante que os avaliadores vejam apenas o que precisa de ação ou já foi finalizado por eles.
-    if (in_array($user->role, ['napex', 'coordenador'])) {
-        $query->where(function ($q) {
-            // Regra 1: Mostra PROPOSTAS que estão 'entregue' ou 'aprovado'.
-            $q->where(function ($sub) {
-                $sub->where('etapa', 'Proposta')->whereIn('status', ['entregue', 'aprovado']);
-            })
-            // Regra 2: Mostra RESULTADOS que estão 'enviado' ou 'aprovado'.
-            ->orWhere(function ($sub) {
-                $sub->where('etapa', 'Resultado')->whereHas('resultado', function ($res) {
-                    $res->whereIn('status', ['enviado', 'aprovado']);
-                });
-            })
-            // Regra 3: Sempre mostra projetos Concluídos.
-            ->orWhere('etapa', 'Concluído');
-        });
-    }
-
-    // --- SEÇÃO DE FILTROS GERAIS DA BUSCA (Mantida e Aprimorada) ---
-
-    // Filtro principal pela ETAPA
-    if ($request->filled('etapa') && $request->etapa != 'todas') {
-        $query->where('etapa', $request->etapa);
-    }
-
-    // Filtros por campos de texto
-    if ($request->filled('cadastrado_por')) {
-        $query->whereHas('user', function ($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
-        });
-    }
-    if ($request->filled('titulo')) {
-        $query->where('titulo', 'like', '%' . $request->titulo . '%');
-    }
-    if ($request->filled('periodo')) {
-        $query->where('periodo', 'like', '%' . $request->periodo . '%');
-    }
-
-    // Filtro de status CONTEXTUAL à ETAPA selecionada
-    if ($request->filled('status') && $request->status != 'todos') {
-        $etapaSelecionada = $request->etapa;
-        $statusSelecionado = $request->status;
-
-        if ($etapaSelecionada === 'Resultado') {
-            $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
-                $q->where('status', $statusSelecionado);
+        if ($user->role === 'professor') {
+            $query->whereHas('professores', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
             });
-        } else {
-            // Se a etapa for Proposta, Todas, ou não especificada, o filtro de status se aplica ao projeto.
-            $query->where('projetos.status', $statusSelecionado);
         }
-    }
-    
-    // Filtros de aprovação CONTEXTUAIS à ETAPA
-    if ($request->filled('aprovado_napex')) {
-        $aprovacao = $request->aprovado_napex;
-        if ($request->etapa === 'Resultado') {
-            $query->whereHas('resultado', fn($q) => $q->where('aprovado_napex', $aprovacao));
-        } else {
-            $query->where('aprovado_napex', $aprovacao);
+
+        // --- LÓGICA DE VISUALIZAÇÃO PARA AVALIADORES (CORRIGIDA) ---
+        if (in_array($user->role, ['napex', 'coordenador'])) {
+            $query->where(function ($q) {
+                // Regra 1: Mostra propostas 'entregue' E propostas já 'aprovadas'.
+                // Isso garante que a proposta não suma logo após ser aprovada.
+                $q->where(function ($sub) {
+                    $sub->where('etapa', 'Proposta')->whereIn('status', ['entregue', 'aprovado']);
+                })
+                // Regra 2 (A CORREÇÃO ESTÁ AQUI): Mostra TUDO que já avançou para a etapa de 'Resultado' ou 'Concluído'.
+                // Isso cobre o período em que o projeto aguarda o envio do relatório pelo aluno,
+                // o período de avaliação do relatório e os projetos já finalizados.
+                ->orWhereIn('etapa', ['Resultado', 'Concluído']);
+            });
         }
-    }
 
-    if ($request->filled('aprovado_coordenador')) {
-        $aprovacao = $request->aprovado_coordenador;
-        if ($request->etapa === 'Resultado') {
-            $query->whereHas('resultado', fn($q) => $q->where('aprovado_coordenador', $aprovacao));
-        } else {
-            $query->where('aprovado_coordenador', $aprovacao);
+        // --- SEÇÃO DE FILTROS GERAIS DA BUSCA (Seu código original mantido) ---
+
+        // Filtro principal pela ETAPA
+        if ($request->filled('etapa') && $request->etapa != 'todas') {
+            $query->where('etapa', $request->etapa);
         }
-    }
-    
-    // Demais filtros originais mantidos
-    if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
-        $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
-    }
-    if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
-        $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
-    }
-    if ($request->filled('carga_min') || $request->filled('carga_max')) {
-        // ... (sua lógica de carga horária)
-    }
 
-    // Lógica de ordenação mantida
-    $ordenar = $request->input('ordenar', 'data_desc');
-    if ($ordenar == 'data_asc') {
-        $query->orderBy('created_at', 'asc');
-    } else {
-        $query->orderBy('created_at', 'desc');
+        // Filtros por campos de texto
+        if ($request->filled('cadastrado_por')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
+            });
+        }
+        if ($request->filled('titulo')) {
+            $query->where('titulo', 'like', '%' . $request->titulo . '%');
+        }
+        if ($request->filled('periodo')) {
+            $query->where('periodo', 'like', '%' . $request->periodo . '%');
+        }
+
+        // Filtro de status CONTEXTUAL à ETAPA selecionada
+        if ($request->filled('status') && $request->status != 'todos') {
+            $etapaSelecionada = $request->etapa;
+            $statusSelecionado = $request->status;
+
+            if ($etapaSelecionada === 'Resultado') {
+                $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
+                    $q->where('status', $statusSelecionado);
+                });
+            } else {
+                // Se a etapa for Proposta, Todas, ou não especificada, o filtro de status se aplica ao projeto.
+                $query->where('projetos.status', $statusSelecionado);
+            }
+        }
+        
+        // Filtros de aprovação CONTEXTUAIS à ETAPA
+        if ($request->filled('aprovado_napex')) {
+            $aprovacao = $request->aprovado_napex;
+            if ($request->etapa === 'Resultado') {
+                $query->whereHas('resultado', fn($q) => $q->where('aprovado_napex', $aprovacao));
+            } else {
+                $query->where('aprovado_napex', $aprovacao);
+            }
+        }
+
+        if ($request->filled('aprovado_coordenador')) {
+            $aprovacao = $request->aprovado_coordenador;
+            if ($request->etapa === 'Resultado') {
+                $query->whereHas('resultado', fn($q) => $q->where('aprovado_coordenador', $aprovacao));
+            } else {
+                $query->where('aprovado_coordenador', $aprovacao);
+            }
+        }
+        
+        // Demais filtros originais mantidos
+        if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
+            $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
+        }
+        if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
+            $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
+        }
+        if ($request->filled('carga_min') || $request->filled('carga_max')) {
+            // ... (sua lógica de carga horária)
+        }
+
+        // Lógica de ordenação mantida
+        $ordenar = $request->input('ordenar', 'data_desc');
+        if ($ordenar == 'data_asc') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Paginação e resposta anti-cache mantidas
+        $projetos = $query->paginate(10)->appends($request->query());
+
+        $response = response(view('projetos.index', compact('projetos')));
+        $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $response->header('Pragma', 'no-cache');
+        $response->header('Expires', '0');
+
+        return $response;
     }
-
-    // Paginação e resposta anti-cache mantidas
-    $projetos = $query->paginate(10)->appends($request->query());
-
-    $response = response(view('projetos.index', compact('projetos')));
-    $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    $response->header('Pragma', 'no-cache');
-    $response->header('Expires', '0');
-
-    return $response;
-}
     
     /**
      * Exibe o formulário para criação de um novo projeto.

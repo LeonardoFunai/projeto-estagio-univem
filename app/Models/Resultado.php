@@ -55,4 +55,8 @@ class Resultado extends Model
     {
         return $this->hasMany(RejeicaoResultado::class);
     }
+    public function anexos()
+    {
+        return $this->hasMany(Anexo::class);
+    }
 }

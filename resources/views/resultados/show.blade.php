@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
 <x-app-layout>
     <x-slot name="header">
         
@@ -101,15 +104,40 @@
                         </div>
                     <hr>
 
-                    <div>
-                        <strong class="text-gray-600">Anexos:</strong>
-                        <p class="mt-1 text-gray-900">{{ $resultado->anexos_descricao ?? 'Nenhuma descrição fornecida.' }}</p>
-                        {{-- Futuramente, adicione aqui os links para download das fotos/vídeos --}}
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold border-b pb-2">Anexos do Relatório</h3>
+
+                        {{-- Mostra a DESCRIÇÃO DOS ANEXOS que o aluno escreveu --}}
+                        @if ($resultado->anexos_descricao)
+                            <div class="mt-4">
+                                <p class="font-semibold text-gray-700">Descrição Fornecida:</p>
+                                <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded-md">{{ $resultado->anexos_descricao }}</p>
+                            </div>
+                        @endif
+
+                        {{-- Lista os ARQUIVOS ANEXADOS --}}
+                        <div class="mt-4">
+                            <p class="font-semibold text-gray-700">Arquivos Enviados:</p>
+
+                            {{-- A diretiva @forelse é perfeita aqui: ela faz um loop se houver anexos,
+                                ou mostra uma mensagem se a lista estiver vazia. --}}
+                            @forelse ($resultado->anexos as $anexo)
+                                <div class="mt-2 p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50">
+                                    {{-- Link para abrir o arquivo em uma nova aba --}}
+                                    <a href="{{ Storage::url($anexo->path) }}" target="_blank" class="text-blue-600 hover:underline">
+                                        {{ $anexo->nome_original }}
+                                    </a>
+                                    {{-- Mostra o tipo do arquivo (Ex: image/jpeg) --}}
+                                    <span class="text-sm text-gray-500">{{ $anexo->mime_type }}</span>
+                                </div>
+                            @empty
+                                {{-- Esta mensagem aparece se nenhum anexo foi enviado --}}
+                                <p class="mt-2 text-gray-600">Nenhum arquivo foi anexado a este relatório.</p>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
-
-
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">PARECERES DA AVALIAÇÃO</h3>

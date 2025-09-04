@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\StoreResultadoRequest;
 use App\Models\RejeicaoResultado;
+use App\Models\Anexo;
 
 class ResultadoController extends Controller
 {
@@ -35,19 +36,41 @@ class ResultadoController extends Controller
      */
     public function store(StoreResultadoRequest $request, Projeto $projeto)
     {
-        // Policy: A autorização é feita pelo FormRequest, que deve chamar a policy 'create'.
         $this->authorize('create', [Resultado::class, $projeto]);
 
         $validatedData = $request->validated();
-        $dadosParaSalvar = $validatedData + [
+
+        // Monta o array de dados para salvar, garantindo que todos os campos obrigatórios estejam presentes.
+        $resultado = Resultado::create([
             'projeto_id' => $projeto->id,
-            'status' => 'rascunho',
-        ];
+            'status' => 'enviado',
+            'atividades_desenvolvidas' => $validatedData['atividades_desenvolvidas'],
+            'anexos_descricao' => $validatedData['anexos_descricao'] ?? null,
+            'parceiro_organizacao' => $validatedData['parceiro_organizacao'] ?? null,
+            'parceiro_responsavel' => $validatedData['parceiro_responsavel'] ?? null,
+            'parceiro_endereco' => $validatedData['parceiro_endereco'] ?? null,
+            'parceiro_cnpj' => $validatedData['parceiro_cnpj'] ?? null,
+            'parceiro_tipo_participacao' => $validatedData['parceiro_tipo_participacao'] ?? null,
+            'comunidade_externa' => $validatedData['comunidade_externa'] ?? null,
+        ]);
 
-        Resultado::create($dadosParaSalvar);
+        // A lógica de upload de anexos continua a mesma e está correta.
+        if ($request->hasFile('anexos')) {
+            foreach ($request->file('anexos') as $arquivo) {
+                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
+                Anexo::create([
+                    'resultado_id' => $resultado->id,
+                    'nome_original' => $arquivo->getClientOriginalName(),
+                    'path' => $caminho,
+                    'mime_type' => $arquivo->getMimeType(),
+                ]);
+            }
+        }
 
-        return redirect()->route('projetos.index')->with('success', 'Rascunho do Relatório de Resultados salvo com sucesso!');
-    }
+        $projeto->update(['etapa' => 'Resultado']);
+
+        return redirect()->route('projetos.index')->with('success', 'Relatório de Resultados enviado com sucesso!');
+}
 
     /**
      * Mostra os detalhes de um resultado.
@@ -82,20 +105,57 @@ class ResultadoController extends Controller
      */
     public function update(StoreResultadoRequest $request, Resultado $resultado)
     {
-        // Policy: A autorização é feita pelo FormRequest, que deve chamar a policy 'update'.
+        // 1. Autorização (seu código original, mantido)
         $this->authorize('update', $resultado);
 
-        $resultado->update($request->validated());
+        // 2. Pega os dados validados do formulário
+        $validatedData = $request->validated();
 
-        if ($resultado->status === 'reprovado') {
-            $resultado->status = 'enviado';
-            $resultado->aprovado_napex = 'pendente';
-            $resultado->parecer_napex = null;
-            $resultado->aprovado_coordenador = 'pendente';
-            $resultado->parecer_coordenador = null;
-            $resultado->save();
+        // 3. GERENCIAR EXCLUSÃO DE ANEXOS MARCADOS
+        if ($request->has('anexos_a_deletar')) {
+            // Encontra os anexos pelos IDs enviados no formulário
+            $anexosParaDeletar = Anexo::whereIn('id', $request->anexos_a_deletar)->get();
+            
+            foreach ($anexosParaDeletar as $anexo) {
+                // Apaga o arquivo físico do disco
+                Storage::disk('public')->delete($anexo->path);
+                // Deleta o registro do banco de dados
+                $anexo->delete();
+            }
         }
 
+        // 4. GERENCIAR UPLOAD DE NOVOS ANEXOS
+        if ($request->hasFile('anexos')) {
+            foreach ($request->file('anexos') as $arquivo) {
+                // Salva o novo arquivo na pasta correta
+                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
+                // Cria o registro do novo anexo no banco
+                Anexo::create([
+                    'resultado_id' => $resultado->id,
+                    'nome_original' => $arquivo->getClientOriginalName(),
+                    'path' => $caminho,
+                    'mime_type' => $arquivo->getMimeType(),
+                ]);
+            }
+        }
+
+        // 5. ATUALIZAR OS DADOS DO RELATÓRIO
+        // Primeiro, atualiza os campos de texto que foram validados
+        $resultado->update($validatedData);
+
+        // 6. APLICAR A LÓGICA DE REENVIO (seu código original, mantido e otimizado)
+        // Se o relatório estava reprovado, ele é resetado para uma nova avaliação.
+        if ($resultado->status === 'reprovado') {
+            $resultado->update([
+                'status' => 'enviado',
+                'aprovado_napex' => 'pendente',
+                'parecer_napex' => null,
+                'aprovado_coordenador' => 'pendente',
+                'parecer_coordenador' => null,
+            ]);
+        }
+
+        // 7. Redirecionar para a página de visualização com mensagem de sucesso
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados atualizado com sucesso!');
     }
 
@@ -174,6 +234,6 @@ class ResultadoController extends Controller
         
         $resultado->save();
 
-        return redirect()->route('resultados.show', $resultado)->with('success', 'Parecer salvo com sucesso!');
+        return redirect()->route('projetos.index', $resultado)->with('success', 'Parecer salvo com sucesso!');
     }
 }
