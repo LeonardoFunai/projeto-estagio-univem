@@ -33,6 +33,7 @@
                 @csrf
 
                 <fieldset class="mb-8">
+                    
                     <!-- Trilha de Status -->
                     <div class="flex items-end justify-center space-x-6 mt-3">
 

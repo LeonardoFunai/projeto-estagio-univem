@@ -5,6 +5,65 @@
         </h2>
     </x-slot>
 
+
+    <h3 class="text-lg font-bold text-gray-800 mb-6 text-center">Andamento do Relatório</h3>
+
+    <div class="flex items-center justify-center">
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-green-500 text-white border-green-600 shadow-md">
+                <span>✓</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Proposta<br>Aprovada</span>
+        </div>
+
+        <div class="w-16 border-t-4 border-green-500 mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-blue-600 text-white border-blue-800 shadow-md animate-pulse">
+                <span>1</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Adicionado</span>
+        </div>
+
+        <div class="w-16 border-t-4 border-gray-300 mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm">
+                <span>2</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Entregue</span>
+        </div>
+
+        <div class="w-16 border-t-4 border-gray-300 mx-1"></div>
+
+        <div class="flex flex-col space-y-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm">
+                    <span class="text-xs font-bold">N</span>
+                </div>
+                <span class="ml-2 text-sm text-gray-500">Parecer NAPEX</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm">
+                    <span class="text-xs font-bold">C</span>
+                </div>
+                <span class="ml-2 text-sm text-gray-500">Parecer Coord.</span>
+            </div>
+        </div>
+
+        <div class="w-16 border-t-4 border-gray-300 mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm">
+                <span class="text-2xl"></span>
+            </div>
+            <span class="mt-2 text-sm font-semibold text-gray-500">Aprovado</span>
+        </div>
+    </div>
+
+
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

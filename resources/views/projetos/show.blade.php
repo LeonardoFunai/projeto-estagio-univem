@@ -4,8 +4,100 @@
                 {{ __('Detalhes da Proposta de Projeto Extensionista - Curricularização da Extensão') }}
             </h2>
         </x-slot>
+        
+        @php
+            // --- Lógica para Definir o Estado Atual do Projeto ---
+            $projetoStatus = $projeto->status;
 
-        <div class="py-12">
+            // Condições de Aprovação e Reprovação
+            $napexAprovado = $projeto->aprovado_napex === 'sim';
+            $coordAprovado = $projeto->aprovado_coordenador === 'sim';
+            $napexReprovado = $projeto->aprovado_napex === 'nao';
+            $coordReprovado = $projeto->aprovado_coordenador === 'nao';
+
+            // Status Gerais do Fluxo
+            $propostaCriada = true; // Etapa 1: Sempre concluída
+            $emEdicao = $projetoStatus === 'editando'; // Etapa 2: É o estado atual?
+            $foiEnviado = in_array($projetoStatus, ['entregue', 'aprovado', 'reprovado']); // Etapa 3: Já passou daqui?
+            $emAnalise = $projetoStatus === 'entregue'; // Etapa 3: É o estado atual?
+            $reprovadoGeral = $projetoStatus === 'reprovado';
+            $aprovadoFinal = $projetoStatus === 'aprovado';
+
+            // --- Função Helper de Estilo ---
+            function etapaClasseProjetoFinal($condicaoPositiva, $isAtual = false, $condicaoNegativa = false) {
+                if ($condicaoNegativa) return 'bg-red-500 text-white border-red-600 shadow-md';
+                return $condicaoPositiva
+                    ? 'bg-green-500 text-white border-green-600 shadow-md'
+                    : ($isAtual ? 'bg-blue-600 text-white border-blue-800 shadow-md animate-pulse' : 'bg-gray-300 text-gray-600 border-gray-400 shadow-sm');
+            }
+        @endphp
+
+        
+        <h3 class="text-lg font-bold text-gray-800 mb-6 text-center">Andamento da Proposta</h3>
+
+        <div class="flex items-center justify-center">
+
+            <div class="flex flex-col items-center text-center w-20">
+                <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasseProjetoFinal($propostaCriada) }}">
+                    <span>1</span>
+                </div>
+                <span class="mt-2 text-sm font-semibold">Proposta<br>Criada</span>
+            </div>
+
+            <div class="w-24 border-t-4 {{ $emEdicao || $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+
+            <div class="flex flex-col items-center text-center w-20">
+                <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasseProjetoFinal($foiEnviado, $emEdicao, $reprovadoGeral) }}">
+                    <span>2</span>
+                </div>
+                <span class="mt-2 text-sm font-semibold">Editando</span>
+            </div>
+
+            <div class="w-24 border-t-4 {{ $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+
+            <div class="flex flex-col items-center text-center w-20">
+                <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasseProjetoFinal($aprovadoFinal, $emAnalise, $reprovadoGeral) }}">
+                    <span>3</span>
+                </div>
+                <span class="mt-2 text-sm font-semibold">Entregue</span>
+            </div>
+            
+            <div class="w-24 border-t-4 {{ ($napexAprovado || $coordAprovado || $reprovadoGeral) ? ($reprovadoGeral ? 'border-red-500' : 'border-green-500') : 'border-gray-300' }} mx-1"></div>
+
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center {{ etapaClasseProjetoFinal($napexAprovado, false, $napexReprovado) }}">
+                        <span class="text-xs font-bold">N</span>
+                    </div>
+                    <span class="ml-2 text-sm">Parecer NAPEX</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center {{ etapaClasseProjetoFinal($coordAprovado, false, $coordReprovado) }}">
+                        <span class="text-xs font-bold">C</span>
+                    </div>
+                    <span class="ml-2 text-sm">Parecer Coord.</span>
+                </div>
+            </div>
+
+            <div class="w-24 border-t-4 {{ $aprovadoFinal ? 'border-green-500' : ($reprovadoGeral ? 'border-red-500' : 'border-gray-300') }} mx-1"></div>
+
+            <div class="flex flex-col items-center text-center w-20">
+                <div class="w-11 h-11 rounded-full border-3 flex items-center justify-center {{ etapaClasseProjetoFinal($aprovadoFinal, false, $reprovadoGeral) }}">
+                    <span class="text-2xl">
+                        @if($aprovadoFinal) ✓ @endif
+                        @if($reprovadoGeral) X @endif
+                    </span>
+                </div>
+                <span class="mt-2 text-sm font-semibold">
+                    @if($reprovadoGeral) Reprovado @else Aprovado @endif
+                </span>
+            </div>
+        </div>
+        
+
+
+
+        <div class="py-1">
             <div class="w-full px-6">
                 <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
 
@@ -30,96 +122,7 @@
                         Detalhes da Proposta de Extensão
                     </x-slot>
 
-                    <!--Trilha do Status -->
-
-                    @php
-                        $status = $projeto->status;
-
-                        $napexAprovado = $projeto->aprovado_napex === 'sim';
-                        $coordAprovado = $projeto->aprovado_coordenador === 'sim';
-                        $entregue = $status === 'entregue';
-                        $aprovadoFinal = $napexAprovado && $coordAprovado;
-
-
-                        function etapaClasse($condicao, $atual = false) {
-                            return $condicao
-                                ? 'bg-green-500 text-white border-green-600 shadow-md'
-                                : ($atual ? 'bg-blue-600 text-white border-blue-800 shadow-md animate-pulse' : 'bg-gray-300 text-gray-600 border-gray-400 shadow-sm');
-                        }
-                    @endphp
-
-                    <div class="flex items-end justify-center space-x-10 mt-5">
-
-                        {{-- Etapas iniciais — deslocadas para cima --}}
-                        <div class="flex space-x-10 self-center ">
-                            @foreach ([
-                                ['label' => 'Proposta Criada', 'cond' => true, 'atual' => false],
-                                ['label' => 'Editando',
-                                'cond' => $entregue || $napexAprovado || $coordAprovado || $aprovadoFinal, // já passou dessa etapa
-                                'atual' => $status === 'editando'],
-                                [    'label' => 'Entregue',
-                                'cond' => $napexAprovado || $coordAprovado || $aprovadoFinal, // se já foi aprovado por algum
-                                'atual' => $status === 'entregue'],
-                            ] as $i => $etapa)
-                                <div class="flex flex-col items-center">
-                                    <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasse($etapa['cond'], $etapa['atual']) }}">
-                                        {{ $i + 1 }}
-                                    </div>
-                                    <span class="mt-1 text-sm  text-center">{{ $etapa['label'] }}</span>
-                                </div>
-
-                                @if ($i === 0)
-                                    {{-- seta entre Proposta Criada -> Editando (sempre verde ou posterior) --}}
-                                    <div class="w-10 h-1 {{ $status !== 'proposta_criada' ? 'bg-green-500' : 'bg-gray-300' }} shadow-md skew-x-12 mt-6"></div>
-                                @endif
-
-                                @if ($i === 1)
-                                    {{-- seta entre Editando -> Entregue (só verde se realmente entregou ou passou disso) --}}
-                                    <div class="w-10 h-1 {{ in_array($status, ['entregue', 'aprovado_napex', 'aprovado_coord', 'aprovado']) ? 'bg-green-500' : 'bg-gray-300' }} shadow-md skew-x-12 mt-6"></div>
-                                @endif
-
-                            @endforeach
-                        </div>
-
-
-                        {{-- seta para aprovações --}}
-                        <div class="w-10 h-1 {{ ($napexAprovado || $coordAprovado) ? 'bg-green-500' : 'bg-gray-300' }} shadow-md skew-x-12 self-center"></div>
-
-                        {{-- APROVAÇÕES EMPILHADAS --}}
-                        <div class="flex flex-col justify-between space-y-6 items-center mt-[-32px]">
-                            {{-- Napex --}}
-                            <div class="flex flex-col items-center">
-                                <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasse($napexAprovado, $status === 'aprovado_napex') }}">
-                                    N
-                                </div>
-                                <span class="mt-1 text-sm  text-center">Aprovação NAPEx</span>
-                            </div>
-
-                            {{-- Coordenador --}}
-                            <div class="flex flex-col items-center">
-                                <div class="w-10 h-10 rounded-full border-3 flex items-center justify-center {{ etapaClasse($coordAprovado, $status === 'aprovado_coord') }}">
-                                    C
-                                </div>
-                                <span class="mt-1 text-sm  text-center">Aprovação Coordenação</span>
-                            </div>
-                        </div>
-
-                        {{-- seta final --}}
                     
-                            <div class="w-10 h-1 self-center {{ $aprovadoFinal ? 'bg-green-500' : 'bg-gray-300' }} shadow-md skew-x-12"></div>
-
-
-                            {{-- Aprovado Final --}}
-                            <div class="flex flex-col self-center items-center">
-                                <div class="w-12 h-12 rounded-full border-4 flex items-center justify-center {{ etapaClasse($aprovadoFinal, false) }}">
-                                    ✓
-                                </div>
-                                <span class="mt-2 text-sm font-semibold text-center {{ $aprovadoFinal ? 'text-black' : 'text-gray-400' }}">
-                                    Aprovado
-                                </span>
-                            </div>
-                    
-                    </div>
 
                     @php
                         $role = auth()->user()->role;
@@ -506,7 +509,7 @@
                         </table>
                         
                             <!-- Botão editar  -->
-                            @if ($status != 'aprovado')
+                            @if ($projeto->status != 'aprovado')
                                 <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}#form-parecer-napex"
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-6">
                                     Editar Parecer
@@ -594,7 +597,7 @@
                         </table>
 
                             <!-- Botão de Editar -->
-                        @if($status != 'aprovado')
+                        @if($projeto->status != 'aprovado')
                             <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
                             class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
                                 Editar Parecer

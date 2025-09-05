@@ -12,6 +12,111 @@
 <x-slot name="pageTitle">
     Edição do Relatório de Resultados
 </x-slot>
+
+    <!-- Trilha de Status -->
+
+    @php
+        // --- Lógica para Definir o Estado Atual do Relatório ---
+        $resultadoStatus = $resultado->status;
+
+        // Condições de Aprovação e Reprovação
+        $napexAprovado = $resultado->aprovado_napex === 'sim';
+        $coordAprovado = $resultado->aprovado_coordenador === 'sim';
+        $napexReprovado = $resultado->aprovado_napex === 'nao';
+        $coordReprovado = $resultado->aprovado_coordenador === 'nao';
+
+        // --- Status Gerais do Fluxo ---
+        $propostaAprovada = true; // Etapa 1: Sempre concluída
+        $relatorioAdicionado = true; // Etapa 2: Sempre concluída, pois o resultado existe para ser visto
+        
+        $emRascunho = $resultadoStatus === 'rascunho'; // Etapa 3: É o estado ATUAL?
+        $foiEnviado = in_array($resultadoStatus, ['enviado', 'aprovado', 'reprovado']); // Já passou da etapa de rascunho?
+        
+        $emAnalise = $resultadoStatus === 'enviado'; // Etapa 4: É o estado ATUAL?
+        
+        $reprovadoGeral = $resultadoStatus === 'reprovado';
+        $aprovadoFinal = $resultadoStatus === 'aprovado';
+
+        // --- Função Helper de Estilo ---
+        function etapaClasseFinal($condicaoPositiva, $isAtual = false, $condicaoNegativa = false) {
+            if ($condicaoNegativa) return 'bg-red-500 text-white border-red-600 shadow-md';
+            return $condicaoPositiva
+                ? 'bg-green-500 text-white border-green-600 shadow-md'
+                : ($isAtual ? 'bg-blue-600 text-white border-blue-800 shadow-md animate-pulse' : 'bg-gray-300 text-gray-600 border-gray-400 shadow-sm');
+        }
+    @endphp
+
+    <h3 class="text-lg font-bold text-gray-800 mb-6 text-center">Andamento do Relatório</h3>
+
+    <div class="flex items-center justify-center">
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($propostaAprovada) }}">
+                <span>✓</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Proposta<br>Aprovada</span>
+        </div>
+
+        <div class="w-12 border-t-4 {{ etapaClasseFinal($propostaAprovada) }} mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($relatorioAdicionado) }}">
+                <span>1</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Adicionado</span>
+        </div>
+
+        <div class="w-12 border-t-4 {{ $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($foiEnviado, $emRascunho) }}">
+                <span>2</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Rascunho</span>
+        </div>
+
+        <div class="w-12 border-t-4 {{ $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($aprovadoFinal || $reprovadoGeral, $emAnalise) }}">
+                <span>3</span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Entregue</span>
+        </div>
+
+        <div class="w-12 border-t-4 {{ ($napexAprovado || $coordAprovado || $reprovadoGeral) ? ($reprovadoGeral ? 'border-red-500' : 'border-green-500') : 'border-gray-300' }} mx-1"></div>
+
+        <div class="flex flex-col space-y-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($napexAprovado, false, $napexReprovado) }}">
+                    <span class="text-xs font-bold">N</span>
+                </div>
+                <span class="ml-2 text-sm">Parecer NAPEX</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($coordAprovado, false, $coordReprovado) }}">
+                    <span class="text-xs font-bold">C</span>
+                </div>
+                <span class="ml-2 text-sm">Parecer Coord.</span>
+            </div>
+        </div>
+
+        <div class="w-12 border-t-4 {{ $aprovadoFinal ? 'border-green-500' : ($reprovadoGeral ? 'border-red-500' : 'border-gray-300') }} mx-1"></div>
+
+        <div class="flex flex-col items-center text-center w-24">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($aprovadoFinal, false, $reprovadoGeral) }}">
+                <span class="text-2xl">
+                    @if($aprovadoFinal) ✓ @endif
+                    @if($reprovadoGeral) X @endif
+                </span>
+            </div>
+            <span class="mt-2 text-sm font-semibold">
+                @if($reprovadoGeral) Reprovado @else Aprovado @endif
+            </span>
+        </div>
+    </div>
+
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
