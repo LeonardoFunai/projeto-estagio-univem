@@ -33,7 +33,7 @@ return new class extends Migration
             $table->text('links_videos')->nullable();
 
             // Status do relatório
-            $table->enum('status', ['rascunho', 'enviado', 'aprovado', 'reprovado'])->default('rascunho');
+            $table->enum('status', ['editando', 'entregue', 'aprovado', 'reprovado'])->default('editando');
 
             $table->timestamps();
         });

@@ -154,7 +154,7 @@
 
                         <div class="flex items-center justify-end mt-6">
                             <x-primary-button>
-                                {{ __('Enviar Relatório de Resultados') }}
+                                {{ __('Salvar Relatório de Resultados') }}
                             </x-primary-button>
                         </div>
                     </form>

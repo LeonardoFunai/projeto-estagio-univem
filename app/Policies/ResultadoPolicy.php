@@ -16,9 +16,9 @@ class ResultadoPolicy
      */
     public function view(User $user, Resultado $resultado): bool
     {
-        // Avaliadores (napex, coordenador) podem ver se estiver enviado ou aprovado.
+        // Avaliadores (napex, coordenador) podem ver se estiver entregue ou aprovado.
         if (in_array($user->role, ['napex', 'coordenador'])) {
-            return in_array($resultado->status, ['enviado', 'aprovado']);
+            return in_array($resultado->status, ['entregue', 'aprovado']);
         }
 
         // Aluno criador do projeto pode ver.
@@ -49,7 +49,7 @@ class ResultadoPolicy
     public function update(User $user, Resultado $resultado): bool
     {
         // 1. O relatório precisa estar em um estado editável.
-        if (!in_array($resultado->status, ['rascunho', 'reprovado'])) {
+        if (!in_array($resultado->status, ['editando', 'reprovado'])) {
             return false;
         }
 
@@ -70,7 +70,7 @@ class ResultadoPolicy
     public function sendForEvaluation(User $user, Resultado $resultado): bool
     {
         // Apenas pode enviar se estiver como rascunho ou reprovado
-        if (!in_array($resultado->status, ['rascunho', 'reprovado'])) {
+        if (!in_array($resultado->status, ['editando', 'reprovado'])) {
             return false;
         }
 
@@ -84,7 +84,7 @@ class ResultadoPolicy
     public function revertToDraft(User $user, Resultado $resultado): bool
     {
         // 1. O resultado precisa estar no estado correto para ser revertido.
-        if ($resultado->status !== 'enviado' || $resultado->aprovado_napex !== 'pendente' || $resultado->aprovado_coordenador !== 'pendente') {
+        if ($resultado->status !== 'entregue' || $resultado->aprovado_napex !== 'pendente' || $resultado->aprovado_coordenador !== 'pendente') {
             return false;
         }
 
@@ -104,8 +104,8 @@ class ResultadoPolicy
      */
     public function evaluate(User $user, Resultado $resultado): bool
     {
-        // 1. O resultado deve estar 'enviado' para ser avaliado.
-        if ($resultado->status !== 'enviado') {
+        // 1. O resultado deve estar 'entregue' para ser avaliado.
+        if ($resultado->status !== 'entegue') {
             return false;
         }
 

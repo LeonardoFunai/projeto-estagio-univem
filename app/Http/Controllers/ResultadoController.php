@@ -20,14 +20,20 @@ class ResultadoController extends Controller
         // Policy: Verifica se o usuário logado pode criar um resultado para ESTE projeto.
         $this->authorize('create', [Resultado::class, $projeto]);
 
-        // Lógica de negócio (continua no controller)
-        if ($projeto->etapa !== 'Resultado') {
-            return redirect()->route('projetos.index')->with('error', 'Só é possível adicionar resultados a projetos na Etapa de Resultado.');
-        }
+        // Lógica de negócio ATUALIZADA
+
+        // 1. Verifica se um relatório já existe. Se sim, redireciona para a edição. (Esta lógica continua correta)
         if ($projeto->resultado) {
             return redirect()->route('resultados.edit', $projeto->resultado)->with('info', 'Este projeto já possui um relatório de resultados. Você pode editá-lo aqui.');
         }
 
+        // 2. CORREÇÃO: Verifica se a proposta foi aprovada.
+        // Só permite criar um relatório se a etapa for 'Proposta' e o status for 'aprovado'.
+        if ($projeto->etapa !== 'Proposta' || $projeto->status !== 'aprovado') {
+            return redirect()->route('projetos.index')->with('error', 'Só é possível adicionar um relatório após a proposta ser aprovada.');
+        }
+
+        // 3. Se todas as verificações passarem, exibe a página de criação.
         return view('resultados.create', compact('projeto'));
     }
 
@@ -38,39 +44,17 @@ class ResultadoController extends Controller
     {
         $this->authorize('create', [Resultado::class, $projeto]);
 
-        $validatedData = $request->validated();
+        $data = $request->validated();
+        $data['projeto_id'] = $projeto->id;
 
-        // Monta o array de dados para salvar, garantindo que todos os campos obrigatórios estejam presentes.
-        $resultado = Resultado::create([
-            'projeto_id' => $projeto->id,
-            'status' => 'enviado',
-            'atividades_desenvolvidas' => $validatedData['atividades_desenvolvidas'],
-            'anexos_descricao' => $validatedData['anexos_descricao'] ?? null,
-            'parceiro_organizacao' => $validatedData['parceiro_organizacao'] ?? null,
-            'parceiro_responsavel' => $validatedData['parceiro_responsavel'] ?? null,
-            'parceiro_endereco' => $validatedData['parceiro_endereco'] ?? null,
-            'parceiro_cnpj' => $validatedData['parceiro_cnpj'] ?? null,
-            'parceiro_tipo_participacao' => $validatedData['parceiro_tipo_participacao'] ?? null,
-            'comunidade_externa' => $validatedData['comunidade_externa'] ?? null,
-        ]);
 
-        // A lógica de upload de anexos continua a mesma e está correta.
-        if ($request->hasFile('anexos')) {
-            foreach ($request->file('anexos') as $arquivo) {
-                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
-                Anexo::create([
-                    'resultado_id' => $resultado->id,
-                    'nome_original' => $arquivo->getClientOriginalName(),
-                    'path' => $caminho,
-                    'mime_type' => $arquivo->getMimeType(),
-                ]);
-            }
-        }
 
-        $projeto->update(['etapa' => 'Resultado']);
+        $resultado = Resultado::create($data);
+        $projeto->etapa = 'Resultado';
+    $projeto->save();
 
-        return redirect()->route('projetos.index')->with('success', 'Relatório de Resultados enviado com sucesso!');
-}
+        return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório salvo com sucesso! Agora você já pode enviar para avaliação.');
+    }
 
     /**
      * Mostra os detalhes de um resultado.
@@ -167,7 +151,7 @@ class ResultadoController extends Controller
         // Policy: Verifica se o usuário tem permissão para enviar para avaliação.
         $this->authorize('sendForEvaluation', $resultado);
 
-        $resultado->status = 'enviado';
+        $resultado->status = 'entregue';
         $resultado->aprovado_napex = 'pendente';
         $resultado->parecer_napex = null;
         $resultado->aprovado_coordenador = 'pendente';
@@ -185,7 +169,7 @@ class ResultadoController extends Controller
         // Policy: Verifica se o usuário tem permissão para reverter para rascunho.
         $this->authorize('revertToDraft', $resultado);
 
-        $resultado->status = 'rascunho';
+        $resultado->status = 'editando';
         $resultado->save();
 
         return redirect()->route('resultados.edit', $resultado)->with('success', 'O relatório de resultados voltou para o modo de edição.');

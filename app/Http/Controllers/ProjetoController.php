@@ -460,7 +460,7 @@ public function avaliarNapex(Request $request, $id)
         // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
         if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
             $projeto->status = 'aprovado';
-            $projeto->etapa = 'Resultado'; 
+            
         }
         // Se $projeto->aprovado_coordenador !== 'sim' (ou seja, está 'pendente' ou 'nao'),
         // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
@@ -512,7 +512,7 @@ public function avaliarNapex(Request $request, $id)
         // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
         if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
             $projeto->status = 'aprovado';
-            $projeto->etapa = 'Resultado'; 
+             
         }
         // Se $projeto->aprovado_napex !== 'sim' (ou seja, está 'pendente' ou 'nao'),
         // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.

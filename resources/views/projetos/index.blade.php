@@ -92,7 +92,7 @@
                         <!-- Etapa -->
                         <div>
                             <label class="block mb-1">Etapa:</label>
-                            <select name="etapa" class="w-auto border-gray-300 rounded-md py-1">
+                            <select name="etapa" class="w-full border-gray-300 rounded-md py-1">
                                 <option value="">-- Todas --</option>
                                 <option value="Proposta" {{ request('etapa') === 'Proposta' ? 'selected' : '' }}>Proposta</option>
                                 <option value="Resultado" {{ request('etapa') === 'Resultado' ? 'selected' : '' }}>Resultado</option>
@@ -133,14 +133,16 @@
 
                         <!-- Status -->
                         <div>
-                            <label class="block mb-1">Status:</label>
-                            <select name="status" class="w-auto border-gray-300 rounded-md py-1">
+                            <label for="status" class="block mb-1">Status:</label>
+                            <select name="status" id="status" class="w-full border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
-                                @if ($role === 'aluno' || $role === 'professor')
-                                    <option value="editando" {{ request('status') === 'editando' ? 'selected' : '' }}>Editando</option>
-                                @endif
-                                <option value="entregue" {{ request('status') === 'entregue' ? 'selected' : '' }}>Entregue</option>
-                                <option value="aprovado" {{ request('status') === 'aprovado' ? 'selected' : '' }}>Aprovado</option>
+                                
+                                <optgroup label="Proposta & Resultado">
+                                    <option value="editando" {{ request('status') == 'editando' ? 'selected' : '' }}>Editando</option>
+                                    <option value="entregue" {{ request('status') == 'entregue' ? 'selected' : '' }}>Entregue</option>
+                                    <option value="aprovado" {{ request('status') == 'aprovado' ? 'selected' : '' }}>Aprovado</option>
+                                    <option value="reprovado" {{ request('status') == 'reprovado' ? 'selected' : '' }}>Reprovado</option>
+                                </optgroup>
                             </select>
                         </div>
 
@@ -148,7 +150,7 @@
                         <!-- Aprovações -->
                         <div>
                             <label class="block mb-1">Aprovação NAPEx:</label>
-                            <select name="aprovado_napex" class="w-auto border-gray-300 rounded-md py-1">
+                            <select name="aprovado_napex" class="w-full border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="sim" {{ request('aprovado_napex') === 'sim' ? 'selected' : '' }}>Sim</option>
                                 <option value="nao" {{ request('aprovado_napex') === 'nao' ? 'selected' : '' }}>Não</option>
@@ -158,7 +160,7 @@
 
                         <div>
                             <label class="block mb-1">Aprovação Coordenador:</label>
-                            <select name="aprovado_coordenador" class="w-auto border-gray-300 rounded-md py-1">
+                            <select name="aprovado_coordenador" class="w-full border-gray-300 rounded-md py-1">
                                 <option value="">-- Todos --</option>
                                 <option value="sim" {{ request('aprovado_coordenador') === 'sim' ? 'selected' : '' }}>Sim</option>
                                 <option value="nao" {{ request('aprovado_coordenador') === 'nao' ? 'selected' : '' }}>Não</option>
@@ -269,18 +271,25 @@
                                                 'editando' => 'text-yellow-800',
                                                 'entregue' => 'text-blue-800',
                                                 'aprovado' => 'text-green-800',
-                                                'reprovado' => 'text-red-800', // Adicionando caso de reprovado
-                                                default => 'text-gray-700'
-                                            };
-                                        } elseif ($projeto->etapa === 'Resultado' && $projeto->resultado) {
-                                            $status = $projeto->resultado->status;
-                                            $cor = match($status) {
-                                                'rascunho' => 'text-yellow-800',
-                                                'enviado' => 'text-blue-800',
-                                                'aprovado' => 'text-green-800',
                                                 'reprovado' => 'text-red-800',
                                                 default => 'text-gray-700'
                                             };
+                                        } elseif ($projeto->etapa === 'Resultado') {
+                                            // Se o relatório de resultado já existe, pegue o status dele
+                                            if ($projeto->resultado) {
+                                                $status = $projeto->resultado->status;
+                                                $cor = match($status) {
+                                                    'editando' => 'text-yellow-800',
+                                                    'entregue' => 'text-blue-800',
+                                                    'aprovado' => 'text-green-800',
+                                                    'reprovado' => 'text-red-800',
+                                                    default => 'text-gray-700'
+                                                };
+                                            } else {
+                                                // Se o relatório AINDA NÃO EXISTE, o status da proposta é 'Aprovado'.
+                                                $status = 'Aprovado';
+                                                $cor = 'text-green-800'; // Cor para 'Aprovado'
+                                            }
                                         } elseif ($projeto->etapa === 'Concluído') {
                                             $status = 'Finalizado';
                                             $cor = 'text-green-800 font-bold';
@@ -292,136 +301,114 @@
   
 
                                     <!-- Ações -->
-                                    
+                                    {{-- ======================= CÉLULA DE AÇÕES  ======================= --}}
+                                    <td class="py-2 px-6" style="min-width: 200px;" x-data="{ openModal: false }">
+                                        <div class="flex items-center justify-start gap-2 flex-nowrap">
 
-                                            {{-- ======================= CÉLULA DE AÇÕES  ======================= --}}
-                                            <td class="py-2 px-6" style="min-width: 200px;" x-data="{ openModal: false }">
-                                                <div class="flex items-center justify-start gap-2 flex-nowrap">
+                                            @php
+                                                // --- VARIÁVEIS DE CONTEXTO ---
+                                                $role = auth()->user()->role;
+                                                $isAlunoOuProfessor = in_array($role, ['aluno', 'professor']);
+                                                $isNapexOuCoord = in_array($role, ['napex', 'coordenador']);
 
-                                                    @php
-                                                        // --- VARIÁVEIS DE CONTEXTO ---
-                                                        $role = auth()->user()->role;
-                                                        $isAlunoOuProfessor = in_array($role, ['aluno', 'professor']);
-                                                        $isNapexOuCoord = in_array($role, ['napex', 'coordenador']);
+                                                // --- CONDIÇÕES DA PROPOSTA ---
+                                                $propostaEntregue = $projeto->etapa === 'Proposta' && $projeto->status === 'entregue';
+                                                
+                                                // --- CONDIÇÕES DO RESULTADO ---
+                                                $resultadoExiste = $projeto->resultado !== null;
+                                                $resultadoEmEdicao = $resultadoExiste && $projeto->resultado->status === 'editando';
+                                                $resultadoEntregue = $resultadoExiste && $projeto->resultado->status === 'entregue';
 
-                                                        // --- CONDIÇÕES DA PROPOSTA ---
-                                                        $propostaEmEdicao = $projeto->etapa === 'Proposta' && $projeto->status === 'editando';
-                                                        $propostaEntregue = $projeto->etapa === 'Proposta' && $projeto->status === 'entregue';
-                                                        $propostaAprovada = $projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído' || ($projeto->etapa === 'Proposta' && $projeto->status === 'aprovado');
-                                                        
-                                                        // --- CONDIÇÕES DO RESULTADO (se existir) ---
-                                                        $resultadoExiste = $projeto->resultado !== null;
-                                                        $resultadoEmRascunho = $resultadoExiste && $projeto->resultado->status === 'rascunho';
-                                                        $resultadoEnviado = $resultadoExiste && $projeto->resultado->status === 'enviado';
-                                                        $resultadoAprovado = $projeto->etapa === 'Concluído';
+                                                // --- VERIFICA SE PODE VOLTAR PARA EDIÇÃO ---
+                                                $podeVoltarProposta = $propostaEntregue &&
+                                                    ($projeto->aprovado_napex === 'pendente' || is_null($projeto->aprovado_napex)) &&
+                                                    ($projeto->aprovado_coordenador === 'pendente' || is_null($projeto->aprovado_coordenador));
 
-                                                        // --- VERIFICA SE PODE VOLTAR PARA EDIÇÃO ---
-                                                        $podeVoltarProposta = $propostaEntregue &&
-                                                                            ($projeto->aprovado_napex === 'pendente' || is_null($projeto->aprovado_napex)) &&
-                                                                            ($projeto->aprovado_coordenador === 'pendente' || is_null($projeto->aprovado_coordenador));
+                                                $podeVoltarResultado = $resultadoEntregue && $resultadoExiste &&
+                                                    ($projeto->resultado->aprovado_napex === 'pendente' || is_null($projeto->resultado->aprovado_napex)) &&
+                                                    ($projeto->resultado->aprovado_coordenador === 'pendente' || is_null($projeto->resultado->aprovado_coordenador));
+                                            @endphp
 
-                                                        $podeVoltarResultado = $resultadoEnviado && $resultadoExiste &&
-                                                                            ($projeto->resultado->aprovado_napex === 'pendente' || is_null($projeto->resultado->aprovado_napex)) &&
-                                                                            ($projeto->resultado->aprovado_coordenador === 'pendente' || is_null($projeto->resultado->aprovado_coordenador));
-                                                    @endphp
+                                            {{-- ================================================================= --}}
+                                            {{-- LÓGICA PARA ALUNO E PROFESSOR                                     --}}
+                                            {{-- ================================================================= --}}
+                                            @if ($isAlunoOuProfessor)
 
-                                                    {{-- ================================================================= --}}
-                                                    {{-- LÓGICA PARA ALUNO E PROFESSOR                                     --}}
-                                                    {{-- ================================================================= --}}
-                                                    @if ($isAlunoOuProfessor)
+                                                {{-- BOTÃO "VER PROPOSTA" (SEMPRE VISÍVEL APÓS APROVAÇÃO) --}}
+                                                @if ($projeto->status === 'aprovado' || in_array($projeto->etapa, ['Resultado', 'Concluído']))
+                                                    <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                @endif
 
-                                                        {{-- --- AÇÕES FIXAS --- --}}
-                                                        @if ($propostaAprovada)
-                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                {{-- --- AÇÕES DA ETAPA PROPOSTA (ANTES DA APROVAÇÃO) --- --}}
+                                                @if ($projeto->etapa === 'Proposta')
+                                                    @if ($projeto->status === 'editando')
+                                                        {{-- Se não colocamos o "Ver Proposta" aqui, ele some durante a edição --}}
+                                                        @if (!($projeto->status === 'aprovado' || in_array($projeto->etapa, ['Resultado', 'Concluído'])))
+                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                        @endif
+                                                        <a href="{{ route('projetos.edit', $projeto->id) }}" title="Editar Proposta" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20"></a>
+                                                        @if($role === 'aluno')
+                                                            <button @click="openModal = true" title="Apagar Proposta" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-apagar.png') }}" alt="Apagar" width="20"></button>
                                                         @endif
 
-                                                        {{-- --- AÇÕES DA ETAPA PROPOSTA --- --}}
-                                                        @if ($projeto->etapa === 'Proposta')
-                                                            @if ($propostaEmEdicao)
-                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
-                                                                <a href="{{ route('projetos.edit', $projeto->id) }}" title="Editar Proposta" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20"></a>
-                                                                @if($role === 'aluno')
-                                                                    <button @click="openModal = true" title="Apagar Proposta" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-apagar.png') }}" alt="Apagar" width="20"></button>
-                                                                @endif
-                                                            @elseif ($propostaEntregue)
-                                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
-                                                                {{-- [NOVA CONDIÇÃO] O botão de voltar só aparece se NENHUMA avaliação foi feita --}}
-                                                                @if($podeVoltarProposta)
-                                                                    <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" class="inline-block"> @csrf
-                                                                        <button type="submit" title="Voltar para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="20"></button>
-                                                                    </form>
-                                                                @endif
+                                                    @elseif ($projeto->status === 'entregue')
+                                                        <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                        @if($podeVoltarProposta)
+                                                            <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST" class="inline-block"> @csrf
+                                                                <button type="submit" title="Voltar para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="20"></button>
+                                                            </form>
+                                                        @endif
+
+                                                    @elseif ($projeto->status === 'aprovado')
+                                                        {{-- O botão "Adicionar Relatório" aparece aqui --}}
+                                                        <a href="{{ route('resultados.create', $projeto) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Adicionar Relatório</a>
+                                                    @endif
+                                                
+                                                {{-- --- AÇÕES DA ETAPA RESULTADO --- --}}
+                                                @elseif ($projeto->etapa === 'Resultado')
+                                                    @if ($resultadoExiste)
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                        @if ($resultadoEmEdicao)
+                                                            <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20"></a>
+                                                        @elseif ($resultadoEntregue)
+                                                            @if($podeVoltarResultado)
+                                                                <form action="{{ route('resultados.voltarParaRascunho', $projeto->resultado) }}" method="POST" class="inline-block"> @csrf
+                                                                    <button type="submit" title="Voltar Relatório para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="20"></button>
+                                                                </form>
                                                             @endif
                                                         @endif
-
-                                                        {{-- --- AÇÕES DA ETAPA RESULTADO --- --}}
-                                                        @if ($projeto->etapa === 'Resultado')
-                                                            @if ($resultadoExiste)
-                                                                <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
-                                                                @if ($resultadoEmRascunho)
-                                                                    <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="39"></a>
-                                                                @elseif ($resultadoEnviado)
-                                                                    {{-- [NOVA CONDIÇÃO] O botão de voltar só aparece se NENHUMA avaliação foi feita --}}
-                                                                    @if($podeVoltarResultado)
-                                                                        <form action="{{ route('resultados.voltarParaRascunho', $projeto->resultado) }}" method="POST" class="inline-block"> @csrf
-                                                                            <button type="submit" title="Voltar Relatório para Edição" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar" width="20"></button>
-                                                                        </form>
-                                                                    @endif
-                                                                @endif
-                                                            @else
-                                                                <a href="{{ route('resultados.create', $projeto) }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Adicionar Resultado</a>
-                                                            @endif
-                                                        @endif
-
-                                                        {{-- --- AÇÕES DA ETAPA CONCLUÍDO --- --}}
-                                                        @if ($projeto->etapa === 'Concluído')
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
-                                                        @endif
-
-                                                    {{-- ================================================================= --}}
-                                                    {{-- LÓGICA PARA NAPEX E COORDENADOR (sem alterações aqui)              --}}
-                                                    {{-- ================================================================= --}}
-                                                    @elseif ($isNapexOuCoord)
-                                                        
-                                                        @if ($propostaAprovada)
-                                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
-                                                        @endif
-
-                                                        @if ($propostaEntregue)
-                                                            <a href="{{ route('projetos.show', $projeto->id) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Proposta">Avaliar Proposta</a>
-                                                        @endif
-
-                                                        @if ($resultadoEnviado)
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Relatório</a>
-                                                        @endif
-
-                                                        @if ($resultadoAprovado)
-                                                            <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
-                                                        @endif
-                                                        
                                                     @endif
 
-                                                    {{-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (seu código original) --}}
-                                                    <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                                                        {{-- ... (código do modal continua igual) ... --}}
-                                                        <div class="bg-white rounded-lg p-6 shadow-lg w-80">
-                                                            <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirmação</h2>
-                                                            <p class="mb-6 text-gray-600">Tem certeza que deseja apagar este projeto?</p>
-                                                            <div class="flex justify-end space-x-2">
-                                                                <button @click="openModal = false" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-4 rounded">
-                                                                    Cancelar
-                                                                </button>
-                                                                <form action="{{ route('projetos.destroy', $projeto->id) }}" method="POST">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">
-                                                                        Apagar
-                                                                    </button>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                            
+                                                {{-- --- AÇÕES DA ETAPA CONCLUÍDO --- --}}
+                                                @elseif ($projeto->etapa === 'Concluído' && $resultadoExiste)
+                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório Final</a>
+                                                @endif
+
+                                            {{-- ================================================================= --}}
+                                            {{-- LÓGICA PARA NAPEX E COORDENADOR                                   --}}
+                                            {{-- ================================================================= --}}
+                                            @elseif ($isNapexOuCoord)
+
+                                                {{-- Botão "Ver Proposta" (SEMPRE VISÍVEL APÓS APROVAÇÃO) --}}
+                                                @if ($projeto->status === 'aprovado' || in_array($projeto->etapa, ['Resultado', 'Concluído']))
+                                                    <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                @endif
+
+                                                {{-- Botão de Ação Principal (Avaliar Proposta ou Relatório) --}}
+                                                @if ($projeto->etapa === 'Proposta' && $projeto->status === 'entregue')
+                                                    <a href="{{ route('projetos.show', $projeto->id) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Proposta">Avaliar Proposta</a>
+                                                @elseif ($projeto->etapa === 'Resultado' && $resultadoEntregue)
+                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Relatório</a>
+                                                @endif
+                                                
+                                                {{-- Botão "Ver Relatório" (SEMPRE VISÍVEL APÓS SER ENTREGUE) --}}
+                                                @if ($resultadoEntregue || $projeto->etapa === 'Concluído')
+                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                @endif
+
+                                            @endif
+
+                                            {{-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --}}
                                             <div x-show="openModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                                                 <div class="bg-white rounded-lg p-6 shadow-lg w-80">
                                                     <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirmação</h2>
@@ -440,10 +427,8 @@
                                                     </div>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </td>
-                                    
                                 </tr>
                             @endforeach
                         </tbody>

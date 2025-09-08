@@ -8,14 +8,16 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Visualização do Relatório de Resultados
             </h2>
-           @php
-                $isAluno = auth()->user()->id === $resultado->projeto->user_id;
-                $podeEditarOuEnviar = in_array($resultado->status, ['rascunho', 'reprovado']);
-                
-                $podeVoltar = $resultado->status === 'enviado' && 
-                              $resultado->aprovado_napex === 'pendente' && 
-                              $resultado->aprovado_coordenador === 'pendente';
-            @endphp
+        @php
+            $isAluno = auth()->user()->id === $resultado->projeto->user_id;
+            
+            $podeEditarOuEnviar = in_array($resultado->status, ['editando', 'reprovado']);
+            
+            
+            $podeVoltar = $resultado->status === 'entregue' && 
+                        ($resultado->aprovado_napex === 'pendente' || is_null($resultado->aprovado_napex)) && 
+                        ($resultado->aprovado_coordenador === 'pendente' || is_null($resultado->aprovado_coordenador));
+        @endphp
 
         </div>
     </x-slot>
@@ -36,10 +38,10 @@
         $propostaAprovada = true; // Etapa 1: Sempre concluída
         $relatorioAdicionado = true; // Etapa 2: Sempre concluída, pois o resultado existe para ser visto
         
-        $emRascunho = $resultadoStatus === 'rascunho'; // Etapa 3: É o estado ATUAL?
-        $foiEnviado = in_array($resultadoStatus, ['enviado', 'aprovado', 'reprovado']); // Já passou da etapa de rascunho?
+        $emEdicao = $resultadoStatus === 'editando'; // Etapa 3: É o estado ATUAL?
+        $foiEntregue = in_array($resultadoStatus, ['entregue', 'aprovado', 'reprovado']); 
         
-        $emAnalise = $resultadoStatus === 'enviado'; // Etapa 4: É o estado ATUAL?
+        $emAnalise = $resultadoStatus === 'entregue'; // Etapa 4: É o estado ATUAL?
         
         $reprovadoGeral = $resultadoStatus === 'reprovado';
         $aprovadoFinal = $resultadoStatus === 'aprovado';
@@ -73,16 +75,16 @@
             <span class="mt-2 text-sm font-semibold">Relatório<br>Adicionado</span>
         </div>
 
-        <div class="w-12 border-t-4 {{ $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+        <div class="w-12 border-t-4 {{ $foiEntregue ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
 
         <div class="flex flex-col items-center text-center w-24">
-            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($foiEnviado, $emRascunho) }}">
+            <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($foiEntregue, $emEdicao) }}">
                 <span>2</span>
             </div>
-            <span class="mt-2 text-sm font-semibold">Relatório<br>Rascunho</span>
+            <span class="mt-2 text-sm font-semibold">Relatório<br>Edição</span>
         </div>
 
-        <div class="w-12 border-t-4 {{ $foiEnviado ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
+        <div class="w-12 border-t-4 {{ $foiEntregue ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
 
         <div class="flex flex-col items-center text-center w-24">
             <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($aprovadoFinal || $reprovadoGeral, $emAnalise) }}">
@@ -176,7 +178,7 @@
             </div>
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">RELATÓRIO DE RESULTADOS ENVIADO</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-4">RELATÓRIO DE RESULTADOS ENTREGUE</h3>
                 <div class="space-y-4 text-sm">
                     <div>
                         <strong class="text-gray-600">Atividades Desenvolvidas no Período:</strong>
