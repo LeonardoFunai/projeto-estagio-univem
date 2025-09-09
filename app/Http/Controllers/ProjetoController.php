@@ -90,16 +90,23 @@ class ProjetoController extends Controller
 
         // Filtro de status CONTEXTUAL à ETAPA selecionada
         if ($request->filled('status') && $request->status != 'todos') {
-            $etapaSelecionada = $request->etapa;
             $statusSelecionado = $request->status;
 
-            if ($etapaSelecionada === 'Resultado') {
-                $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
-                    $q->where('status', $statusSelecionado);
-                });
+            // Se o status for 'finalizado', a busca real é pela ETAPA 'Concluído'
+            if ($statusSelecionado === 'finalizado') {
+                $query->where('etapa', 'Concluído');
             } else {
-                // Se a etapa for Proposta, Todas, ou não especificada, o filtro de status se aplica ao projeto.
-                $query->where('projetos.status', $statusSelecionado);
+                // Para todos os outros status, a lógica continua a mesma.
+                // (Ele vai procurar pelo status tanto na tabela de projetos quanto na de resultados,
+                // dependendo da etapa selecionada, se houver).
+                $etapaSelecionada = $request->etapa;
+                if ($etapaSelecionada === 'Resultado') {
+                    $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
+                        $q->where('status', $statusSelecionado);
+                    });
+                } else {
+                    $query->where('projetos.status', $statusSelecionado);
+                }
             }
         }
         
@@ -688,67 +695,77 @@ public function avaliarNapex(Request $request, $id)
      */
     public function exportarPdf(Request $request)
     {
-        // 1. Autoriza a ação usando a Policy. Substitui o 'if'.
         $this->authorize('exportGeneralPdf', Projeto::class);
 
-        // 2. O restante da sua lógica para buscar dados e gerar o PDF é mantido.
-        $query = Projeto::query()->with(['user', 'atividades', 'professores']);
+        // --- LÓGICA DE FILTRO ATUALIZADA ---
+        $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
 
-        $query->whereIn('status', ['entregue', 'aprovado']);
+        // Filtro principal pela ETAPA
+        if ($request->filled('etapa')) {
+            $query->where('etapa', $request->etapa);
+        }
 
-        // Aplicação dos filtros da requisição (código original mantido)
+        // Filtros por campos de texto
         if ($request->filled('titulo')) {
             $query->where('titulo', 'like', '%' . $request->titulo . '%');
         }
 
-        if ($request->filled('cadastrado_por')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
+        // Filtro de status CONTEXTUAL à ETAPA
+        if ($request->filled('status')) {
+            $statusSelecionado = $request->status;
+
+            // Se o status for 'finalizado', a busca real é pela ETAPA 'Concluído'
+            if ($statusSelecionado === 'finalizado') {
+                $query->where('etapa', 'Concluído');
+            } else {
+                // Lógica para buscar status em 'projetos' ou 'resultados'
+                $query->where(function ($q) use ($statusSelecionado) {
+                    // Busca em projetos cujo status da proposta corresponde
+                    $q->where(function ($sub) use ($statusSelecionado) {
+                        $sub->where('etapa', 'Proposta')->where('status', $statusSelecionado);
+                    })
+                    // OU busca em projetos cuja etapa é resultado e o status do resultado corresponde
+                    ->orWhereHas('resultado', function ($res) use ($statusSelecionado) {
+                        $res->where('status', $statusSelecionado);
+                    });
+                });
+            }
+        }
+        
+        // Filtros de aprovação CONTEXTUAIS à ETAPA
+        if ($request->filled('aprovado_napex')) {
+            $aprovacao = $request->aprovado_napex;
+            $query->where(function ($q) use ($aprovacao) {
+                $q->where(function ($sub) use ($aprovacao) {
+                    $sub->where('etapa', 'Proposta')->where('aprovado_napex', $aprovacao);
+                })->orWhereHas('resultado', function ($res) use ($aprovacao) {
+                    $res->where('aprovado_napex', $aprovacao);
+                });
             });
         }
 
+        if ($request->filled('aprovado_coordenador')) {
+            $aprovacao = $request->aprovado_coordenador;
+            $query->where(function ($q) use ($aprovacao) {
+                $q->where(function ($sub) use ($aprovacao) {
+                    $sub->where('etapa', 'Proposta')->where('aprovado_coordenador', $aprovacao);
+                })->orWhereHas('resultado', function ($res) use ($aprovacao) {
+                    $res->where('aprovado_coordenador', $aprovacao);
+                });
+            });
+        }
+        
+        // Demais filtros (datas, etc.)
         if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
             $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
-        } elseif ($request->filled('data_inicio_de')) {
-            $query->whereDate('data_inicio', '>=', $request->data_inicio_de);
-        } elseif ($request->filled('data_inicio_ate')) {
-            $query->whereDate('data_inicio', '<=', $request->data_inicio_ate);
         }
-
         if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
             $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
-        } elseif ($request->filled('data_fim_de')) {
-            $query->whereDate('data_fim', '>=', $request->data_fim_de);
-        } elseif ($request->filled('data_fim_ate')) {
-            $query->whereDate('data_fim', '<=', $request->data_fim_ate);
         }
+        // --- FIM DA LÓGICA DE FILTRO ATUALIZADA ---
 
-        if ($request->filled('carga_min') || $request->filled('carga_max')) {
-            $query->whereHas('atividades', function ($q) use ($request) {
-                $q->selectRaw('projeto_id, SUM(carga_horaria) as soma_carga_horaria')
-                  ->groupBy('projeto_id');
 
-                if ($request->filled('carga_min')) {
-                    $q->havingRaw('SUM(carga_horaria) >= ?', [$request->carga_min]);
-                }
-                if ($request->filled('carga_max')) {
-                    $q->havingRaw('SUM(carga_horaria) <= ?', [$request->carga_max]);
-                }
-            });
-        }
-
-        if ($request->filled('status') && !in_array($request->status, ['--', 'todos', null], true) ) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('aprovado_napex') && !in_array($request->aprovado_napex, ['--', 'todos', null], true) ) {
-            $query->where('aprovado_napex', $request->aprovado_napex);
-        }
-
-        if ($request->filled('aprovado_coordenador') && !in_array($request->aprovado_coordenador, ['--', 'todos', null], true) ) {
-            $query->where('aprovado_coordenador', $request->aprovado_coordenador);
-        }
-
+        // O resto da sua função continua igual
         $projetos = $query->orderBy('created_at', 'desc')->get();
         $filtros = $request->except(['_token']);
         $usuarioLogado = auth()->user()->name;

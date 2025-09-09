@@ -142,6 +142,7 @@
                                     <option value="entregue" {{ request('status') == 'entregue' ? 'selected' : '' }}>Entregue</option>
                                     <option value="aprovado" {{ request('status') == 'aprovado' ? 'selected' : '' }}>Aprovado</option>
                                     <option value="reprovado" {{ request('status') == 'reprovado' ? 'selected' : '' }}>Reprovado</option>
+                                    <option value="finalizado" {{ request('status') == 'finalizado' ? 'selected' : '' }}>Finalizado</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -391,19 +392,23 @@
 
                                                 {{-- Botão "Ver Proposta" (SEMPRE VISÍVEL APÓS APROVAÇÃO) --}}
                                                 @if ($projeto->status === 'aprovado' || in_array($projeto->etapa, ['Resultado', 'Concluído']))
-                                                    <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta Aprovada" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
+                                                    <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Proposta</a>
                                                 @endif
 
-                                                {{-- Botão de Ação Principal (Avaliar Proposta ou Relatório) --}}
+                                                {{-- AÇÃO PRINCIPAL: Avaliar a proposta PENDENTE --}}
                                                 @if ($projeto->etapa === 'Proposta' && $projeto->status === 'entregue')
                                                     <a href="{{ route('projetos.show', $projeto->id) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Proposta">Avaliar Proposta</a>
-                                                @elseif ($projeto->etapa === 'Resultado' && $resultadoEntregue)
-                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Relatório</a>
                                                 @endif
                                                 
-                                                {{-- Botão "Ver Relatório" (SEMPRE VISÍVEL APÓS SER ENTREGUE) --}}
-                                                @if ($resultadoEntregue || $projeto->etapa === 'Concluído')
-                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                {{-- AÇÃO PARA RESULTADOS: um único botão que muda de texto e cor --}}
+                                                @if ($resultadoExiste)
+                                                    @if ($projeto->etapa === 'Resultado' && $resultadoEntregue)
+                                                        {{-- Botão verde para AVALIAR --}}
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Relatório</a>
+                                                    @elseif ($projeto->etapa === 'Concluído')
+                                                        {{-- Botão ciano para VER o relatório finalizado --}}
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                    @endif
                                                 @endif
 
                                             @endif

@@ -105,7 +105,7 @@ class ResultadoPolicy
     public function evaluate(User $user, Resultado $resultado): bool
     {
         // 1. O resultado deve estar 'entregue' para ser avaliado.
-        if ($resultado->status !== 'entegue') {
+        if ($resultado->status !== 'entregue') {
             return false;
         }
 

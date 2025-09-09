@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\StoreResultadoRequest;
 use App\Models\RejeicaoResultado;
 use App\Models\Anexo;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ResultadoController extends Controller
 {
@@ -219,5 +220,23 @@ class ResultadoController extends Controller
         $resultado->save();
 
         return redirect()->route('projetos.index', $resultado)->with('success', 'Parecer salvo com sucesso!');
+    }
+
+    public function gerarPdf(Resultado $resultado)
+    {
+        // 1. Autoriza a ação (só quem pode ver o relatório, pode baixar o PDF)
+        $this->authorize('view', $resultado);
+
+        // 2. Carrega as informações relacionadas que vamos usar no PDF
+        $resultado->load(['projeto.professores', 'projeto.alunos.curso', 'anexos']);
+
+        // 3. Chama a view do PDF (que criaremos no próximo passo)
+        $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
+        
+        // 4. Define um nome para o arquivo que será baixado
+        $nomeArquivo = "relatorio_resultados_{$resultado->projeto->id}.pdf";
+        
+        // 5. Força o download do PDF no navegador
+        return $pdf->download($nomeArquivo);
     }
 }

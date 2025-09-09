@@ -58,6 +58,7 @@
     <h3 class="text-lg font-bold text-gray-800 mb-6 text-center">Andamento do Relatório</h3>
 
     <div class="flex items-center justify-center">
+        
 
         <div class="flex flex-col items-center text-center w-24">
             <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($propostaAprovada) }}">
@@ -83,6 +84,8 @@
             </div>
             <span class="mt-2 text-sm font-semibold">Relatório<br>Edição</span>
         </div>
+
+        
 
         <div class="w-12 border-t-4 {{ $foiEntregue ? 'border-green-500' : 'border-gray-300' }} mx-1"></div>
 
@@ -128,7 +131,11 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex items-center space-x-4">
-
+            
+            <!-- Gerar pdf -->
+            <a href="{{ route('resultados.gerarPdf', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
+                    Gerar PDF do Relatório
+                </a>
                 <!-- Botão de Voltar para edição -->
                 @if ($isAluno && $podeVoltar)
                     <form action="{{ route('resultados.voltarParaRascunho', $resultado) }}" method="POST" onsubmit="return confirm('Tem certeza? A ação removerá o relatório da fila de avaliação e você precisará enviá-lo novamente.')">

@@ -140,6 +140,10 @@
                     if (!empty($filtros['titulo']))
                         $campos[] = "<strong>Título:</strong> {$filtros['titulo']}";
 
+                    // LINHA ADICIONADA PARA O NOVO FILTRO
+                    if (!empty($filtros['etapa']))
+                        $campos[] = "<strong>Etapa:</strong> {$filtros['etapa']}";
+
                     if (!empty($filtros['data_inicio_de']) && !empty($filtros['data_inicio_ate']))
                         $campos[] = "<strong>Data de Início:</strong> {$filtros['data_inicio_de']} até {$filtros['data_inicio_ate']}";
 
@@ -186,33 +190,77 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Cadastrado por</th>
                 <th>Título</th>
                 <th>Data Início</th>
                 <th>Data Fim</th>
-                <th>Carga Horária</th>
-                <th>NAPEx</th>
-                <th>Coord.</th>
+                <th>Aprovação NAPEx</th>
+                <th>Aprovação Coordenador</th>
+                <th>Etapa</th>
                 <th>Status</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach($projetos as $index => $projeto)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $projeto->user->name ?? '-' }}</td>
-                    <td style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
-                        {{ $projeto->titulo }}
-                    </td>
-                    <td>{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
-                    <td>{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
-                    <td>{{ $projeto->atividades->sum('carga_horaria') ?? 0 }}hh</td>
-                    <td>{{ ucfirst($projeto->aprovado_napex ?? 'pendente') }}</td>
-                    <td>{{ ucfirst($projeto->aprovado_coordenador ?? 'pendente') }}</td>
-                    <td>{{ ucfirst($projeto->status) }}</td>
-                </tr>
-            @endforeach
-        </tbody>
+<tbody>
+    @foreach($projetos as $index => $projeto)
+        <tr>
+            <td>{{ $index + 1 }}</td>
+            <td style="width: 30%;">{{ $projeto->titulo }}</td>
+            <td class="text-center">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
+            <td class="text-center">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
+            
+            {{-- LÓGICA ATUALIZADA PARA APROVAÇÃO NAPEX --}}
+            <td class="text-center">
+                @php
+                    $aprovacaoNapex = 'N/A';
+                    if ($projeto->etapa === 'Proposta') {
+                        $aprovacaoNapex = $projeto->aprovado_napex;
+                    } elseif ($projeto->etapa === 'Resultado' && $projeto->resultado) {
+                        $aprovacaoNapex = $projeto->resultado->aprovado_napex;
+                    } elseif ($projeto->etapa === 'Concluído') {
+                        $aprovacaoNapex = 'sim';
+                    }
+                @endphp
+                {{ $aprovacaoNapex === 'sim' ? 'Sim' : ($aprovacaoNapex === 'nao' ? 'Não' : 'Pendente') }}
+            </td>
+
+            {{-- LÓGICA ATUALIZADA PARA APROVAÇÃO COORDENADOR --}}
+            <td class="text-center">
+                @php
+                    $aprovacaoCoord = 'N/A';
+                    if ($projeto->etapa === 'Proposta') {
+                        $aprovacaoCoord = $projeto->aprovado_coordenador;
+                    } elseif ($projeto->etapa === 'Resultado' && $projeto->resultado) {
+                        $aprovacaoCoord = $projeto->resultado->aprovado_coordenador;
+                    } elseif ($projeto->etapa === 'Concluído') {
+                        $aprovacaoCoord = 'sim';
+                    }
+                @endphp
+                {{ $aprovacaoCoord === 'sim' ? 'Sim' : ($aprovacaoCoord === 'nao' ? 'Não' : 'Pendente') }}
+            </td>
+
+            {{-- NOVA COLUNA DE ETAPA --}}
+            <td class="text-center"><strong>{{ $projeto->etapa }}</strong></td>
+
+            {{-- LÓGICA ATUALIZADA PARA STATUS --}}
+            <td class="text-center">
+                @php
+                    $statusFinal = '';
+                    if ($projeto->etapa === 'Proposta') {
+                        $statusFinal = $projeto->status;
+                    } elseif ($projeto->etapa === 'Resultado') {
+                        if ($projeto->resultado) {
+                            $statusFinal = $projeto->resultado->status;
+                        } else {
+                            $statusFinal = 'Aprovado'; // Status da proposta enquanto aguarda relatório
+                        }
+                    } elseif ($projeto->etapa === 'Concluído') {
+                        $statusFinal = 'Finalizado';
+                    }
+                @endphp
+                {{ ucfirst($statusFinal) }}
+            </td>
+        </tr>
+    @endforeach
+</tbody>
     </table>
 
     </body>

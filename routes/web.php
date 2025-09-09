@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/resultados/{resultado}/voltar-rascunho', [ResultadoController::class, 'voltarParaRascunho'])->name('resultados.voltarParaRascunho');
     Route::post('/resultados/{resultado}/avaliar', [ResultadoController::class, 'avaliar'])->name('resultados.avaliar');
 
+    Route::get('/resultados/{resultado}/gerar-pdf', [ResultadoController::class, 'gerarPdf'])->name('resultados.gerarPdf');
+
 
     // 📤 Fluxo de envio, edição e parecer
     Route::post('/projetos/{id}/enviar', [ProjetoController::class, 'enviarProjeto'])->name('projetos.enviar');
