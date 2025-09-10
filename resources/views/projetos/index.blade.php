@@ -362,7 +362,9 @@
 
                                                     @elseif ($projeto->status === 'aprovado')
                                                         {{-- O botão "Adicionar Relatório" aparece aqui --}}
+                                                        @if($role === 'aluno')
                                                         <a href="{{ route('resultados.create', $projeto) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Adicionar Relatório</a>
+                                                        @endif
                                                     @endif
                                                 
                                                 {{-- --- AÇÕES DA ETAPA RESULTADO --- --}}
