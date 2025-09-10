@@ -207,7 +207,6 @@
                 height: 13px; /* Ajustado */
                 line-height: 13px; /* Ajustado */
                 text-align: center;
-                border: 1px solid #333;
                 margin-right: 2px;
                 vertical-align: middle; /* Alinha melhor com o texto */
             }

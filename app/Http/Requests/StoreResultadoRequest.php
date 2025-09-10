@@ -21,23 +21,19 @@ class StoreResultadoRequest extends FormRequest
 
     public function rules(): array
     {
-        
         return [
             'atividades_desenvolvidas' => 'required|string',
-            'comunidade_externa' => 'nullable|string',
             'parceiro_organizacao' => 'nullable|string|max:255',
+            'parceiro_responsavel' => 'nullable|string|max:255',
             'parceiro_endereco' => 'nullable|string|max:255',
             'parceiro_cnpj' => 'nullable|string|max:20',
-            'parceiro_responsavel' => 'nullable|string|max:255',
             'parceiro_tipo_participacao' => 'nullable|string|max:255',
+            'comunidade_externa' => 'nullable|string',
             'anexos_descricao' => 'nullable|string',
-            'anexos' => 'nullable|array',
-            'anexos.*' => [
-                'nullable',
-                'file',
-                'mimes:jpg,jpeg,png,gif,pdf,doc,docx,mp4,mov,avi,wmv',
-                'max:20480',
-            ],
+            
+            
+            'anexos' => 'nullable|array', 
+            'anexos.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,mp4,avi,mkv|max:20480', 
         ];
     }
 }

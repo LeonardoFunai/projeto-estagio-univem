@@ -91,7 +91,7 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('resultados.store', $projeto) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('resultados.store', $projeto->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mt-6">

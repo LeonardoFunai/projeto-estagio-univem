@@ -48,11 +48,30 @@ class ResultadoController extends Controller
         $data = $request->validated();
         $data['projeto_id'] = $projeto->id;
 
-
-
+        // Cria o registro do resultado
         $resultado = Resultado::create($data);
+
+
+        // Verifica se foram enviados arquivos no campo 'anexos'
+        if ($request->hasFile('anexos')) {
+            // Itera sobre cada arquivo enviado
+            foreach ($request->file('anexos') as $arquivo) {
+                // Salva o arquivo em 'storage/app/public/resultados/{id_do_resultado}'
+                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
+                
+                // Cria um registro na tabela 'anexos' associado a este resultado
+                Anexo::create([
+                    'resultado_id' => $resultado->id,
+                    'nome_original' => $arquivo->getClientOriginalName(),
+                    'path' => $caminho,
+                    'mime_type' => $arquivo->getMimeType(),
+                ]);
+            }
+        }
+
+        // Atualiza a etapa do projeto principal
         $projeto->etapa = 'Resultado';
-    $projeto->save();
+        $projeto->save();
 
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório salvo com sucesso! Agora você já pode enviar para avaliação.');
     }
