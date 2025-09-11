@@ -230,7 +230,7 @@
                                                 // Se a etapa for Proposta, busca a aprovação da tabela 'projetos'
                                                 $aprovacao = $projeto->aprovado_napex;
                                             } elseif ($projeto->etapa === 'Resultado' && $projeto->resultado) {
-                                                // Se a etapa for Resultado, busca a aprovação da tabela 'resultados'
+                                                // Se a etapa for Relatório, busca a aprovação da tabela 'relatório'
                                                 $aprovacao = $projeto->resultado->aprovado_napex;
                                             } elseif ($projeto->etapa === 'Concluído') {
                                                 // Se estiver concluído, a aprovação é sempre 'Sim'
@@ -370,7 +370,7 @@
                                                 {{-- --- AÇÕES DA ETAPA RESULTADO --- --}}
                                                 @elseif ($projeto->etapa === 'Resultado')
                                                     @if ($resultadoExiste)
-                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Resultado</a>
                                                         @if ($resultadoEmEdicao)
                                                             <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap"><img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="20"></a>
                                                         @elseif ($resultadoEntregue)
@@ -402,14 +402,14 @@
                                                     <a href="{{ route('projetos.show', $projeto->id) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Proposta">Avaliar Proposta</a>
                                                 @endif
                                                 
-                                                {{-- AÇÃO PARA RESULTADOS: um único botão que muda de texto e cor --}}
+                                                {{-- AÇÃO PARA RELATÓRIO: um único botão que muda de texto e cor --}}
                                                 @if ($resultadoExiste)
                                                     @if ($projeto->etapa === 'Resultado' && $resultadoEntregue)
                                                         {{-- Botão verde para AVALIAR --}}
-                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Relatório</a>
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap" title="Analisar Relatório">Avaliar Resultado</a>
                                                     @elseif ($projeto->etapa === 'Concluído')
                                                         {{-- Botão ciano para VER o relatório finalizado --}}
-                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Relatório</a>
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório Final" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-3 py-1 rounded text-sm whitespace-nowrap">Ver Resultado</a>
                                                     @endif
                                                 @endif
 

@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
+    <div class="max-w-9xl mx-auto mt-8 p-8 bg-white  rounded-lg">
         <x-slot name="pageTitle">
             Editar Projeto de Extensão
         </x-slot>

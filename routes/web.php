@@ -40,7 +40,6 @@ Route::middleware('auth')->group(function () {
     | Rotas de Resultados 
     |--------------------------------------------------------------------------
     */
-    Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
     Route::get('/projetos/{projeto}/resultados/create', [ResultadoController::class, 'create'])->name('resultados.create');
     Route::post('/projetos/{projeto}/resultados', [ResultadoController::class, 'store'])->name('resultados.store');
     Route::get('/resultados/{resultado}', [ResultadoController::class, 'show'])->name('resultados.show');

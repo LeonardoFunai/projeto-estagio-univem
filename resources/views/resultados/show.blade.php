@@ -128,8 +128,8 @@
         </div>
     </div>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-10">
+        <div class="max-w-8xl mx-auto sm:px-6 lg:px-8 space-y-3">
             <div class="flex items-center space-x-4">
             
             <!-- Gerar pdf -->
@@ -149,17 +149,21 @@
                 
                 @if ($isAluno && $podeEditarOuEnviar)
                     <!-- Botão de Editar -->
-                    <a href="{{ route('resultados.edit', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <a href="{{ route('resultados.edit', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700">
                         Editar Relatório
                     </a>
                     <!-- Botão de Enviar -->
                     <form action="{{ route('resultados.enviar', $resultado) }}" method="POST" onsubmit="return confirm('Você tem certeza que deseja enviar o relatório para avaliação? Você poderá retorná-lo para o modo de edição caso ainda não tenha sido avaliado.')">
                         @csrf
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
                             Enviar para Avaliação
                         </button>
                     </form>
                 @endif
+
+                <a href="{{ route('projetos.show', $resultado->projeto_id) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    Ver Proposta
+                </a>
             </div>
 
             <!-- Título -->

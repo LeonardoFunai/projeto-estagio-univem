@@ -77,6 +77,8 @@
                 return '____ de _______________ de _______';
             }
         }
+
+        $totalHoras = $projeto->atividades->sum('carga_horaria');
     @endphp
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -355,7 +357,14 @@
                                     </tr>
                                     @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2" style="text-align: right; background-color: #e0e0e0;">Total de Horas:</th>
+                                        <th style="text-align: center; background-color: #e0e0e0;">{{ $totalHoras }}h</th>
+                                    </tr>
+                                </tfoot>
                             </table>
+                            
                             @else
                             <p style="text-align: left; font-style: italic; padding-left: 10px;">Nenhuma atividade informada.</p>
                             @endif

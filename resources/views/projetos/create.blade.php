@@ -7,7 +7,7 @@
     
     @can('create', App\Models\Projeto::class)
     
-        <div class="max-w-7xl mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
+        <div class="max-w-9xl mx-auto mt-8 p-8 bg-white  rounded-lg">
             <x-slot name="pageTitle">
                 Cadastrar Projeto de Extensão
             </x-slot>
