@@ -2,6 +2,7 @@
 
     namespace App\Models;
 
+    use App\Traits\LogaAlteracoes;
     use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Model;
     use App\Models\Professor;
@@ -13,7 +14,8 @@
 
     class Projeto extends Model
     {
-        use HasFactory;
+        
+        use HasFactory, LogaAlteracoes;
 
         protected $fillable = [
             'titulo',
@@ -86,6 +88,18 @@
         public function resultado()
         {
             return $this->hasOne(Resultado::class);
+        }
+
+        public function logs()
+    {
+        
+        return $this->morphMany(ProjetoLog::class, 'loggable');
+    }
+
+        public function todosOsLogs()
+        {
+
+            return $this->hasMany(ProjetoLog::class)->latest();
         }
     }
 

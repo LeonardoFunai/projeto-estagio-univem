@@ -2,28 +2,24 @@
 
 namespace App\Http\Controllers;
 
-// Models utilizados pelo controller
+
 use App\Models\Projeto;
 use App\Models\Aluno;
 use App\Models\Professor;
 use App\Models\Atividade;
 use App\Models\Cronograma;
-use App\Models\User; // Necessário para buscar usuários (ex: professores)
-use App\Models\Rejeicao; // Para registrar rejeições de projetos
+use App\Models\User;
+use App\Models\Rejeicao; 
 use App\Models\Curso;
 
 // Requests para validação de formulários
 use App\Http\Requests\StoreProjetoRequest;
 use App\Http\Requests\UpdateProjetoRequest;
 
-// Facades e Classes do Laravel e de pacotes
-use Illuminate\Http\Request; // Para manipulação de requisições HTTP genéricas
-use Illuminate\Database\QueryException; // Para tratamento de exceções do banco de dados (não explicitamente usado no try-catch, mas bom ter em mente)
-use Barryvdh\DomPDF\Facade\Pdf; // Para geração de PDFs
-// use Illuminate\Support\Facades\Response; // REMOVER: Não utilizado neste controller
-// use PhpOffice\PhpWord\TemplateProcessor; // REMOVER: Não utilizado neste controller
-// use Illuminate\Support\Facades\Storage; // REMOVER: Não utilizado neste controller
-// Nota: Auth::user() ou auth()->user() não requerem 'use Illuminate\Support\Facades\Auth;' se estiver usando o helper global.
+use Illuminate\Http\Request; 
+use Illuminate\Database\QueryException; 
+use Barryvdh\DomPDF\Facade\Pdf; 
+
 
 class ProjetoController extends Controller
 {
@@ -300,7 +296,7 @@ class ProjetoController extends Controller
      */
     public function show($id)
     {
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user'])->findOrFail($id);
+        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user', 'logs.user'])->findOrFail($id);
 
    
         $user = auth()->user();
@@ -430,53 +426,61 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-public function avaliarNapex(Request $request, $id)
-{
-    $projeto = Projeto::findOrFail($id);
+    public function avaliarNapex(Request $request, $id)
+    {
+        $projeto = Projeto::findOrFail($id);
 
-    // Usa o método 'approveByNapex' da sua Policy
-    $this->authorize('approveByNapex', $projeto);
+        // Usa o método 'approveByNapex' da sua Policy
+        $this->authorize('approveByNapex', $projeto);
 
-    if ($projeto->status !== 'entregue') {
-        return redirect()->route('projetos.show', $projeto->id)
-                         ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
-    }
-
-    $validatedData = $request->validate([
-        'aprovado_napex' => 'required|in:sim,nao',
-        'motivo_napex' => 'nullable|string|required_if:aprovado_napex,nao|max:2000',
-        'numero_projeto' => 'nullable|string|max:255',
-    ]);
-
-    $projeto->aprovado_napex = $validatedData['aprovado_napex'];
-    $projeto->motivo_napex = $validatedData['motivo_napex'] ?? null;
-    $projeto->data_parecer_napex = now();
-    if ($projeto->aprovado_napex === 'sim' && isset($validatedData['numero_projeto'])) {
-        $projeto->numero_projeto = $validatedData['numero_projeto'];
-    }
-
-    if ($projeto->aprovado_napex === 'nao') {
-        $this->registrarRejeicao($projeto, $projeto->motivo_napex, 'napex');
-        $projeto->status = 'editando'; 
-        $projeto->save();
-        return redirect()->route('projetos.index')
-                         ->with('success', 'Projeto NÃO APROVADO pelo NAPEx. Status alterado para "Editando" e devolvido ao aluno.');
-    } else { // NAPEx APROVOU (aprovado_napex === 'sim')
-        
-        // **PONTO CHAVE DA SUA REGRA DE NEGÓCIO:**
-        // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
-        if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
-            $projeto->status = 'aprovado';
-            
+        if ($projeto->status !== 'entregue') {
+            return redirect()->route('projetos.show', $projeto->id)
+                            ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
         }
-        // Se $projeto->aprovado_coordenador !== 'sim' (ou seja, está 'pendente' ou 'nao'),
-        // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
-        
-        $projeto->save();
-        return redirect()->route('projetos.show', $projeto->id)
-                         ->with('success', 'Parecer do NAPEx salvo com sucesso.');
+
+        $validatedData = $request->validate([
+            'aprovado_napex' => 'required|in:sim,nao',
+            'motivo_napex' => 'nullable|string|required_if:aprovado_napex,nao|max:2000',
+            'numero_projeto' => 'nullable|string|max:255',
+        ]);
+
+        // --- ADIÇÃO DO LOG FICA AQUI ---
+        if ($validatedData['aprovado_napex'] === 'sim') {
+            $projeto->registrarLog('PARECER_NAPEX', 'Parecer do NAPEX: Aprovado.');
+        } else {
+            $descricao = 'Proposta Recusada pelo NAPEX. Motivo: ' . ($validatedData['motivo_napex'] ?? 'Não especificado.');
+            $projeto->registrarLog('RECUSA_NAPEX', $descricao);
+        }
+        // --- FIM DA ADIÇÃO DO LOG ---
+
+        $projeto->aprovado_napex = $validatedData['aprovado_napex'];
+        $projeto->motivo_napex = $validatedData['motivo_napex'] ?? null;
+        $projeto->data_parecer_napex = now();
+        if ($projeto->aprovado_napex === 'sim' && isset($validatedData['numero_projeto'])) {
+            $projeto->numero_projeto = $validatedData['numero_projeto'];
+        }
+
+        if ($projeto->aprovado_napex === 'nao') {
+            $this->registrarRejeicao($projeto, $projeto->motivo_napex, 'napex');
+            $projeto->status = 'editando'; 
+            $projeto->save();
+            return redirect()->route('projetos.index')
+                            ->with('success', 'Projeto NÃO APROVADO pelo NAPEx. Status alterado para "Editando" e devolvido ao aluno.');
+        } else { // NAPEx APROVOU (aprovado_napex === 'sim')
+            
+            // **PONTO CHAVE DA SUA REGRA DE NEGÓCIO:**
+            // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
+            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+                $projeto->status = 'aprovado';
+            }
+            // Se $projeto->aprovado_coordenador !== 'sim' (ou seja, está 'pendente' ou 'nao'),
+            // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
+            
+            $projeto->save();
+            return redirect()->route('projetos.show', $projeto->id)
+                            ->with('success', 'Parecer do NAPEx salvo com sucesso.');
+        }
     }
-}
 
 
     /**
@@ -486,91 +490,48 @@ public function avaliarNapex(Request $request, $id)
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
- public function avaliarCoordenador(Request $request, $id)
-{
-    $projeto = Projeto::findOrFail($id);
-
-    
-    $this->authorize('approveByCoordinator', $projeto);
-
-    if ($projeto->status !== 'entregue') {
-        return redirect()->route('projetos.show', $projeto->id)
-                         ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
-    }
-
-    $validatedData = $request->validate([
-        'aprovado_coordenador' => 'required|in:sim,nao',
-        'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
-    ]);
-
-    $projeto->aprovado_coordenador = $validatedData['aprovado_coordenador'];
-    $projeto->motivo_coordenador = $validatedData['motivo_coordenador'] ?? null;
-    $projeto->data_parecer_coordenador = now();
-
-    if ($projeto->aprovado_coordenador === 'nao') {
-        $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
-        $projeto->status = 'editando';
-        $projeto->save();
-        return redirect()->route('projetos.index')
-                         ->with('success', 'Projeto NÃO APROVADO pela Coordenação. Status alterado para "Editando" e devolvido ao aluno.');
-    } else { // Coordenador APROVOU (aprovado_coordenador === 'sim')
-
-        // **PONTO CHAVE DA SUA REGRA DE NEGÓCIO:**
-        // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
-        if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
-            $projeto->status = 'aprovado';
-             
-        }
-        // Se $projeto->aprovado_napex !== 'sim' (ou seja, está 'pendente' ou 'nao'),
-        // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
-
-        $projeto->save();
-        return redirect()->route('projetos.show', $projeto->id)
-                         ->with('success', 'Parecer do Coordenador salvo com sucesso.');
-    }
-}
-
-    /**
-     * Limpa campos de aprovação e redefine o status do projeto para 'editando'.
-     * Usado quando um projeto é rejeitado para permitir nova edição pelo aluno.
-     * ATENÇÃO: Este método foi renomeado para limparAprovacoesParciais e a lógica foi ajustada.
-     * A função original 'limparAprovacoes' está abaixo, mas pode ser muito drástica.
-     *
-     * @param  \App\Models\Projeto  $projeto
-     * @param  string $origemRejeicao 'napex' ou 'coordenador'
-     * @return void
-     */
-    private function limparAprovacoesParciais($projeto, $origemRejeicao)
+    public function avaliarCoordenador(Request $request, $id)
     {
-        $updateData = [
-            'status' => 'editando', // Volta para edição para o aluno corrigir
-            // 'data_entrega' => null, // Decide se a data de entrega original deve ser mantida ou resetada
-        ];
+        $projeto = Projeto::findOrFail($id);
 
-        if ($origemRejeicao === 'napex') {
-            $updateData['aprovado_napex'] = 'pendente'; // Ou 'rejeitado', dependendo do fluxo desejado
-            $updateData['motivo_napex'] = $projeto->motivo_napex; // Mantém o motivo da rejeição
-            // $updateData['data_parecer_napex'] = null; // Data do parecer de rejeição é mantida
-            // Se NAPEx rejeita, a aprovação do coordenador (se existia) também é invalidada?
-            // Isso depende da regra de negócio. Se sim:
-            // $updateData['aprovado_coordenador'] = 'pendente';
-            // $updateData['motivo_coordenador'] = null;
-            // $updateData['data_parecer_coordenador'] = null;
-        } elseif ($origemRejeicao === 'coordenador') {
-            $updateData['aprovado_coordenador'] = 'pendente'; // Ou 'rejeitado'
-            $updateData['motivo_coordenador'] = $projeto->motivo_coordenador; // Mantém o motivo
-            // $updateData['data_parecer_coordenador'] = null;
-            // Se Coordenador rejeita, a aprovação do NAPEx (se existia) também é invalidada?
-            // $updateData['aprovado_napex'] = 'pendente';
-            // $updateData['motivo_napex'] = null;
-            // $updateData['data_parecer_napex'] = null;
+        $this->authorize('approveByCoordinator', $projeto);
+
+        if ($projeto->status !== 'entregue') {
+            return redirect()->route('projetos.show', $projeto->id)
+                            ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
         }
-        
-        // Se qualquer um rejeita, o número do projeto pode ser resetado se ele só é atribuído na aprovação final.
-        // $updateData['numero_projeto'] = null;
 
+        $validatedData = $request->validate([
+            'aprovado_coordenador' => 'required|in:sim,nao',
+            'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
+        ]);
 
-        $projeto->update($updateData);
+        if ($validatedData['aprovado_coordenador'] === 'sim') {
+            $projeto->registrarLog('PARECER_COORDENADOR', 'Parecer do Coordenador: Aprovado.');
+        } else {
+            $descricao = 'Proposta Recusada pelo Coordenador. Motivo: ' . ($validatedData['motivo_coordenador'] ?? 'Não especificado.');
+            $projeto->registrarLog('RECUSA_COORDENADOR', $descricao);
+        }
+
+        $projeto->aprovado_coordenador = $validatedData['aprovado_coordenador'];
+        $projeto->motivo_coordenador = $validatedData['motivo_coordenador'] ?? null;
+        $projeto->data_parecer_coordenador = now();
+
+        if ($projeto->aprovado_coordenador === 'nao') {
+            $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
+            $projeto->status = 'editando';
+            $projeto->save();
+            return redirect()->route('projetos.index')
+                            ->with('success', 'Projeto NÃO APROVADO pela Coordenação. Status alterado para "Editando" e devolvido ao aluno.');
+        } else {
+            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+                $projeto->status = 'aprovado';
+            }
+
+            $projeto->save();
+            return redirect()->route('projetos.show', $projeto->id)
+                            ->with('success', 'Parecer do Coordenador salvo com sucesso.');
+        }
     }
 
     /**

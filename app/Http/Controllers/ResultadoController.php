@@ -81,11 +81,17 @@ class ResultadoController extends Controller
      */
     public function show(Resultado $resultado)
     {
-        // Policy: Verifica se o usuário pode ver este resultado.
+
         $this->authorize('view', $resultado);
 
-        $resultado->load('projeto.user', 'rejeicoes.user');
-        $response = response(view('resultados.show', compact('resultado')));
+
+        $resultado->load(['projeto.user', 'rejeicoes.user', 'projeto.todosOsLogs.user']);
+
+        $response = response(view('resultados.show', [
+            'resultado' => $resultado,
+            'projeto'   => $resultado->projeto
+        ]));
+
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');
@@ -200,21 +206,30 @@ class ResultadoController extends Controller
      */
     public function avaliar(Request $request, Resultado $resultado)
     {
-        // Policy: Verifica se o usuário pode avaliar.
         $this->authorize('evaluate', $resultado);
 
         $user = auth()->user();
-        $role = $user->role;
+        $role = $user->role;    
 
-        
         if ($role === 'napex') {
+            if ($request->aprovacao === 'sim') {
+                $resultado->registrarLog('PARECER_NAPEX', 'Parecer do NAPEX no Relatório: Aprovado.');
+            } else {
+                $descricao = 'Relatório Recusado pelo NAPEX. Motivo: ' . ($request->parecer ?? 'Não especificado.');
+                $resultado->registrarLog('RECUSA_NAPEX', $descricao);
+            }
             $resultado->parecer_napex = $request->parecer;
             $resultado->aprovado_napex = $request->aprovacao;
         } elseif ($role === 'coordenador') {
+            if ($request->aprovacao === 'sim') {
+                $resultado->registrarLog('PARECER_COORDENADOR', 'Parecer do Coordenador no Relatório: Aprovado.');
+            } else {
+                $descricao = 'Relatório Recusado pelo Coordenador. Motivo: ' . ($request->parecer ?? 'Não especificado.');
+                $resultado->registrarLog('RECUSA_COORDENADOR', $descricao);
+            }
             $resultado->parecer_coordenador = $request->parecer;
             $resultado->aprovado_coordenador = $request->aprovacao;
         }
-
 
         $aprovadoNapex = $resultado->aprovado_napex;
         $aprovadoCoord = $resultado->aprovado_coordenador;
@@ -234,6 +249,7 @@ class ResultadoController extends Controller
             $projeto = $resultado->projeto;
             $projeto->etapa = 'Concluído';
             $projeto->save();
+            $resultado->registrarLog('PROJETO_CONCLUIDO', 'Projeto movido para a etapa "Concluído" após aprovação final do relatório.');
         }
         
         $resultado->save();

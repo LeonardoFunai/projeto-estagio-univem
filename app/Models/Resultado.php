@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogaAlteracoes;
 
 class Resultado extends Model
 {
-    use HasFactory;
+    use HasFactory, LogaAlteracoes;
 
     /**
      * The attributes that are mass assignable.
@@ -58,5 +59,9 @@ class Resultado extends Model
     public function anexos()
     {
         return $this->hasMany(Anexo::class);
+    }
+    public function todosOsLogs()
+    {
+        return $this->hasMany(ProjetoLog::class)->latest(); 
     }
 }

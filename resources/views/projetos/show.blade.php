@@ -1,4 +1,4 @@
-    <x-app-layout>
+<x-app-layout>
         <x-slot name="header">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Detalhes da Proposta de Projeto Extensionista - Curricularização da Extensão') }}
@@ -660,6 +660,53 @@
                         </table>
                     </div>
                 @endif
+
+                <div class="mt-10">
+                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Histórico Detalhado</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full w-full border border-gray-300 rounded-lg">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Data</th>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Usuário</th>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Origem</th>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Ação</th>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{-- Verifica se a variável $projeto existe e se a coleção de logs não está vazia --}}
+                                @if ($projeto && $projeto->todosOsLogs->isNotEmpty())
+                                    @foreach ($projeto->todosOsLogs as $log)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="py-2 px-3 border-b">{{ $log->created_at->format('d/m/Y H:i:s') }}</td>
+                                            <td class="py-2 px-3 border-b">{{ $log->user->name ?? 'Sistema' }}</td>
+                                            <td class="py-2 px-3 border-b">
+                                                @if (str_contains($log->loggable_type, 'Projeto'))
+                                                    <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">
+                                                        Proposta
+                                                    </span>
+                                                @elseif (str_contains($log->loggable_type, 'Resultado'))
+                                                    <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">
+                                                        Relatório
+                                                    </span>
+                                                @endif
+                                            </td>
+
+                                            <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
+                                            <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    {{-- Caso não haja logs, exibe uma mensagem na tabela --}}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-gray-500">Nenhum histórico de alterações encontrado.</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
             </div>
         </div>
