@@ -4,9 +4,20 @@ namespace App\Traits;
 
 use App\Models\ProjetoLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 trait LogaAlteracoes
 {
+    private static ?string $logBatchId = null;
+
+    protected static function getLogBatchId(): string
+    {
+        if (static::$logBatchId === null) {
+            static::$logBatchId = (string) Str::uuid();
+        }
+        return static::$logBatchId;
+    }
+
     protected static function bootLogaAlteracoes()
     {
         static::updating(function ($model) {
@@ -21,7 +32,7 @@ trait LogaAlteracoes
 
             if (isset($alteracoes['etapa'])) {
                 if ($model->getOriginal('etapa') === 'Resultado' && $alteracoes['etapa'] === 'Concluído') {
-                    return; 
+                    return;
                 }
                 $model->registrarLog(
                     'ETAPA_ALTERADA',
@@ -44,6 +55,7 @@ trait LogaAlteracoes
         $projetoId = $this instanceof \App\Models\Resultado ? $this->projeto_id : $this->id;
 
         ProjetoLog::create([
+            'batch_id'      => static::getLogBatchId(),
             'projeto_id'    => $projetoId,
             'user_id'       => Auth::id(),
             'acao'          => $acao,

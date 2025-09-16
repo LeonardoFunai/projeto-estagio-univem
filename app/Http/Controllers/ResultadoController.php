@@ -79,19 +79,37 @@ class ResultadoController extends Controller
     /**
      * Mostra os detalhes de um resultado.
      */
-    public function show(Resultado $resultado)
+    public function show(Resultado $resultado, Request $request)
     {
-
         $this->authorize('view', $resultado);
 
+        // Pega a direção da ordenação da URL (?sort=asc), o padrão é 'desc'
+        $sortDirection = $request->query('sort', 'desc');
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
 
+        // Carrega as relações necessárias, incluindo todos os logs do projeto
         $resultado->load(['projeto.user', 'rejeicoes.user', 'projeto.todosOsLogs.user']);
 
-        $response = response(view('resultados.show', [
+        // Ordena a coleção de logs
+        $logs = $resultado->projeto->todosOsLogs;
+        if ($sortDirection === 'asc') {
+            $logs = $logs->sortBy('created_at');
+        } else {
+            $logs = $logs->sortByDesc('created_at');
+        }
+        
+        // Prepara todos os dados que a view precisa
+        $data = [
             'resultado' => $resultado,
-            'projeto'   => $resultado->projeto
-        ]));
+            'projeto'   => $resultado->projeto,
+            'logs' => $logs, // A variável de logs, agora definida e ordenada
+            'sortDirection' => $sortDirection, // A direção da ordenação para o botão
+        ];
 
+        // Cria a resposta com os dados e os headers
+        $response = response(view('resultados.show', $data));
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');

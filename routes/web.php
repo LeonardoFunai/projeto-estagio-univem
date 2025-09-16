@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
     // 📄 Gerar proposta pdf
     Route::get('/projetos/{id}/gerar-pdf', [ProjetoController::class, 'gerarPdf'])->name('projetos.gerarPdf');
 
+    Route::get('/projetos/{projeto}/logs/pdf', [ProjetoController::class, 'exportarLogPdf'])->name('projetos.exportarLogPdf');
 
 });
 

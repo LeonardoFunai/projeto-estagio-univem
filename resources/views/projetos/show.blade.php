@@ -661,13 +661,37 @@
                     </div>
                 @endif
 
-                <div class="mt-10">
-                    <h2 class="text-xl font-bold text-[#251C57] mb-4">Histórico Detalhado</h2>
+               <div class="mt-10" id="historico">
+                    <div class="relative text-center mb-4">
+                            {{-- Título Centralizado --}}
+                            <h2 class="text-xl font-bold text-[#251C57]">Histórico Detalhado</h2>
+
+                            {{-- Botão Menor e Posicionado à Direita --}}
+                            <a href="{{ route('projetos.exportarLogPdf', $projeto) }}#historico" 
+                            class="absolute top-0 right-0 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md text-sm inline-flex items-center">
+                                <svg class="fill-current w-3 h-3 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+                                <span>Exportar</span>
+                            </a>
+                        </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full w-full border border-gray-300 rounded-lg">
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Data</th>
+                                    <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">
+                                        @php
+                                            $nextSortDirection = ($sortDirection === 'desc') ? 'asc' : 'desc';
+                                        @endphp
+                                        
+                                        
+                                        <a href="{{ route('projetos.show', ['id' => $projeto->id, 'sort' => $nextSortDirection]) }}#historico" class="inline-flex items-center">
+                                            Data
+                                            @if ($sortDirection === 'desc')
+                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            @else
+                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                            @endif
+                                        </a>
+                                    </th>
                                     <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Usuário</th>
                                     <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Origem</th>
                                     <th class="text-left py-2 px-3 border-b-2 font-semibold text-gray-700">Ação</th>
@@ -675,30 +699,50 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{-- Verifica se a variável $projeto existe e se a coleção de logs não está vazia --}}
-                                @if ($projeto && $projeto->todosOsLogs->isNotEmpty())
-                                    @foreach ($projeto->todosOsLogs as $log)
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="py-2 px-3 border-b">{{ $log->created_at->format('d/m/Y H:i:s') }}</td>
-                                            <td class="py-2 px-3 border-b">{{ $log->user->name ?? 'Sistema' }}</td>
-                                            <td class="py-2 px-3 border-b">
-                                                @if (str_contains($log->loggable_type, 'Projeto'))
-                                                    <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">
-                                                        Proposta
-                                                    </span>
-                                                @elseif (str_contains($log->loggable_type, 'Resultado'))
-                                                    <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">
-                                                        Relatório
-                                                    </span>
-                                                @endif
-                                            </td>
+                                @if ($projeto && $logs->isNotEmpty())
+                                    {{-- O loop agora usa a variável $logs, que já está ordenada e agrupada ---}}
+                                    @foreach ($logs->groupBy('batch_id') as $batchId => $batch)
+                                        @php
+                                            // Se o batch_id for nulo ou vazio, não é um grupo de verdade
+                                            $isGroup = !empty($batchId) && $batch->count() > 1;
+                                        @endphp
 
-                                            <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
-                                            <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
-                                        </tr>
+                                        @foreach ($batch as $log)
+                                            @if ($loop->first)
+                                                <tr class="hover:bg-gray-50 @if($isGroup) border-l-4 border-blue-500 @endif">
+                                                    <td class="py-2 px-3 border-b align-top" @if($isGroup) rowspan="{{ $batch->count() }}" @endif>
+                                                        {{ $log->created_at->format('d/m/Y') }}
+                                                        <span class="block text-xs text-gray-500">{{ $log->created_at->format('H:i:s') }}</span>
+                                                    </td>
+                                                    <td class="py-2 px-3 border-b align-top" @if($isGroup) rowspan="{{ $batch->count() }}" @endif>
+                                                        {{ $log->user->name ?? 'Sistema' }}
+                                                    </td>
+                                                    <td class="py-2 px-3 border-b">
+                                                        @if (str_contains($log->loggable_type, 'Projeto'))
+                                                            <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">Proposta</span>
+                                                        @elseif (str_contains($log->loggable_type, 'Resultado'))
+                                                            <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">Relatório</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
+                                                    <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
+                                                </tr>
+                                            @else
+                                                <tr class="hover:bg-gray-50 border-l-4 border-blue-500">
+                                                    <td class="py-2 px-3 border-b">
+                                                        @if (str_contains($log->loggable_type, 'Projeto'))
+                                                            <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">Proposta</span>
+                                                        @elseif (str_contains($log->loggable_type, 'Resultado'))
+                                                            <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">Relatório</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
+                                                    <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
                                     @endforeach
                                 @else
-                                    {{-- Caso não haja logs, exibe uma mensagem na tabela --}}
                                     <tr>
                                         <td colspan="5" class="text-center py-4 text-gray-500">Nenhum histórico de alterações encontrado.</td>
                                     </tr>

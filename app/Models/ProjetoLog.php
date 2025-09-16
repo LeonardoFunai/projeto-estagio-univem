@@ -12,6 +12,7 @@ class ProjetoLog extends Model
     protected $table = 'projeto_logs';
 
     protected $fillable = [
+        'batch_id',
         'projeto_id',
         'user_id',
         'acao',

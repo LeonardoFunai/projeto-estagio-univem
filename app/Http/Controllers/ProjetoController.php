@@ -294,26 +294,49 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\View\View
      */
-    public function show($id)
+    public function show($id, Request $request)
     {
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user', 'logs.user'])->findOrFail($id);
+        // Pega a direção da ordenação da URL (?sort=asc), o padrão é 'desc'
+        $sortDirection = $request->query('sort', 'desc');
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
 
-   
+        // Carrega o projeto e a relação correta para TODOS os logs
+        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user', 'todosOsLogs.user', 'resultado'])
+                        ->findOrFail($id);
+
+        // Lógica de autorização que você já tinha
         $user = auth()->user();
         if (in_array($user->role, ['napex', 'coordenador'])) {
-            // Se o avaliador tentar ver uma proposta que não está na sua fila, bloqueie.
             if (!in_array($projeto->status, ['entregue', 'aprovado'])) {
                 abort(403, 'Acesso não autorizado para este status de proposta.');
             }
         }
         $this->authorize('view', $projeto);
 
-            $response = response(view('projetos.show', compact('projeto')));
-            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
-            $response->header('Pragma', 'no-cache');
-            $response->header('Expires', '0');
+        // Ordena a coleção de logs
+        $logs = $projeto->todosOsLogs;
+        if ($sortDirection === 'asc') {
+            $logs = $logs->sortBy('created_at');
+        } else {
+            $logs = $logs->sortByDesc('created_at');
+        }
 
-            return $response;
+        // Prepara os dados para a view
+        $data = [
+            'projeto' => $projeto,
+            'logs' => $logs,
+            'sortDirection' => $sortDirection,
+        ];
+
+        // Cria a resposta mantendo seus headers
+        $response = response(view('projetos.show', $data));
+        $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $response->header('Pragma', 'no-cache');
+        $response->header('Expires', '0');
+
+        return $response;
     }
 
     /**
@@ -765,5 +788,26 @@ class ProjetoController extends Controller
         $nomeArquivo = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $nomeArquivo);
 
         return $pdf->download($nomeArquivo);
+    }
+
+    public function exportarLogPdf(Projeto $projeto)
+    {
+        // Garante que o usuário pode ver o projeto
+        $this->authorize('view', $projeto);
+
+        // Carrega a relação necessária
+        $projeto->load('todosOsLogs.user');
+
+        // Prepara os dados para a view do PDF
+        $data = [
+            'projeto' => $projeto,
+            'logs' => $projeto->todosOsLogs
+        ];
+
+        // Carrega a view do PDF, passa os dados e gera o PDF
+        $pdf = Pdf::loadView('pdf.logs-historico', $data);
+
+        // Define o nome do arquivo e força o download
+        return $pdf->download('historico-projeto-' . $projeto->id . '.pdf');
     }
 }
