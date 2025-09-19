@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\User;
+use App\Notifications\PropostaEnviada;
+use Illuminate\Support\Facades\Notification;
 use App\Models\Projeto;
 use App\Models\Aluno;
 use App\Models\Professor;
 use App\Models\Atividade;
 use App\Models\Cronograma;
-use App\Models\User;
 use App\Models\Rejeicao; 
 use App\Models\Curso;
-
-// Requests para validação de formulários
 use App\Http\Requests\StoreProjetoRequest;
 use App\Http\Requests\UpdateProjetoRequest;
-
+use App\Services\ProjectSearchService;
 use Illuminate\Http\Request; 
 use Illuminate\Database\QueryException; 
 use Barryvdh\DomPDF\Facade\Pdf; 
+use App\Notifications\PropostaAvaliada;
 
 
 class ProjetoController extends Controller
@@ -29,122 +29,12 @@ class ProjetoController extends Controller
      *
      * @return \Illuminate\View\View
      */
-
-
-    public function index(Request $request)
+    public function index(Request $request, ProjectSearchService $searchService)
     {
-        // Inicia a query base, já carregando a relação com 'resultado' para otimização
-        $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
+     
+        $query = $searchService->buildQuery($request->all());
 
-        $user = auth()->user();
-
-        // Filtros por papel (lógica para aluno e professor mantida)
-        if ($user->role === 'aluno') {
-            $query->where('user_id', $user->id);
-        }
-
-        if ($user->role === 'professor') {
-            $query->whereHas('professores', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
-
-        // --- LÓGICA DE VISUALIZAÇÃO PARA AVALIADORES (CORRIGIDA) ---
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            $query->where(function ($q) {
-                // Regra 1: Mostra propostas 'entregue' E propostas já 'aprovadas'.
-                // Isso garante que a proposta não suma logo após ser aprovada.
-                $q->where(function ($sub) {
-                    $sub->where('etapa', 'Proposta')->whereIn('status', ['entregue', 'aprovado']);
-                })
-                // Regra 2 (A CORREÇÃO ESTÁ AQUI): Mostra TUDO que já avançou para a etapa de 'Resultado' ou 'Concluído'.
-                // Isso cobre o período em que o projeto aguarda o envio do relatório pelo aluno,
-                // o período de avaliação do relatório e os projetos já finalizados.
-                ->orWhereIn('etapa', ['Resultado', 'Concluído']);
-            });
-        }
-
-        // --- SEÇÃO DE FILTROS GERAIS DA BUSCA (Seu código original mantido) ---
-
-        // Filtro principal pela ETAPA
-        if ($request->filled('etapa') && $request->etapa != 'todas') {
-            $query->where('etapa', $request->etapa);
-        }
-
-        // Filtros por campos de texto
-        if ($request->filled('cadastrado_por')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->cadastrado_por . '%');
-            });
-        }
-        if ($request->filled('titulo')) {
-            $query->where('titulo', 'like', '%' . $request->titulo . '%');
-        }
-        if ($request->filled('periodo')) {
-            $query->where('periodo', 'like', '%' . $request->periodo . '%');
-        }
-
-        // Filtro de status CONTEXTUAL à ETAPA selecionada
-        if ($request->filled('status') && $request->status != 'todos') {
-            $statusSelecionado = $request->status;
-
-            // Se o status for 'finalizado', a busca real é pela ETAPA 'Concluído'
-            if ($statusSelecionado === 'finalizado') {
-                $query->where('etapa', 'Concluído');
-            } else {
-                // Para todos os outros status, a lógica continua a mesma.
-                // (Ele vai procurar pelo status tanto na tabela de projetos quanto na de resultados,
-                // dependendo da etapa selecionada, se houver).
-                $etapaSelecionada = $request->etapa;
-                if ($etapaSelecionada === 'Resultado') {
-                    $query->whereHas('resultado', function ($q) use ($statusSelecionado) {
-                        $q->where('status', $statusSelecionado);
-                    });
-                } else {
-                    $query->where('projetos.status', $statusSelecionado);
-                }
-            }
-        }
         
-        // Filtros de aprovação CONTEXTUAIS à ETAPA
-        if ($request->filled('aprovado_napex')) {
-            $aprovacao = $request->aprovado_napex;
-            if ($request->etapa === 'Resultado') {
-                $query->whereHas('resultado', fn($q) => $q->where('aprovado_napex', $aprovacao));
-            } else {
-                $query->where('aprovado_napex', $aprovacao);
-            }
-        }
-
-        if ($request->filled('aprovado_coordenador')) {
-            $aprovacao = $request->aprovado_coordenador;
-            if ($request->etapa === 'Resultado') {
-                $query->whereHas('resultado', fn($q) => $q->where('aprovado_coordenador', $aprovacao));
-            } else {
-                $query->where('aprovado_coordenador', $aprovacao);
-            }
-        }
-        
-        // Demais filtros originais mantidos
-        if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
-            $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
-        }
-        if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
-            $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
-        }
-        if ($request->filled('carga_min') || $request->filled('carga_max')) {
-            // ... (sua lógica de carga horária)
-        }
-
-        // Lógica de ordenação mantida
-        $ordenar = $request->input('ordenar', 'data_desc');
-        if ($ordenar == 'data_asc') {
-            $query->orderBy('created_at', 'asc');
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
-
-        // Paginação e resposta anti-cache mantidas
         $projetos = $query->paginate(10)->appends($request->query());
 
         $response = response(view('projetos.index', compact('projetos')));
@@ -166,7 +56,7 @@ class ProjetoController extends Controller
         $this->authorize('create', Projeto::class);
 
         $professores = User::where('role', 'professor')->orderBy('name')->get();
-        $cursos = Curso::orderBy('nome')->get(); // Busca os cursos do banco de dados
+        $cursos = Curso::orderBy('nome')->get(); 
 
         return view('projetos.create', compact('professores', 'cursos'));
     }
@@ -180,79 +70,72 @@ class ProjetoController extends Controller
      */
     public function store(StoreProjetoRequest $request)
     {
-        // Verifica se o usuário autenticado é um aluno
-        // A Policy 'create' é reutilizada aqui, pois a permissão é a mesma.
+
         $this->authorize('create', Projeto::class);
 
 
-        $data = $request->validated(); // Obtém os dados validados do request
-        $data['status'] = 'editando'; // Define o status inicial do projeto
+        $data = $request->validated(); 
+        $data['status'] = 'editando'; 
 
-        // Lógica para upload de arquivo, se um arquivo foi enviado e é válido
+
         if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
             $file = $request->file('arquivo');
-            // Gera um nome de arquivo único para evitar conflitos
             $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
-            $file->move(public_path('arquivos_projetos'), $fileName); // Move o arquivo para a pasta public
-            $data['arquivo'] = 'arquivos_projetos/' . $fileName; // Salva o caminho do arquivo
+            $file->move(public_path('arquivos_projetos'), $fileName); 
+            $data['arquivo'] = 'arquivos_projetos/' . $fileName; 
         }
 
-        // Cria a string 'periodo_realizacao' formatada se as datas de início e fim foram fornecidas
+
         if ($request->filled('data_inicio') && $request->filled('data_fim')) {
             $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
             $fim = date('d/m/Y', strtotime($request->input('data_fim')));
             $data['periodo_realizacao'] = "$inicio a $fim";
         }
 
-        $data['user_id'] = auth()->id(); // Associa o projeto ao aluno autenticado
-        // $data['professor_id'] = $request->input('professor_id'); // OBS: Esta linha parece redundante se os professores são salvos na tabela 'professores' relacionada.
-                                                                // Se a tabela 'projetos' não tem um campo 'professor_id' direto, esta linha é desnecessária.
-                                                                // Avaliar se este campo existe e é usado na tabela 'projetos'.
+        $data['user_id'] = auth()->id(); 
+        
+        $projeto = Projeto::create($data); 
 
-        $projeto = Projeto::create($data); // Cria o projeto principal
-
-        // Salva os alunos relacionados, se houver
+     
         if ($request->has('alunos')) {
-            foreach ($request->alunos as $alunoData) { // Renomeado para $alunoData para clareza
-                // Validação adicional para dados do aluno pode ser necessária aqui
-                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) { // Exemplo de validação simples
+            foreach ($request->alunos as $alunoData) { 
+                
+                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) { 
                     $projeto->alunos()->create($alunoData);
                 }
             }
         }
 
-        // Salva os professores relacionados, se houver
+        
         if ($request->has('professores')) {
-            $professorIds = []; // Para verificar duplicidade de professores
+            $professorIds = []; 
 
             foreach ($request->professores as $professorData) {
-                // Verifica se o ID do professor foi fornecido
-                if (empty($professorData['id'])) continue; // Pula se o ID do professor não estiver presente
+                
+                if (empty($professorData['id'])) continue; 
 
-                // Verifica se o professor já foi adicionado para evitar duplicidade
                 if (in_array($professorData['id'], $professorIds)) {
                     return redirect()->back()
-                        ->withInput() // Mantém os dados do formulário
+                        ->withInput() 
                         ->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
                 }
                 $professorIds[] = $professorData['id'];
 
-                $userProfessor = User::find($professorData['id']); // Busca o usuário professor pelo ID
+                $userProfessor = User::find($professorData['id']); 
                 if ($userProfessor) {
-                    // Cria o registro na tabela 'professores' (relacionada ao projeto)
+                 
                     $projeto->professores()->create([
                         'nome' => $userProfessor->name,
                         'email' => $userProfessor->email,
-                        'area' => $professorData['area'] ?? null, // Adiciona área se fornecida
-                        'user_id' => $userProfessor->id, // Chave estrangeira para o usuário professor
+                        'area' => $professorData['area'] ?? null, 
+                        'user_id' => $userProfessor->id, 
                     ]);
                 }
             }
         }
 
-        // Salva as atividades relacionadas, se houver
         if ($request->has('atividades')) {
-            foreach ($request->atividades as $atividadeData) { // Renomeado para $atividadeData
+            foreach ($request->atividades as $atividadeData) {
                  if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) { // Exemplo
                     $projeto->atividades()->create($atividadeData);
                  }
@@ -261,24 +144,17 @@ class ProjetoController extends Controller
 
         if ($request->has('cronograma') && is_array($request->cronograma)) {
             foreach ($request->cronograma as $itemDataCronograma) {
-                // A validação do Laravel já deve ter tratado campos obrigatórios.
-                // Esta verificação !empty() é uma segurança adicional se, por exemplo,
-                // nem todos os campos fossem estritamente 'required' pela validação em todos os cenários.
-                // Se a validação já garante que são 'required', este if pode ser simplificado
-                // ou focar em outras lógicas de negócio, se houver.
+
 
                 if (!empty($itemDataCronograma['atividade']) &&
                     !empty($itemDataCronograma['mes_inicio']) &&
                     !empty($itemDataCronograma['mes_fim'])) {
 
-                    // Cria o item de cronograma associado ao projeto.
-                    // Certifique-se de que seu modelo Cronograma tenha 'atividade', 'mes_inicio', 'mes_fim'
-                    // (e 'projeto_id', que é tratado pela relação) no array $fillable.
                     $projeto->cronogramas()->create([
                         'atividade'  => $itemDataCronograma['atividade'],
                         'mes_inicio' => $itemDataCronograma['mes_inicio'],
                         'mes_fim'    => $itemDataCronograma['mes_fim'],
-                        // Adicione quaisquer outros campos do cronograma que você precise salvar aqui.
+                     
                     ]);
                 }
             }
@@ -296,17 +172,14 @@ class ProjetoController extends Controller
      */
     public function show($id, Request $request)
     {
-        // Pega a direção da ordenação da URL (?sort=asc), o padrão é 'desc'
         $sortDirection = $request->query('sort', 'desc');
         if (!in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
 
-        // Carrega o projeto e a relação correta para TODOS os logs
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user', 'todosOsLogs.user', 'resultado'])
                         ->findOrFail($id);
 
-        // Lógica de autorização que você já tinha
         $user = auth()->user();
         if (in_array($user->role, ['napex', 'coordenador'])) {
             if (!in_array($projeto->status, ['entregue', 'aprovado'])) {
@@ -315,7 +188,6 @@ class ProjetoController extends Controller
         }
         $this->authorize('view', $projeto);
 
-        // Ordena a coleção de logs
         $logs = $projeto->todosOsLogs;
         if ($sortDirection === 'asc') {
             $logs = $logs->sortBy('created_at');
@@ -323,14 +195,13 @@ class ProjetoController extends Controller
             $logs = $logs->sortByDesc('created_at');
         }
 
-        // Prepara os dados para a view
         $data = [
             'projeto' => $projeto,
             'logs' => $logs,
             'sortDirection' => $sortDirection,
         ];
 
-        // Cria a resposta mantendo seus headers
+   
         $response = response(view('projetos.show', $data));
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
@@ -353,10 +224,10 @@ class ProjetoController extends Controller
 
         $professores = User::where('role', 'professor')->orderBy('name')->get();
         
-        // <<< ADICIONE ESTA LINHA >>>
-        $cursos = Curso::orderBy('nome')->get(); // Busca todos os cursos do banco
+    
+        $cursos = Curso::orderBy('nome')->get();
 
-        // <<< ADICIONE 'cursos' AO COMPACT >>>
+        
         return view('projetos.edit', compact('projeto', 'professores', 'cursos'));
     }
 
@@ -370,23 +241,14 @@ class ProjetoController extends Controller
      */
     public function update(UpdateProjetoRequest $request, $id)
     {
-        // 1. Carrega o projeto que será atualizado
         $projeto = Projeto::with('professores')->findOrFail($id);
 
-        // 2. Autoriza a ação usando a ProjetoPolicy.
-        //    Esta única linha substitui todos os 'if's de permissão.
         $this->authorize('update', $projeto);
         
-        // 3. Pega os dados validados do formulário
         $data = $request->validated();
         
-        // 4. Atualiza os campos principais do projeto
         $projeto->update($data);
-    
-        // 5. Atualiza as relações (alunos, professores, etc.)
-        //    A lógica de "deletar e recriar" é mantida.
-        
-        // Atualizar alunos
+
         $projeto->alunos()->delete();
         if ($request->has('alunos')) {
             foreach ($request->alunos as $alunoData) {
@@ -396,7 +258,6 @@ class ProjetoController extends Controller
             }
         }
     
-        // Atualizar professores
         $projeto->professores()->delete();
         if ($request->has('professores')) {
             $professorIds = [];
@@ -419,8 +280,7 @@ class ProjetoController extends Controller
                 }
             }
         }
-    
-        // Atualizar atividades
+
         $projeto->atividades()->delete();
         if ($request->has('atividades')) {
             foreach ($request->atividades as $atividadeData) {
@@ -430,11 +290,10 @@ class ProjetoController extends Controller
             }
         }
     
-        // Atualizar cronograma
         $projeto->cronogramas()->delete();
         if ($request->has('cronograma') && is_array($request->cronograma)) {
             foreach ($request->cronograma as $cronogramaItem) {
-                // A validação já garante que os campos existem
+               
                 $projeto->cronogramas()->create($cronogramaItem);
             }
         }
@@ -451,15 +310,8 @@ class ProjetoController extends Controller
      */
     public function avaliarNapex(Request $request, $id)
     {
-        $projeto = Projeto::findOrFail($id);
-
-        // Usa o método 'approveByNapex' da sua Policy
+        $projeto = Projeto::with('user')->findOrFail($id);
         $this->authorize('approveByNapex', $projeto);
-
-        if ($projeto->status !== 'entregue') {
-            return redirect()->route('projetos.show', $projeto->id)
-                            ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
-        }
 
         $validatedData = $request->validate([
             'aprovado_napex' => 'required|in:sim,nao',
@@ -467,44 +319,42 @@ class ProjetoController extends Controller
             'numero_projeto' => 'nullable|string|max:255',
         ]);
 
-        // --- ADIÇÃO DO LOG FICA AQUI ---
-        if ($validatedData['aprovado_napex'] === 'sim') {
-            $projeto->registrarLog('PARECER_NAPEX', 'Parecer do NAPEX: Aprovado.');
-        } else {
-            $descricao = 'Proposta Recusada pelo NAPEX. Motivo: ' . ($validatedData['motivo_napex'] ?? 'Não especificado.');
-            $projeto->registrarLog('RECUSA_NAPEX', $descricao);
-        }
-        // --- FIM DA ADIÇÃO DO LOG ---
-
-        $projeto->aprovado_napex = $validatedData['aprovado_napex'];
-        $projeto->motivo_napex = $validatedData['motivo_napex'] ?? null;
+        $projeto->fill($validatedData);
         $projeto->data_parecer_napex = now();
         if ($projeto->aprovado_napex === 'sim' && isset($validatedData['numero_projeto'])) {
             $projeto->numero_projeto = $validatedData['numero_projeto'];
         }
+        
+        // Salva a avaliação do NAPEX
+        $projeto->save();
 
+        // Notifica o aluno sobre ESTA avaliação específica
+        if ($projeto->user) {
+            if ($projeto->aprovado_napex === 'sim') {
+                $projeto->user->notify(new PropostaAvaliada($projeto, 'Aprovado', null, 'NAPEX'));
+            } else {
+                $projeto->user->notify(new PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_napex, 'NAPEX'));
+            }
+        }
+
+        // AGORA, verificamos o estado geral do projeto
         if ($projeto->aprovado_napex === 'nao') {
             $this->registrarRejeicao($projeto, $projeto->motivo_napex, 'napex');
-            $projeto->status = 'editando'; 
+            $projeto->status = 'editando';
             $projeto->save();
-            return redirect()->route('projetos.index')
-                            ->with('success', 'Projeto NÃO APROVADO pelo NAPEx. Status alterado para "Editando" e devolvido ao aluno.');
-        } else { // NAPEx APROVOU (aprovado_napex === 'sim')
-            
-            // **PONTO CHAVE DA SUA REGRA DE NEGÓCIO:**
-            // O status do projeto SÓ muda para 'aprovado' se AMBOS, NAPEx E Coordenador, tiverem aprovado.
-            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
-                $projeto->status = 'aprovado';
-            }
-            // Se $projeto->aprovado_coordenador !== 'sim' (ou seja, está 'pendente' ou 'nao'),
-            // o status do projeto NÃO é alterado aqui. Se ele era 'entregue', continuará 'entregue'.
-            
-            $projeto->save();
-            return redirect()->route('projetos.show', $projeto->id)
-                            ->with('success', 'Parecer do NAPEx salvo com sucesso.');
+            return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno foi notificado.');
         }
-    }
+        
+        // Se ambos aprovaram, muda o status geral e envia a notificação final
+        if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+            $projeto->status = 'aprovado';
+            $projeto->save();
+            // Opcional: Enviar a notificação de "Próxima Etapa" que criamos antes
+            // $projeto->user->notify(new PropostaAprovadaFinal($projeto));
+        }
 
+        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
+    }
 
     /**
      * Processa a avaliação de um projeto pelo Coordenador.
@@ -513,49 +363,49 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function avaliarCoordenador(Request $request, $id)
-    {
-        $projeto = Projeto::findOrFail($id);
+  public function avaliarCoordenador(Request $request, $id)
+{
+    $projeto = Projeto::with('user')->findOrFail($id);
+    $this->authorize('approveByCoordinator', $projeto);
 
-        $this->authorize('approveByCoordinator', $projeto);
+    $validatedData = $request->validate([
+        'aprovado_coordenador' => 'required|in:sim,nao',
+        'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
+    ]);
 
-        if ($projeto->status !== 'entregue') {
-            return redirect()->route('projetos.show', $projeto->id)
-                            ->with('error', 'Este projeto não está com status "Entregue" e não pode ser avaliado no momento.');
-        }
+    $projeto->fill($validatedData);
+    $projeto->data_parecer_coordenador = now();
+    
+    // Salva a avaliação do Coordenador
+    $projeto->save();
 
-        $validatedData = $request->validate([
-            'aprovado_coordenador' => 'required|in:sim,nao',
-            'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
-        ]);
-
-        if ($validatedData['aprovado_coordenador'] === 'sim') {
-            $projeto->registrarLog('PARECER_COORDENADOR', 'Parecer do Coordenador: Aprovado.');
+    // Notifica o aluno sobre ESTA avaliação específica
+    if ($projeto->user) {
+        if ($projeto->aprovado_coordenador === 'sim') {
+            $projeto->user->notify(new PropostaAvaliada($projeto, 'Aprovado', null, 'Coordenador'));
         } else {
-            $descricao = 'Proposta Recusada pelo Coordenador. Motivo: ' . ($validatedData['motivo_coordenador'] ?? 'Não especificado.');
-            $projeto->registrarLog('RECUSA_COORDENADOR', $descricao);
-        }
-
-        $projeto->aprovado_coordenador = $validatedData['aprovado_coordenador'];
-        $projeto->motivo_coordenador = $validatedData['motivo_coordenador'] ?? null;
-        $projeto->data_parecer_coordenador = now();
-
-        if ($projeto->aprovado_coordenador === 'nao') {
-            $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
-            $projeto->status = 'editando';
-            $projeto->save();
-            return redirect()->route('projetos.index')
-                            ->with('success', 'Projeto NÃO APROVADO pela Coordenação. Status alterado para "Editando" e devolvido ao aluno.');
-        } else {
-            if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
-                $projeto->status = 'aprovado';
-            }
-
-            $projeto->save();
-            return redirect()->route('projetos.show', $projeto->id)
-                            ->with('success', 'Parecer do Coordenador salvo com sucesso.');
+            $projeto->user->notify(new PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_coordenador, 'Coordenador'));
         }
     }
+
+    // AGORA, verificamos o estado geral do projeto
+    if ($projeto->aprovado_coordenador === 'nao') {
+        $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
+        $projeto->status = 'editando';
+        $projeto->save();
+        return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno foi notificado.');
+    }
+    
+    // Se ambos aprovaram, muda o status geral e envia a notificação final
+    if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+        $projeto->status = 'aprovado';
+        $projeto->save();
+        // Opcional: Enviar a notificação de "Próxima Etapa"
+        // $projeto->user->notify(new PropostaAprovadaFinal($projeto));
+    }
+
+    return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
+}
 
     /**
      * Exclui um projeto.
@@ -566,27 +416,25 @@ class ProjetoController extends Controller
      */
     public function destroy($id)
     {
-        // 1. Carrega o projeto que será excluído
+
         $projeto = Projeto::findOrFail($id);
 
-        // 2. Autoriza a exclusão usando a ProjetoPolicy.
-        //    Esta única linha substitui AMBOS os 'if's de permissão que você tinha antes.
+
+
         $this->authorize('delete', $projeto);
 
-        // 3. Executa a exclusão (sua lógica original é mantida)
         try {
             // Lógica para deletar arquivos associados
             if ($projeto->arquivo && file_exists(public_path($projeto->arquivo))) {
                 unlink(public_path($projeto->arquivo));
             }
 
-            $projeto->delete(); // Deleta o projeto e suas relações em cascata
+            $projeto->delete(); 
 
             return redirect()->route('projetos.index')->with('success', 'Projeto excluído com sucesso!');
 
         } catch (\Exception $e) {
-            // Opcional: Logar o erro para depuração
-            // Log::error("Erro ao excluir projeto {$id}: " . $e->getMessage());
+
             return redirect()->route('projetos.index')->with('error', 'Erro ao excluir o projeto.');
         }
     }
@@ -599,14 +447,13 @@ class ProjetoController extends Controller
      */
     public function enviarProjeto($id)
     {
-        // 1. Carrega o projeto
-        $projeto = Projeto::findOrFail($id);
+
+        $projeto = \App\Models\Projeto::findOrFail($id);
         
-        // 2. Autoriza a ação usando a Policy.
-        //    A sua policy 'submit' já verifica o dono do projeto e o status 'editando'.
+
         $this->authorize('submit', $projeto);
 
-        // 3. Executa a ação (o resto do seu código)
+
         $projeto->status = 'entregue';
         $projeto->data_entrega = now();
         $projeto->aprovado_napex = 'pendente';
@@ -615,6 +462,26 @@ class ProjetoController extends Controller
         $projeto->aprovado_coordenador = 'pendente';
         $projeto->motivo_coordenador = null;
         $projeto->data_parecer_coordenador = null;
+        $destinatarios = collect();
+
+
+        $professorIds = \App\Models\Professor::where('projeto_id', $projeto->id)->pluck('user_id')->filter();
+        if ($professorIds->isNotEmpty()) {
+            $destinatarios = $destinatarios->merge(\App\Models\User::whereIn('id', $professorIds)->get());
+        }
+
+
+        $avaliadores = \App\Models\User::whereIn('role', ['napex', 'coordenador'])->get();
+        if ($avaliadores->isNotEmpty()) {
+            $destinatarios = $destinatarios->merge($avaliadores);
+        }
+        
+        if ($destinatarios->isNotEmpty()) {
+            $destinatariosUnicos = $destinatarios->unique('id');
+            
+            \Illuminate\Support\Facades\Notification::send($destinatariosUnicos, new \App\Notifications\PropostaEnviada($projeto));
+        }
+        
 
         $projeto->save();
         
@@ -637,16 +504,13 @@ class ProjetoController extends Controller
      */
     public function voltarParaEdicao($id)
     {
-        // 1. Carrega o projeto
+
         $projeto = Projeto::findOrFail($id);
 
-        // 2. Autoriza a ação usando a nova regra 'revertToEditing' na Policy.
-        //    Esta linha substitui todo o bloco de 'if's de permissão e estado.
         $this->authorize('revertToEditing', $projeto);
     
-        // 3. Executa a ação principal (lógica mantida)
         $projeto->status = 'editando';
-        $projeto->data_entrega = null; // Limpa a data de entrega
+        $projeto->data_entrega = null; 
         $projeto->save();
     
         return redirect()->route('projetos.edit', $projeto)->with('success', 'A proposta voltou para o modo de edição.');  
@@ -664,9 +528,9 @@ class ProjetoController extends Controller
     {
         Rejeicao::create([
             'projeto_id' => $projeto->id,
-            'motivo' => $motivo ?? 'Motivo não especificado.', // Garante que não seja nulo
+            'motivo' => $motivo ?? 'Motivo não especificado.', 
             'data_rejeicao' => now(),
-            'autor' => $autor, // 'napex' ou 'coordenador'
+            'autor' => $autor, 
         ]);
     }
     
@@ -677,80 +541,13 @@ class ProjetoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function exportarPdf(Request $request)
+    public function exportarPdf(Request $request, ProjectSearchService $searchService)
     {
         $this->authorize('exportGeneralPdf', Projeto::class);
 
-        // --- LÓGICA DE FILTRO ATUALIZADA ---
-        $query = Projeto::with(['atividades', 'user', 'professores', 'resultado']);
+        $query = $searchService->buildQuery($request->all());
+        $projetos = $query->get();
 
-        // Filtro principal pela ETAPA
-        if ($request->filled('etapa')) {
-            $query->where('etapa', $request->etapa);
-        }
-
-        // Filtros por campos de texto
-        if ($request->filled('titulo')) {
-            $query->where('titulo', 'like', '%' . $request->titulo . '%');
-        }
-
-        // Filtro de status CONTEXTUAL à ETAPA
-        if ($request->filled('status')) {
-            $statusSelecionado = $request->status;
-
-            // Se o status for 'finalizado', a busca real é pela ETAPA 'Concluído'
-            if ($statusSelecionado === 'finalizado') {
-                $query->where('etapa', 'Concluído');
-            } else {
-                // Lógica para buscar status em 'projetos' ou 'resultados'
-                $query->where(function ($q) use ($statusSelecionado) {
-                    // Busca em projetos cujo status da proposta corresponde
-                    $q->where(function ($sub) use ($statusSelecionado) {
-                        $sub->where('etapa', 'Proposta')->where('status', $statusSelecionado);
-                    })
-                    // OU busca em projetos cuja etapa é resultado e o status do resultado corresponde
-                    ->orWhereHas('resultado', function ($res) use ($statusSelecionado) {
-                        $res->where('status', $statusSelecionado);
-                    });
-                });
-            }
-        }
-        
-        // Filtros de aprovação CONTEXTUAIS à ETAPA
-        if ($request->filled('aprovado_napex')) {
-            $aprovacao = $request->aprovado_napex;
-            $query->where(function ($q) use ($aprovacao) {
-                $q->where(function ($sub) use ($aprovacao) {
-                    $sub->where('etapa', 'Proposta')->where('aprovado_napex', $aprovacao);
-                })->orWhereHas('resultado', function ($res) use ($aprovacao) {
-                    $res->where('aprovado_napex', $aprovacao);
-                });
-            });
-        }
-
-        if ($request->filled('aprovado_coordenador')) {
-            $aprovacao = $request->aprovado_coordenador;
-            $query->where(function ($q) use ($aprovacao) {
-                $q->where(function ($sub) use ($aprovacao) {
-                    $sub->where('etapa', 'Proposta')->where('aprovado_coordenador', $aprovacao);
-                })->orWhereHas('resultado', function ($res) use ($aprovacao) {
-                    $res->where('aprovado_coordenador', $aprovacao);
-                });
-            });
-        }
-        
-        // Demais filtros (datas, etc.)
-        if ($request->filled('data_inicio_de') && $request->filled('data_inicio_ate')) {
-            $query->whereBetween('data_inicio', [$request->data_inicio_de, $request->data_inicio_ate]);
-        }
-        if ($request->filled('data_fim_de') && $request->filled('data_fim_ate')) {
-            $query->whereBetween('data_fim', [$request->data_fim_de, $request->data_fim_ate]);
-        }
-        // --- FIM DA LÓGICA DE FILTRO ATUALIZADA ---
-
-
-        // O resto da sua função continua igual
-        $projetos = $query->orderBy('created_at', 'desc')->get();
         $filtros = $request->except(['_token']);
         $usuarioLogado = auth()->user()->name;
 
@@ -774,14 +571,14 @@ class ProjetoController extends Controller
      */
     public function gerarPdf($id)
     {
-        // 1. Carrega o projeto
+
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'user', 'rejeicoes'])->findOrFail($id);
 
-        // 2. VERIFICA A PERMISSÃO!
-        //    Usa a regra 'view' da sua ProjetoPolicy para garantir que o usuário pode ver (e portanto baixar) este projeto.
+
+
         $this->authorize('view', $projeto);
 
-        // 3. Se a autorização passar, o resto do código é executado normalmente.
+
         $pdf = Pdf::loadView('projetos.pdf', compact('projeto'));
 
         $nomeArquivo = "proposta_extensionista_{$projeto->id}.pdf";
@@ -792,22 +589,21 @@ class ProjetoController extends Controller
 
     public function exportarLogPdf(Projeto $projeto)
     {
-        // Garante que o usuário pode ver o projeto
+
         $this->authorize('view', $projeto);
 
-        // Carrega a relação necessária
+ 
         $projeto->load('todosOsLogs.user');
 
-        // Prepara os dados para a view do PDF
+
         $data = [
             'projeto' => $projeto,
             'logs' => $projeto->todosOsLogs
         ];
 
-        // Carrega a view do PDF, passa os dados e gera o PDF
+
         $pdf = Pdf::loadView('pdf.logs-historico', $data);
 
-        // Define o nome do arquivo e força o download
         return $pdf->download('historico-projeto-' . $projeto->id . '.pdf');
     }
 }

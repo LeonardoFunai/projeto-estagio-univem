@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/projetos/{projeto}/logs/pdf', [ProjetoController::class, 'exportarLogPdf'])->name('projetos.exportarLogPdf');
 
+    Route::get('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'read'])->name('notifications.read');
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
 });
 
 

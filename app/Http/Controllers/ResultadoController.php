@@ -10,6 +10,11 @@ use App\Http\Requests\StoreResultadoRequest;
 use App\Models\RejeicaoResultado;
 use App\Models\Anexo;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
+use App\Notifications\ResultadoEnviado;
+use App\Notifications\ResultadoAvaliado;
+
 
 class ResultadoController extends Controller
 {
@@ -190,10 +195,13 @@ class ResultadoController extends Controller
     /**
      * Submete o resultado para avaliação.
      */
+
+
     public function enviar(Resultado $resultado)
     {
-        // Policy: Verifica se o usuário tem permissão para enviar para avaliação.
+  
         $this->authorize('sendForEvaluation', $resultado);
+
 
         $resultado->status = 'entregue';
         $resultado->aprovado_napex = 'pendente';
@@ -201,6 +209,15 @@ class ResultadoController extends Controller
         $resultado->aprovado_coordenador = 'pendente';
         $resultado->parecer_coordenador = null;
         $resultado->save();
+
+        $resultado->load('projeto.user');
+        
+        $avaliadores = \App\Models\User::whereIn('role', ['napex', 'coordenador'])->get();
+
+        if ($avaliadores->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send($avaliadores, new \App\Notifications\ResultadoEnviado($resultado));
+        }
+
 
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados enviado para avaliação!');
     }
@@ -222,12 +239,16 @@ class ResultadoController extends Controller
     /**
      * Salva ou atualiza o parecer de um avaliador (NAPEX ou Coordenador).
      */
+
     public function avaliar(Request $request, Resultado $resultado)
     {
         $this->authorize('evaluate', $resultado);
 
         $user = auth()->user();
-        $role = $user->role;    
+        $role = $user->role;
+
+        $resultado->load('projeto.user');
+        $aluno = $resultado->projeto->user;
 
         if ($role === 'napex') {
             if ($request->aprovacao === 'sim') {
@@ -238,7 +259,18 @@ class ResultadoController extends Controller
             }
             $resultado->parecer_napex = $request->parecer;
             $resultado->aprovado_napex = $request->aprovacao;
+
+            if ($aluno) {
+                if ($request->aprovacao === 'sim') {
+                    $aluno->notify(new \App\Notifications\ResultadoAvaliado($resultado, 'Aprovado', null, 'NAPEX'));
+                } else {
+                    $aluno->notify(new \App\Notifications\ResultadoAvaliado($resultado, 'Recusado', $request->parecer, 'NAPEX'));
+                }
+            }
+
+
         } elseif ($role === 'coordenador') {
+
             if ($request->aprovacao === 'sim') {
                 $resultado->registrarLog('PARECER_COORDENADOR', 'Parecer do Coordenador no Relatório: Aprovado.');
             } else {
@@ -247,6 +279,15 @@ class ResultadoController extends Controller
             }
             $resultado->parecer_coordenador = $request->parecer;
             $resultado->aprovado_coordenador = $request->aprovacao;
+
+            if ($aluno) {
+                if ($request->aprovacao === 'sim') {
+                    $aluno->notify(new \App\Notifications\ResultadoAvaliado($resultado, 'Aprovado', null, 'Coordenador'));
+                } else {
+                    $aluno->notify(new \App\Notifications\ResultadoAvaliado($resultado, 'Recusado', $request->parecer, 'Coordenador'));
+                }
+            }
+
         }
 
         $aprovadoNapex = $resultado->aprovado_napex;
@@ -272,24 +313,21 @@ class ResultadoController extends Controller
         
         $resultado->save();
 
-        return redirect()->route('projetos.index', $resultado)->with('success', 'Parecer salvo com sucesso!');
+        return redirect()->route('projetos.show', $resultado->projeto_id)->with('success', 'Parecer salvo com sucesso!');
     }
 
     public function gerarPdf(Resultado $resultado)
     {
-        // 1. Autoriza a ação (só quem pode ver o relatório, pode baixar o PDF)
+
         $this->authorize('view', $resultado);
 
-        // 2. Carrega as informações relacionadas que vamos usar no PDF
         $resultado->load(['projeto.professores', 'projeto.alunos.curso', 'anexos']);
-
-        // 3. Chama a view do PDF (que criaremos no próximo passo)
         $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
         
-        // 4. Define um nome para o arquivo que será baixado
+
         $nomeArquivo = "relatorio_resultados_{$resultado->projeto->id}.pdf";
         
-        // 5. Força o download do PDF no navegador
+
         return $pdf->download($nomeArquivo);
     }
 }
