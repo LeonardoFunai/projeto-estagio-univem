@@ -17,9 +17,6 @@ class ResultadoAvaliado extends Notification
     protected $motivo;
     protected $avaliador;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(Resultado $resultado, string $parecer, ?string $motivo = null, string $avaliador)
     {
         $this->resultado = $resultado;
@@ -28,21 +25,27 @@ class ResultadoAvaliado extends Notification
         $this->avaliador = $avaliador;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     */
     public function via(object $notifiable): array
     {
         return ['database'];
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
     public function toDatabase(object $notifiable): array
     {
         $projeto = $this->resultado->projeto;
-        $mensagem = "Seu relatório de '{$projeto->titulo}' recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        $alunoDoProjeto = $projeto->user;
+        $mensagem = '';
+
+        // ===== LÓGICA DE MENSAGEM PERSONALIZADA =====
+        // Se o notificado é o próprio aluno dono do projeto...
+        if ($notifiable->id === $alunoDoProjeto->id) {
+            $mensagem = "Seu relatório de '{$projeto->titulo}' recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        }
+        // Senão, asumimos que é o professor orientador...
+        else {
+            $mensagem = "O relatório de '{$projeto->titulo}' do aluno(a) {$alunoDoProjeto->name} recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        }
+        // ===============================================
 
         if ($this->parecer === 'Recusado') {
             $mensagem .= " Clique para ver os detalhes.";

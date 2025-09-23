@@ -33,9 +33,19 @@ class PropostaAvaliada extends Notification
     public function toDatabase(object $notifiable): array
     {
         $tituloProjeto = $this->projeto->titulo;
+        $alunoDoProjeto = $this->projeto->user;
+        $mensagem = '';
 
-        // Mensagem mais clara, focada no parecer individual
-        $mensagem = "Sua proposta '{$tituloProjeto}' recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        // ===== LÓGICA DE MENSAGEM PERSONALIZADA =====
+        // Se o notificado é o próprio aluno dono do projeto...
+        if ($notifiable->id === $alunoDoProjeto->id) {
+            $mensagem = "Sua proposta '{$tituloProjeto}' recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        } 
+        // Senão, asumimos que é o professor orientador...
+        else {
+            $mensagem = "A proposta '{$tituloProjeto}' do aluno(a) {$alunoDoProjeto->name} recebeu o parecer '{$this->parecer}' do(a) {$this->avaliador}.";
+        }
+        // ===============================================
 
         if ($this->parecer === 'Recusado') {
             $mensagem .= " Clique para ver os detalhes.";

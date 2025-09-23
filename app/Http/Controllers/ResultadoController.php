@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 use App\Notifications\ResultadoEnviado;
 use App\Notifications\ResultadoAvaliado;
+use App\Notifications\ResultadoCadastradoPeloAluno;
 
 
 class ResultadoController extends Controller
@@ -46,25 +47,19 @@ class ResultadoController extends Controller
     /**
      * Salva o novo relatório de resultados no banco de dados.
      */
-    public function store(StoreResultadoRequest $request, Projeto $projeto)
+   public function store(StoreResultadoRequest $request, Projeto $projeto)
     {
         $this->authorize('create', [Resultado::class, $projeto]);
 
         $data = $request->validated();
         $data['projeto_id'] = $projeto->id;
 
-        // Cria o registro do resultado
         $resultado = Resultado::create($data);
 
-
-        // Verifica se foram enviados arquivos no campo 'anexos'
         if ($request->hasFile('anexos')) {
-            // Itera sobre cada arquivo enviado
             foreach ($request->file('anexos') as $arquivo) {
-                // Salva o arquivo em 'storage/app/public/resultados/{id_do_resultado}'
                 $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
                 
-                // Cria um registro na tabela 'anexos' associado a este resultado
                 Anexo::create([
                     'resultado_id' => $resultado->id,
                     'nome_original' => $arquivo->getClientOriginalName(),
@@ -74,9 +69,16 @@ class ResultadoController extends Controller
             }
         }
 
-        // Atualiza a etapa do projeto principal
         $projeto->etapa = 'Resultado';
         $projeto->save();
+
+        $resultado->load('projeto.user', 'projeto.professores.user');
+        
+        $professores = $resultado->projeto->professores->map(fn($p) => $p->user)->filter();
+
+        if ($professores->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ResultadoCadastradoPeloAluno($resultado));
+        }
 
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório salvo com sucesso! Agora você já pode enviar para avaliação.');
     }

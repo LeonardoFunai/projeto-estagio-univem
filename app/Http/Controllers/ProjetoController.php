@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\QueryException; 
 use Barryvdh\DomPDF\Facade\Pdf; 
 use App\Notifications\PropostaAvaliada;
+use App\Notifications\ProfessorVinculadoAProjeto;
 
 
 class ProjetoController extends Controller
@@ -70,21 +71,17 @@ class ProjetoController extends Controller
      */
     public function store(StoreProjetoRequest $request)
     {
-
         $this->authorize('create', Projeto::class);
 
-
-        $data = $request->validated(); 
-        $data['status'] = 'editando'; 
-
+        $data = $request->validated();
+        $data['status'] = 'editando';
 
         if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
             $file = $request->file('arquivo');
             $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
-            $file->move(public_path('arquivos_projetos'), $fileName); 
-            $data['arquivo'] = 'arquivos_projetos/' . $fileName; 
+            $file->move(public_path('arquivos_projetos'), $fileName);
+            $data['arquivo'] = 'arquivos_projetos/' . $fileName;
         }
-
 
         if ($request->filled('data_inicio') && $request->filled('data_fim')) {
             $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
@@ -92,60 +89,61 @@ class ProjetoController extends Controller
             $data['periodo_realizacao'] = "$inicio a $fim";
         }
 
-        $data['user_id'] = auth()->id(); 
+        $data['user_id'] = auth()->id();
         
-        $projeto = Projeto::create($data); 
+        $projeto = Projeto::create($data);
 
-     
         if ($request->has('alunos')) {
-            foreach ($request->alunos as $alunoData) { 
-                
-                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) { 
+            foreach ($request->alunos as $alunoData) {
+                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) {
                     $projeto->alunos()->create($alunoData);
                 }
             }
         }
-
-        
         if ($request->has('professores')) {
-            $professorIds = []; 
+            $professorIds = [];
+            $professoresParaNotificar = collect();
 
             foreach ($request->professores as $professorData) {
-                
-                if (empty($professorData['id'])) continue; 
+                if (empty($professorData['id'])) continue;
 
                 if (in_array($professorData['id'], $professorIds)) {
                     return redirect()->back()
-                        ->withInput() 
-                        ->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
+                                    ->withInput()
+                                    ->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
                 }
                 $professorIds[] = $professorData['id'];
 
-                $userProfessor = User::find($professorData['id']); 
+                $userProfessor = User::find($professorData['id']);
                 if ($userProfessor) {
-                 
                     $projeto->professores()->create([
                         'nome' => $userProfessor->name,
                         'email' => $userProfessor->email,
-                        'area' => $professorData['area'] ?? null, 
-                        'user_id' => $userProfessor->id, 
+                        'area' => $professorData['area'] ?? null,
+                        'user_id' => $userProfessor->id,
                     ]);
+              
+                    $professoresParaNotificar->push($userProfessor);
                 }
             }
+
+            if ($professoresParaNotificar->isNotEmpty()) {
+                $projeto->load('user'); 
+                Notification::send($professoresParaNotificar, new \App\Notifications\ProfessorVinculadoAProjeto($projeto));
+            }
+
         }
 
         if ($request->has('atividades')) {
             foreach ($request->atividades as $atividadeData) {
-                 if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) { // Exemplo
+                if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
                     $projeto->atividades()->create($atividadeData);
-                 }
+                }
             }
         }
 
         if ($request->has('cronograma') && is_array($request->cronograma)) {
             foreach ($request->cronograma as $itemDataCronograma) {
-
-
                 if (!empty($itemDataCronograma['atividade']) &&
                     !empty($itemDataCronograma['mes_inicio']) &&
                     !empty($itemDataCronograma['mes_fim'])) {
@@ -154,7 +152,6 @@ class ProjetoController extends Controller
                         'atividade'  => $itemDataCronograma['atividade'],
                         'mes_inicio' => $itemDataCronograma['mes_inicio'],
                         'mes_fim'    => $itemDataCronograma['mes_fim'],
-                     
                     ]);
                 }
             }
@@ -310,7 +307,7 @@ class ProjetoController extends Controller
      */
     public function avaliarNapex(Request $request, $id)
     {
-        $projeto = Projeto::with('user')->findOrFail($id);
+        $projeto = Projeto::with('user', 'professores.user')->findOrFail($id);
         $this->authorize('approveByNapex', $projeto);
 
         $validatedData = $request->validate([
@@ -325,87 +322,76 @@ class ProjetoController extends Controller
             $projeto->numero_projeto = $validatedData['numero_projeto'];
         }
         
-        // Salva a avaliação do NAPEX
         $projeto->save();
 
-        // Notifica o aluno sobre ESTA avaliação específica
-        if ($projeto->user) {
+        $aluno = $projeto->user;
+        $professores = $projeto->professores->map(fn($p) => $p->user)->filter();
+        $destinatarios = collect([$aluno])->merge($professores)->filter()->unique('id');
+
+        if ($destinatarios->isNotEmpty()) {
             if ($projeto->aprovado_napex === 'sim') {
-                $projeto->user->notify(new PropostaAvaliada($projeto, 'Aprovado', null, 'NAPEX'));
+                \Illuminate\Support\Facades\Notification::send($destinatarios, new \App\Notifications\PropostaAvaliada($projeto, 'Aprovado', null, 'NAPEX'));
             } else {
-                $projeto->user->notify(new PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_napex, 'NAPEX'));
+                \Illuminate\Support\Facades\Notification::send($destinatarios, new \App\Notifications\PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_napex, 'NAPEX'));
             }
         }
 
-        // AGORA, verificamos o estado geral do projeto
         if ($projeto->aprovado_napex === 'nao') {
             $this->registrarRejeicao($projeto, $projeto->motivo_napex, 'napex');
             $projeto->status = 'editando';
             $projeto->save();
-            return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno foi notificado.');
+            return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno e professor foram notificados.');
         }
         
-        // Se ambos aprovaram, muda o status geral e envia a notificação final
         if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
             $projeto->status = 'aprovado';
             $projeto->save();
-            // Opcional: Enviar a notificação de "Próxima Etapa" que criamos antes
-            // $projeto->user->notify(new PropostaAprovadaFinal($projeto));
         }
 
         return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
     }
-
-    /**
-     * Processa a avaliação de um projeto pelo Coordenador.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-  public function avaliarCoordenador(Request $request, $id)
-{
-    $projeto = Projeto::with('user')->findOrFail($id);
-    $this->authorize('approveByCoordinator', $projeto);
-
-    $validatedData = $request->validate([
-        'aprovado_coordenador' => 'required|in:sim,nao',
-        'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
-    ]);
-
-    $projeto->fill($validatedData);
-    $projeto->data_parecer_coordenador = now();
     
-    // Salva a avaliação do Coordenador
-    $projeto->save();
+    public function avaliarCoordenador(Request $request, $id)
+    {
+        $projeto = Projeto::with('user', 'professores.user')->findOrFail($id);
+        $this->authorize('approveByCoordinator', $projeto);
 
-    // Notifica o aluno sobre ESTA avaliação específica
-    if ($projeto->user) {
-        if ($projeto->aprovado_coordenador === 'sim') {
-            $projeto->user->notify(new PropostaAvaliada($projeto, 'Aprovado', null, 'Coordenador'));
-        } else {
-            $projeto->user->notify(new PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_coordenador, 'Coordenador'));
+        $validatedData = $request->validate([
+            'aprovado_coordenador' => 'required|in:sim,nao',
+            'motivo_coordenador' => 'nullable|string|required_if:aprovado_coordenador,nao|max:2000',
+        ]);
+
+        $projeto->fill($validatedData);
+        $projeto->data_parecer_coordenador = now();
+        
+        $projeto->save();
+
+        $aluno = $projeto->user;
+        $professores = $projeto->professores->map(fn($p) => $p->user)->filter();
+        $destinatarios = collect([$aluno])->merge($professores)->filter()->unique('id');
+
+        if ($destinatarios->isNotEmpty()) {
+            if ($projeto->aprovado_coordenador === 'sim') {
+                \Illuminate\Support\Facades\Notification::send($destinatarios, new \App\Notifications\PropostaAvaliada($projeto, 'Aprovado', null, 'Coordenador'));
+            } else {
+                \Illuminate\Support\Facades\Notification::send($destinatarios, new \App\Notifications\PropostaAvaliada($projeto, 'Recusado', $projeto->motivo_coordenador, 'Coordenador'));
+            }
         }
-    }
 
-    // AGORA, verificamos o estado geral do projeto
-    if ($projeto->aprovado_coordenador === 'nao') {
-        $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
-        $projeto->status = 'editando';
-        $projeto->save();
-        return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno foi notificado.');
-    }
-    
-    // Se ambos aprovaram, muda o status geral e envia a notificação final
-    if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
-        $projeto->status = 'aprovado';
-        $projeto->save();
-        // Opcional: Enviar a notificação de "Próxima Etapa"
-        // $projeto->user->notify(new PropostaAprovadaFinal($projeto));
-    }
+        if ($projeto->aprovado_coordenador === 'nao') {
+            $this->registrarRejeicao($projeto, $projeto->motivo_coordenador, 'coordenador');
+            $projeto->status = 'editando';
+            $projeto->save();
+            return redirect()->route('projetos.index')->with('success', 'Projeto NÃO APROVADO. O aluno e professor foram notificados.');
+        }
+        
+        if ($projeto->aprovado_napex === 'sim' && $projeto->aprovado_coordenador === 'sim') {
+            $projeto->status = 'aprovado';
+            $projeto->save();
+        }
 
-    return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
-}
+        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do Coordenador salvo com sucesso.');
+    }
 
     /**
      * Exclui um projeto.
@@ -445,14 +431,12 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
+
     public function enviarProjeto($id)
     {
-
-        $projeto = \App\Models\Projeto::findOrFail($id);
+        $projeto = \App\Models\Projeto::with('user', 'professores.user')->findOrFail($id);
         
-
         $this->authorize('submit', $projeto);
-
 
         $projeto->status = 'entregue';
         $projeto->data_entrega = now();
@@ -462,28 +446,21 @@ class ProjetoController extends Controller
         $projeto->aprovado_coordenador = 'pendente';
         $projeto->motivo_coordenador = null;
         $projeto->data_parecer_coordenador = null;
-        $destinatarios = collect();
+        
+        $projeto->save();
 
+        $professores = $projeto->professores->map(function ($professor) {
+            return $professor->user;
+        })->filter();
 
-        $professorIds = \App\Models\Professor::where('projeto_id', $projeto->id)->pluck('user_id')->filter();
-        if ($professorIds->isNotEmpty()) {
-            $destinatarios = $destinatarios->merge(\App\Models\User::whereIn('id', $professorIds)->get());
+        if ($professores->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ProjetoSubmetidoPeloAluno($projeto));
         }
-
-
+        
         $avaliadores = \App\Models\User::whereIn('role', ['napex', 'coordenador'])->get();
         if ($avaliadores->isNotEmpty()) {
-            $destinatarios = $destinatarios->merge($avaliadores);
+            \Illuminate\Support\Facades\Notification::send($avaliadores, new \App\Notifications\PropostaEnviada($projeto));
         }
-        
-        if ($destinatarios->isNotEmpty()) {
-            $destinatariosUnicos = $destinatarios->unique('id');
-            
-            \Illuminate\Support\Facades\Notification::send($destinatariosUnicos, new \App\Notifications\PropostaEnviada($projeto));
-        }
-        
-
-        $projeto->save();
         
         return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto enviado para avaliação com sucesso!');
     }
