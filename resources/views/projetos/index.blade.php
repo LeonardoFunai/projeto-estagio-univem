@@ -8,13 +8,14 @@
     </x-slot>
 
     <x-slot name="pageTitle">
-        Lista de Proposta de Atividade Extensionista Curricularização da Extensão
+        Propostas e Relatórios de Atividade Extensionista Curricularização da Extensão
     </x-slot>
 
 
 
     <div class="pt-1 pb-10">
         <div class="w-full mx-auto sm:px-6 lg:px-8">
+       
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
 
             <!-- Erros -->
@@ -67,6 +68,13 @@
                             📄 EXPORTAR TABELA EM PDF
                         </a>
                     @endif
+                                @can('create', App\Models\Projeto::class)
+                <a href="{{ route('projetos.create') }}"
+                    class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 h-[36px] rounded text-sm">
+                    ＋ Nova Proposta
+                </a>
+            @endcan
+
 
                 </div>
 

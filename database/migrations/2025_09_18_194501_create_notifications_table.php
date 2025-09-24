@@ -1,70 +1,31 @@
 <?php
 
-namespace App\Notifications;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
-use App\Models\Projeto; // Importe o modelo Projeto
-
-class PropostaEnviada extends Notification
+return new class extends Migration
 {
-    use Queueable;
-
-    protected $projeto;
-
     /**
-     * Create a new notification instance.
+     * Run the migrations.
      */
-    public function __construct(Projeto $projeto)
+    public function up(): void
     {
-        $this->projeto = $projeto;
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
+     * Reverse the migrations.
      */
-    public function via(object $notifiable): array
+    public function down(): void
     {
-
-        return ['database'];
+        Schema::dropIfExists('notifications');
     }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toDatabase(object $notifiable): array
-    {
-        $alunoNome = $this->projeto->user->name;
-        $tituloProjeto = $this->projeto->titulo;
-
-        return [
-            'projeto_id' => $this->projeto->id,
-            'titulo_projeto' => $tituloProjeto,
-            'mensagem' => "A proposta do projeto '{$tituloProjeto}' foi enviada por {$alunoNome} e aguarda avaliação.",
-            'url' => route('projetos.show', $this->projeto->id), // Link para ver o projeto
-        ];
-    }
-
-    /**
-     * (Opcional) Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        $url = route('projetos.show', $this->projeto->id);
-        $alunoNome = $this->projeto->user->name;
-        $tituloProjeto = $this->projeto->titulo;
-
-        return (new MailMessage)
-                    ->subject('Nova Proposta de Projeto para Avaliação')
-                    ->greeting('Olá!')
-                    ->line("A proposta do projeto '{$tituloProjeto}', submetida por {$alunoNome}, está pronta para ser avaliada.")
-                    ->action('Ver Proposta', $url)
-                    ->line('Obrigado por usar nosso sistema.');
-    }
-}
+};

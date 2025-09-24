@@ -35,13 +35,11 @@ return new class extends Migration {
             $table->text('motivo_coordenador')->nullable();
             $table->date('data_parecer_coordenador')->nullable();
             $table->string('status')->default('editando');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // FK para users, OK
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
 
-            // MODIFICADO: Coluna professor_id definida, mas a CONSTRAINT de chave estrangeira
-            // para 'professores' NÃO é criada aqui. Ela será criada em uma migração posterior.
+
             $table->foreignId('professor_id')->nullable();
-            // Alternativamente, se preferir ser mais explícito sobre o tipo sem usar foreignId para esta coluna temporariamente:
-            // $table->unsignedBigInteger('professor_id')->nullable();
+
 
             $table->timestamps();
         });

@@ -81,6 +81,15 @@
                                 <p class="mt-1 text-gray-600">{{ $projeto->periodo }}</p>
                             </div>
                             <div>
+                                <x-input-label value="Período de Realização" />
+                                <p class="mt-1 text-gray-600">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }} até {{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</p>
+                            </div>
+
+                            <div>
+                                <x-input-label value="Carga Horária Total" />
+                                <p class="mt-1 text-gray-600">{{ $projeto->carga_horaria_total }} horas</p>
+                            </div>
+                            <div>
                                 <x-input-label value="Professor(es) Envolvidos" />
                                 <p class="mt-1 text-gray-600">{{ $projeto->professores->pluck('nome')->implode(', ') }}</p>
                             </div>
@@ -97,7 +106,7 @@
                         <div class="mt-6">
                             <x-input-label for="atividades_desenvolvidas" value="Atividades Desenvolvidas no Período*" class="font-bold"/>
                             <p class="text-sm text-gray-500 mb-2">Descreva o que foi desenvolvido, em qual instituição, quantas pessoas foram envolvidas, se atingiu os resultados esperados e sugestões de melhoria.</p>
-                            <textarea id="atividades_desenvolvidas" name="atividades_desenvolvidas" rows="8" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>{{ old('atividades_desenvolvidas') }}</textarea>
+                            <textarea maxlength="1000" id="atividades_desenvolvidas" name="atividades_desenvolvidas" rows="8" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>{{ old('atividades_desenvolvidas') }}</textarea>
                             <x-input-error :messages="$errors->get('atividades_desenvolvidas')" class="mt-2" />
                         </div>
 
@@ -128,9 +137,9 @@
                         </div>
 
                         <div class="mt-6">
-                            <x-input-label for="comunidade_externa" value="Pessoas da Comunidade Externa Envolvidas" class="font-bold"/>
+                            <x-input-label for="comunidade_externa" value="Pessoas da Comunidade Externa Envolvidas" class="font-bold" />
                             <p class="text-sm text-gray-500 mb-2">Liste os nomes das pessoas ou organizações da comunidade externa que participaram.</p>
-                            <textarea id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('comunidade_externa') }}</textarea>
+                            <textarea maxlength="1000" id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('comunidade_externa') }}</textarea>
                         </div>
 
                         <div class="mt-8 p-4 border border-gray-200 rounded-md">
@@ -162,4 +171,31 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function setupCharacterCounter(textareaId, counterId) {
+            const textarea = document.getElementById(textareaId);
+            const counter = document.getElementById(counterId);
+            if (!textarea || !counter) return;
+
+            const maxLength = textarea.getAttribute('maxlength');
+
+            const updateCounter = () => {
+                const currentLength = textarea.value.length;
+                counter.textContent = `${currentLength} / ${maxLength}`;
+            };
+            
+            textarea.addEventListener('input', updateCounter);
+            updateCounter(); 
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCharacterCounter('atividades_desenvolvidas', 'atividades-counter');
+            setupCharacterCounter('comunidade_externa', 'comunidade-counter');
+            setupCharacterCounter('anexos_descricao', 'descricao-counter');
+        });
+    </script>
+    @endpush
+
 </x-app-layout>

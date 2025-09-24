@@ -27,7 +27,7 @@
             [x-cloak] { display: none !important; }
         </style>
     </head>
-    <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;">
+    <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0;" class="d-flex-column">
 
         <div style="background-color: #251c57; color: white; padding: 15px 20px; font-size: 0.85rem;">
             <div class="container d-flex justify-content-between align-items-center ps-5">
@@ -49,13 +49,20 @@
             z-index: 50;
             width: 50%;
             margin-left: auto;
+            .d-flex-column {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+
+            .flex-grow-1 {
+                flex: 1;
+            }
         ">
             <div style="color: white;" class="container d-flex justify-content-start align-items-center ">
-                <a href="{{ route('projetos.index') }}" class="btn custom-btn me-2">Lista de Propostas</a> |
+                <a href="{{ route('projetos.index') }}" class="btn custom-btn me-2">Projetos de Extensão </a> |
 
-                @if(auth()->user()->role == 'aluno')
-                    <a href="{{ route('projetos.create') }}" class="btn custom-btn me-2">Nova Proposta</a>  |
-                @endif
+
 
                 <a href="{{ route('profile.edit') }}" class="btn custom-btn me-2">
                     {{ auth()->user()->name }}
@@ -90,7 +97,7 @@
             </div>
         </div>
 
-        <main class="container pt-2">
+        <main class="container pt-2 flex-grow-1">
             {{ $slot }}
         </main>
 

@@ -518,7 +518,7 @@ class ProjetoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function exportarPdf(Request $request, ProjectSearchService $searchService)
+  public function exportarPdf(Request $request, ProjectSearchService $searchService)
     {
         $this->authorize('exportGeneralPdf', Projeto::class);
 
@@ -527,17 +527,20 @@ class ProjetoController extends Controller
 
         $filtros = $request->except(['_token']);
         $usuarioLogado = auth()->user()->name;
+        $dataGeracao = now(); 
 
         $pdf = Pdf::loadView('pdf.projetos-relatorio', [
             'projetos' => $projetos,
             'filtros' => $filtros,
             'usuarioLogado' => $usuarioLogado,
-            'dataGeracao' => now()->format('d/m/Y H:i:s')
+            'dataGeracao' => $dataGeracao->format('d/m/Y H:i:s')
         ]);
         
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('relatorio_projetos_extensionistas.pdf');
+        $nomeArquivo = 'Relatorio_Projetos_' . $dataGeracao->format('Y-m-d_His') . '.pdf';
+        
+        return $pdf->download($nomeArquivo);
     }
 
     /**
@@ -548,20 +551,14 @@ class ProjetoController extends Controller
      */
     public function gerarPdf($id)
     {
-
         $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'user', 'rejeicoes'])->findOrFail($id);
-
-
 
         $this->authorize('view', $projeto);
 
-
         $pdf = Pdf::loadView('projetos.pdf', compact('projeto'));
-
-        $nomeArquivo = "proposta_extensionista_{$projeto->id}.pdf";
-        $nomeArquivo = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $nomeArquivo);
-
-        return $pdf->download($nomeArquivo);
+        
+       
+        return $pdf->download($projeto->id . '-proposta.pdf');
     }
 
     public function exportarLogPdf(Projeto $projeto)

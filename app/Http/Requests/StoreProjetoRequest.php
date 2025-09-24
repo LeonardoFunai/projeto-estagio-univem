@@ -9,8 +9,7 @@ class StoreProjetoRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Se apenas alunos podem criar projetos, mantenha esta linha.
-        // Caso contrário, se qualquer usuário autenticado pode criar, mude para 'true'.
+
         return auth()->check() && auth()->user()->role === 'aluno';
     }
 
@@ -57,20 +56,18 @@ class StoreProjetoRequest extends FormRequest
             'objetivo_geral' => 'nullable|string|max:1000',
             'justificativa' => 'nullable|string|max:1000',
             'metodologia' => 'nullable|string|max:500',
-            'recursos' => 'nullable|string|max:1000', // Adicionei max:1000 aqui
+            'recursos' => 'nullable|string|max:1000', 
             'resultados_esperados' => 'nullable|string|max:1000',
 
-            // Pareceres NAPEx e Coordenador (normalmente não seriam preenchidos na CRIAÇÃO)
-            // Mantidos 'nullable' para não causar erro se o formulário enviar, mas o controle
-            // de quem pode preencher isso deve estar no Controller e/ou na view.
+
             'numero_projeto' => 'nullable|string|max:255',
-            'aprovado_napex' => 'nullable|string|in:sim,nao,pendente', // Adicionado 'pendente'
-            'motivo_napex' => 'nullable|string|max:2000', // Aumentado max
-            'aprovado_coordenador' => 'nullable|string|in:sim,nao,pendente', // Adicionado 'pendente'
-            'motivo_coordenador' => 'nullable|string|max:2000', // Aumentado max
+            'aprovado_napex' => 'nullable|string|in:sim,nao,pendente', 
+            'motivo_napex' => 'nullable|string|max:2000', 
+            'aprovado_coordenador' => 'nullable|string|in:sim,nao,pendente', 
+            'motivo_coordenador' => 'nullable|string|max:2000', 
 
             // Arquivo
-            'arquivo' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120', // 5MB
+            'arquivo' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120', 
 
             // Atividades (texto e carga horária)
             'atividades' => 'required|array|min:1|max:10',
@@ -210,7 +207,7 @@ class StoreProjetoRequest extends FormRequest
                         $indiceInicio = $monthOrderMap[$mesInicio] ?? null;
                         $indiceFim = $monthOrderMap[$mesFim] ?? null;
 
-                        // Se os meses são válidos e o mês de fim é anterior ao mês de início
+                  
                         if ($indiceInicio !== null && $indiceFim !== null && $indiceFim < $indiceInicio) {
                             $validator->errors()->add(
                                 "cronograma.{$index}.mes_fim",
@@ -221,27 +218,6 @@ class StoreProjetoRequest extends FormRequest
                 }
             }
 
-            // A validação de formato e ano das datas (data_inicio, data_fim) já é coberta por 'date_format:Y-m-d'
-            // nas regras e pela validação 'after_or_equal'. Recomendo remover o loop 'datasParaValidar'
-            // do método withValidator para evitar redundância, a menos que você tenha uma necessidade muito específica
-            // de validar checkdate ou anos fora de 1900-2100 (o que geralmente é tratado por um bom DatePicker ou backend).
-            // Se você quiser manter a validação de range de ano (1900-2100) ou checkdate, você pode fazer assim:
-            // $datasParaValidarManualmente = [
-            //     'data_inicio', 'data_fim', 'data_entrega', 'data_parecer_napex', 'data_parecer_coordenador'
-            // ];
-            // foreach ($datasParaValidarManualmente as $campo) {
-            //     $valor = $this->input($campo);
-            //     if ($valor && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $matches)) {
-            //         $ano = (int)$matches[1];
-            //         $mes = (int)$matches[2];
-            //         $dia = (int)$matches[3];
-            //         if ($ano < 1900 || $ano > 2100) {
-            //             $validator->errors()->add($campo, "O ano em {$this->attributes()[$campo]} parece inválido (deve ser entre 1900 e 2100).");
-            //         } elseif (!checkdate($mes, $dia, $ano)) {
-            //             $validator->errors()->add($campo, "A data informada em {$this->attributes()[$campo]} não é válida (dia, mês ou ano incorretos).");
-            //         }
-            //     }
-            // }
         });
     }
 }
