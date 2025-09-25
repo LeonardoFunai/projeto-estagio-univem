@@ -16,7 +16,7 @@ Route::get('/', function () {
 // Área logada
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+
 
     // Rotas de perfil do usuário (Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projetos', [ProjetoController::class, 'index'])->name('projetos.index');
     Route::get('/projetos/create', [ProjetoController::class, 'create'])->name('projetos.create');
     Route::post('/projetos', [ProjetoController::class, 'store'])->name('projetos.store');
+    Route::get('/users/search', [\App\Http\Controllers\ProjetoController::class, 'searchUsers'])->name('users.search');
     
     // 📄 Exportar relatório em PDF (visível só para NAPEx e Coordenação)
     Route::get('/projetos/pdf', [ProjetoController::class, 'exportarPdf'])->name('projetos.exportarPdf');
@@ -70,6 +71,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+});
+
+
+Route::middleware(['auth', 'role:admin,napex,coordenador'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class);
 });
 
 

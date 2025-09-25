@@ -10,9 +10,6 @@
                         {{ __('Projetos') }}
                     </x-nav-link>
                 </div>
-
-                {{-- Seus outros links de navegação podem ir aqui --}}
-
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">

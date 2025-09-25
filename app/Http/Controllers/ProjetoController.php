@@ -6,8 +6,6 @@ use App\Models\User;
 use App\Notifications\PropostaEnviada;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Projeto;
-use App\Models\Aluno;
-use App\Models\Professor;
 use App\Models\Atividade;
 use App\Models\Cronograma;
 use App\Models\Rejeicao; 
@@ -55,20 +53,63 @@ class ProjetoController extends Controller
     public function create()
     {
         $this->authorize('create', Projeto::class);
+        
+        $alunos = User::where('role', 'aluno')->orderBy('name')->get();
+        
+        $professores = User::where('role', 'like', 'professor%')
+                        ->orWhere('role', 'like', 'coordenador%')
+                        ->orderBy('name')
+                        ->get();
 
-        $professores = User::where('role', 'professor')->orderBy('name')->get();
-        $cursos = Curso::orderBy('nome')->get(); 
+        $cursos = Curso::orderBy('nome')->get();
 
-        return view('projetos.create', compact('professores', 'cursos'));
+        return view('projetos.create', compact('alunos', 'professores', 'cursos'));
+    }
+    
+    public function searchUsers(Request $request)
+    {
+        $search = $request->input('search');
+        $role = $request->input('role');
+
+        if (empty($search) || empty($role)) {
+            return response()->json([]);
+        }
+
+        $query = User::query()->orderBy('name');
+
+        if ($role === 'aluno') {
+            $query->where('role', 'aluno')
+                  ->where(function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('ra', 'like', "%{$search}%")
+                        ->orWhereHas('curso', function ($cq) use ($search) {
+                            $cq->where('nome', 'like', "%{$search}%");
+                        });
+                  });
+        } elseif ($role === 'professor') {
+            $query->where(function ($q) {
+                $q->where('role', 'like', 'professor%')
+                  ->orWhere('role', 'like', 'coordenador%');
+            })
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->limit(10)->get(['id', 'name', 'email', 'ra']);
+
+        return response()->json($users);
     }
 
     /**
-     * Armazena um novo projeto no banco de dados.
+     * Armazena um novo projeto no banco de dados.c
      * Utiliza StoreProjetoRequest para validação dos dados.
      *
      * @param  \App\Http\Requests\StoreProjetoRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
+
     public function store(StoreProjetoRequest $request)
     {
         $this->authorize('create', Projeto::class);
@@ -76,6 +117,7 @@ class ProjetoController extends Controller
         $data = $request->validated();
         $data['status'] = 'editando';
 
+        // A lógica de arquivo e período permanece a mesma
         if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
             $file = $request->file('arquivo');
             $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
@@ -91,49 +133,30 @@ class ProjetoController extends Controller
 
         $data['user_id'] = auth()->id();
         
+        // Cria o projeto com os dados principais
         $projeto = Projeto::create($data);
 
-        if ($request->has('alunos')) {
-            foreach ($request->alunos as $alunoData) {
-                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) {
-                    $projeto->alunos()->create($alunoData);
-                }
-            }
+        // --- LÓGICA CORRIGIDA PARA REGISTRAR ALUNOS E PROFESSORES ---
+        $alunosIds = $request->input('alunos', []);
+        $professoresIds = $request->input('professores', []);
+        
+        // Combina todos os IDs (alunos e professores) em um único array
+        $todosOsParticipantesIds = array_unique(array_merge($alunosIds, $professoresIds));
+
+        // O método sync() anexa todos os participantes ao projeto de uma só vez
+        if (!empty($todosOsParticipantesIds)) {
+            $projeto->users()->sync($todosOsParticipantesIds);
         }
-        if ($request->has('professores')) {
-            $professorIds = [];
-            $professoresParaNotificar = collect();
 
-            foreach ($request->professores as $professorData) {
-                if (empty($professorData['id'])) continue;
-
-                if (in_array($professorData['id'], $professorIds)) {
-                    return redirect()->back()
-                                    ->withInput()
-                                    ->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
-                }
-                $professorIds[] = $professorData['id'];
-
-                $userProfessor = User::find($professorData['id']);
-                if ($userProfessor) {
-                    $projeto->professores()->create([
-                        'nome' => $userProfessor->name,
-                        'email' => $userProfessor->email,
-                        'area' => $professorData['area'] ?? null,
-                        'user_id' => $userProfessor->id,
-                    ]);
-              
-                    $professoresParaNotificar->push($userProfessor);
-                }
-            }
-
+        // Notifica apenas os professores
+        if (!empty($professoresIds)) {
+            $professoresParaNotificar = User::findMany($professoresIds);
             if ($professoresParaNotificar->isNotEmpty()) {
-                $projeto->load('user'); 
                 Notification::send($professoresParaNotificar, new \App\Notifications\ProfessorVinculadoAProjeto($projeto));
             }
-
         }
 
+        // A lógica para atividades e cronograma permanece a mesma
         if ($request->has('atividades')) {
             foreach ($request->atividades as $atividadeData) {
                 if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
@@ -144,15 +167,8 @@ class ProjetoController extends Controller
 
         if ($request->has('cronograma') && is_array($request->cronograma)) {
             foreach ($request->cronograma as $itemDataCronograma) {
-                if (!empty($itemDataCronograma['atividade']) &&
-                    !empty($itemDataCronograma['mes_inicio']) &&
-                    !empty($itemDataCronograma['mes_fim'])) {
-
-                    $projeto->cronogramas()->create([
-                        'atividade'  => $itemDataCronograma['atividade'],
-                        'mes_inicio' => $itemDataCronograma['mes_inicio'],
-                        'mes_fim'    => $itemDataCronograma['mes_fim'],
-                    ]);
+                if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
+                    $projeto->cronogramas()->create($itemDataCronograma);
                 }
             }
         }
@@ -167,6 +183,8 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\View\View
      */
+   
+
     public function show($id, Request $request)
     {
         $sortDirection = $request->query('sort', 'desc');
@@ -174,15 +192,18 @@ class ProjetoController extends Controller
             $sortDirection = 'desc';
         }
 
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'rejeicoes', 'user', 'todosOsLogs.user', 'resultado'])
-                        ->findOrFail($id);
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Trocamos 'alunos' e 'professores' pelo novo relacionamento 'users'.
+        $projeto = Projeto::with([
+            'users', // Carrega todos os participantes (alunos e professores)
+            'atividades', 
+            'cronogramas', 
+            'rejeicoes', 
+            'user', // Carrega o criador do projeto
+            'todosOsLogs.user', 
+            'resultado'
+        ])->findOrFail($id);
 
-        $user = auth()->user();
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            if (!in_array($projeto->status, ['entregue', 'aprovado'])) {
-                abort(403, 'Acesso não autorizado para este status de proposta.');
-            }
-        }
         $this->authorize('view', $projeto);
 
         $logs = $projeto->todosOsLogs;
@@ -192,13 +213,20 @@ class ProjetoController extends Controller
             $logs = $logs->sortByDesc('created_at');
         }
 
+        // Separa os participantes em alunos e professores para a view
+        $alunos = $projeto->users->where('role', 'aluno');
+        $professores = $projeto->users->filter(function ($user) {
+            return str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador');
+        });
+
         $data = [
             'projeto' => $projeto,
             'logs' => $logs,
             'sortDirection' => $sortDirection,
+            'alunos' => $alunos,
+            'professores' => $professores,
         ];
 
-   
         $response = response(view('projetos.show', $data));
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
@@ -214,18 +242,26 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function edit(string $id)
+    public function edit(Projeto $projeto)
     {
-        $projeto = Projeto::with(['professores', 'alunos', 'atividades', 'cronogramas'])->findOrFail($id);
         $this->authorize('update', $projeto);
 
-        $professores = User::where('role', 'professor')->orderBy('name')->get();
-        
-    
+
+        $projeto->load('users', 'atividades', 'cronogramas');
+
+        $alunos = User::where('role', 'aluno')->orderBy('name')->get();
+
+
+        $professores = User::where('role', 'like', 'professor%')
+                        ->orWhere('role', 'like', 'coordenador%')
+                        ->orderBy('name')
+                        ->get();
+
         $cursos = Curso::orderBy('nome')->get();
 
-        
-        return view('projetos.edit', compact('projeto', 'professores', 'cursos'));
+        $participantesIds = $projeto->users()->pluck('id')->toArray();
+
+        return view('projetos.edit', compact('projeto', 'alunos', 'professores', 'cursos', 'participantesIds'));
     }
 
     /**
@@ -236,66 +272,66 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(UpdateProjetoRequest $request, $id)
+    public function update(UpdateProjetoRequest $request, Projeto $projeto)
     {
-        $projeto = Projeto::with('professores')->findOrFail($id);
-
         $this->authorize('update', $projeto);
-        
+
         $data = $request->validated();
-        
+
+        if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
+            if ($projeto->arquivo && file_exists(public_path($projeto->arquivo))) {
+                unlink(public_path($projeto->arquivo));
+            }
+            $file = $request->file('arquivo');
+            $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
+            $file->move(public_path('arquivos_projetos'), $fileName);
+            $data['arquivo'] = 'arquivos_projetos/' . $fileName;
+        }
+
+        if ($request->filled('data_inicio') && $request->filled('data_fim')) {
+            $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
+            $fim = date('d/m/Y', strtotime($request->input('data_fim')));
+            $data['periodo_realizacao'] = "$inicio a $fim";
+        }
+
         $projeto->update($data);
 
-        $projeto->alunos()->delete();
-        if ($request->has('alunos')) {
-            foreach ($request->alunos as $alunoData) {
-                if (!empty($alunoData['nome']) && !empty($alunoData['ra'])) {
-                    $projeto->alunos()->create($alunoData);
-                }
-            }
-        }
-    
-        $projeto->professores()->delete();
-        if ($request->has('professores')) {
-            $professorIds = [];
-            foreach ($request->professores as $professorData) {
-                if (empty($professorData['id'])) continue;
+        $alunosIds = $request->input('alunos', []);
+        $professoresIds = $request->input('professores', []);
+        
+        $allUserIds = array_unique(array_merge($alunosIds, $professoresIds));
+        $projeto->users()->sync($allUserIds);
 
-                if (in_array($professorData['id'], $professorIds)) {
-                    return redirect()->back()->withInput()->with('error', 'Você tentou adicionar o mesmo professor mais de uma vez.');
-                }
-                $professorIds[] = $professorData['id'];
-    
-                $userProfessor = User::find($professorData['id']);
-                if ($userProfessor) {
-                    $projeto->professores()->create([
-                        'user_id' => $userProfessor->id,
-                        'nome' => $userProfessor->name,
-                        'email' => $userProfessor->email,
-                        'area' => $professorData['area'] ?? null,
-                    ]);
-                }
+        // Opcional: Lógica de notificação para professores recém-adicionados
+        if (!empty($professoresIds)) {
+            $professoresParaNotificar = User::findMany($professoresIds);
+            if ($professoresParaNotificar->isNotEmpty()) {
+                Notification::send($professoresParaNotificar, new \App\Notifications\ProfessorVinculadoAProjeto($projeto));
             }
         }
 
-        $projeto->atividades()->delete();
+        // A lógica para atualizar atividades e cronogramas deve ser mais complexa,
+        // usando sync() ou delete/create para evitar duplicatas.
+        // Por enquanto, manteremos a simplicidade de adicionar novos.
         if ($request->has('atividades')) {
+            $projeto->atividades()->delete(); // Apaga os antigos para adicionar os novos
             foreach ($request->atividades as $atividadeData) {
                 if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
                     $projeto->atividades()->create($atividadeData);
                 }
             }
         }
-    
-        $projeto->cronogramas()->delete();
-        if ($request->has('cronograma') && is_array($request->cronograma)) {
-            foreach ($request->cronograma as $cronogramaItem) {
-               
-                $projeto->cronogramas()->create($cronogramaItem);
+
+        if ($request->has('cronograma')) {
+            $projeto->cronogramas()->delete(); // Apaga os antigos para adicionar os novos
+            foreach ($request->cronograma as $itemDataCronograma) {
+                if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
+                    $projeto->cronogramas()->create($itemDataCronograma);
+                }
             }
         }
-    
-        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto atualizado com sucesso!');
+
+        return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
     }
         
     /**

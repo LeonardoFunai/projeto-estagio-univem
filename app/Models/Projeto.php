@@ -1,105 +1,108 @@
 <?php
 
-    namespace App\Models;
+namespace App\Models;
 
-    use App\Traits\LogaAlteracoes;
-    use Illuminate\Database\Eloquent\Factories\HasFactory;
-    use Illuminate\Database\Eloquent\Model;
-    use App\Models\Professor;
-    use App\Models\Aluno;
-    use App\Models\Atividade;
-    use App\Models\User;
-    use App\Models\Cronograma;
-    use App\Models\Rejeicao; 
+use App\Traits\LogaAlteracoes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-    class Projeto extends Model
-    {
-        
-        use HasFactory, LogaAlteracoes;
+class Projeto extends Model
+{
+    use HasFactory, LogaAlteracoes;
 
-        protected $fillable = [
-            'titulo',
-            'periodo',
-            'data_inicio',
-            'data_fim',
-            'publico_alvo',
-            'introducao',
-            'objetivo_geral',
-            'justificativa',
-            'metodologia',
-            'recursos',
-            'resultados_esperados',
-            'numero_projeto',
-            'data_entrega',
-            'data_parecer_napex',
-            'aprovado_napex',
-            'motivo_napex',
-            'aprovado_coordenador',
-            'motivo_coordenador',
-            'data_parecer_coordenador',
-            'status',
-            'user_id',
-            'napex_aprovado',        
-            'coordenacao_aprovado',
-            'professor_id',
-        ];
+    /**
+     * The attributes that are mass assignable.
+     */
+    protected $fillable = [
+        'titulo',
+        'periodo',
+        'data_inicio',
+        'data_fim',
+        'publico_alvo',
+        'introducao',
+        'objetivo_geral',
+        'justificativa',
+        'metodologia',
+        'recursos',
+        'resultados_esperados',
+        'numero_projeto',
+        'data_entrega',
+        'data_parecer_napex',
+        'aprovado_napex',
+        'motivo_napex',
+        'aprovado_coordenador',
+        'motivo_coordenador',
+        'data_parecer_coordenador',
+        'status',
+        'user_id',
+    ];
 
-        protected $casts = [
-        'data_entrega'      => 'datetime',
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'data_entrega' => 'datetime',
         'data_parecer_napex' => 'datetime',
-        'data_parecer_coordenador'    => 'datetime',
-        ];
-        
-        public function alunos()
-        {
-            return $this->hasMany(Aluno::class);
-        }
-        
-        public function professores()
-        {
-            return $this->hasMany(Professor::class);
-        }
-        
-        public function atividades()
-        {
-            return $this->hasMany(Atividade::class);
-        }
+        'data_parecer_coordenador' => 'datetime',
+    ];
 
-        public function cronogramas()
-        {
-            return $this->hasMany(Cronograma::class);
-        }
-
-        public function user()
-        {
-            return $this->belongsTo(User::class);
-        }
-
-        public function professor()
-        {
-            return $this->belongsTo(User::class, 'professor_id'); 
-        }
-
-        public function rejeicoes()
-        {
-            return $this->hasMany(Rejeicao::class);
-        }
-
-        public function resultado()
-        {
-            return $this->hasOne(Resultado::class);
-        }
-
-        public function logs()
+    /**
+     * O usuário (criador) que este projeto pertence.
+     */
+    public function user(): BelongsTo
     {
-        
-        return $this->morphMany(ProjetoLog::class, 'loggable');
+        return $this->belongsTo(User::class);
     }
 
-        public function todosOsLogs()
-        {
-
-            return $this->hasMany(ProjetoLog::class)->latest();
-        }
+    /**
+     * Os usuários (alunos e professores) que participam deste projeto.
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'projeto_user');
+    }
+    
+    /**
+     * As atividades associadas a este projeto.
+     */
+    public function atividades(): HasMany
+    {
+        return $this->hasMany(Atividade::class);
     }
 
+    /**
+     * Os itens de cronograma associados a este projeto.
+     */
+    public function cronogramas(): HasMany
+    {
+        return $this->hasMany(Cronograma::class);
+    }
+
+    /**
+     * As rejeições associadas a este projeto.
+     */
+    public function rejeicoes(): HasMany
+    {
+        return $this->hasMany(Rejeicao::class);
+    }
+
+    /**
+     * O resultado associado a este projeto.
+     */
+    public function resultado(): HasOne
+    {
+        return $this->hasOne(Resultado::class);
+    }
+
+    /**
+     * Todos os logs de histórico associados a este projeto.
+     */
+    public function todosOsLogs(): HasMany
+    {
+        return $this->hasMany(ProjetoLog::class)->latest();
+    }
+}

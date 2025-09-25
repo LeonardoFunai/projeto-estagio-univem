@@ -13,13 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Chama outros seeders que você criou.
         $this->call([
             CursoSeeder::class,
-            // Exemplo: você poderia adicionar ProfessorSeeder::class aqui no futuro.
+            UserSeeder::class, 
         ]);
-
-        // 2. Mantém a criação do seu usuário de teste que já existia.
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

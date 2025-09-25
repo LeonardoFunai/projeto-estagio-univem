@@ -67,6 +67,11 @@
                 <a href="{{ route('profile.edit') }}" class="btn custom-btn me-2">
                     {{ auth()->user()->name }}
                 </a>  |
+
+                @if(in_array(auth()->user()->role, ['admin', 'napex']) || str_starts_with(auth()->user()->role, 'coordenador'))
+                    <a href="{{ route('admin.users.index') }}" class="btn custom-btn me-2">Gerenciar Usuários</a> |
+                @endif
+
                 <a href="{{ route('notifications.index') }}" class="btn custom-btn relative">
                     🔔
                     @if(auth()->user()->unreadNotifications->count() > 0)

@@ -202,34 +202,23 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Professor(es) envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
-                                    @if ($projeto->professores && $projeto->professores->count())
-                                        <ul class="list-disc pl-5">
-                                            @foreach ($projeto->professores as $prof)
-                                                <li><strong>{{ $prof->nome }}</strong>
-                                                    @if($prof->email) – Email: {{ $prof->email }} @endif
-                                                    @if($prof->area) – Área: {{ $prof->area }} @endif
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
+                                <td class="bg-white p-4 border-b border-gray-300">
+                                    @forelse ($professores as $professor)
+                                        <p>{{ $professor->name }} ({{ $professor->email }})</p>
+                                    @empty
                                         Nenhum professor registrado.
-                                    @endif
+                                    @endforelse
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Alunos envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
-                                    @if ($projeto->alunos && $projeto->alunos->count())
-                                        <ul class="list-disc pl-5">
-                                            @foreach ($projeto->alunos as $aluno)
-                                                <li><strong>{{ $aluno->nome }}</strong> — RA: {{ $aluno->ra }} — Curso: {{ $aluno->curso->nome }}</li>
-                                            @endforeach
-                                        </ul>
-                                    @else
+                                <td class="bg-white p-4 border-b border-gray-300">
+                                    @forelse ($alunos as $aluno)
+                                        <p>{{ $aluno->name }} - RA: {{ $aluno->ra ?? 'N/A' }} - Curso: {{ $aluno->curso->nome ?? 'N/A' }}</p>
+                                    @empty
                                         Nenhum aluno registrado.
-                                    @endif
+                                    @endforelse
                                 </td>
                             </tr>
 

@@ -99,40 +99,22 @@
                     <label class="block mb-2">Período:</label>
                     <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." value="{{ old('periodo') }}" maxlength="50" required>
                     
-                    <label class="block mb-2">Selecione o Professor Responsável:</label>
-                    <p><strong>Professor 1</strong></p>
-                    <div id="professores-wrapper">
-                        <div class="mb-4">
-                            <select name="professores[0][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                                <option value="">-- Selecione um professor --</option>
-                                @foreach($professores as $professor)
-                                    <option value="{{ $professor->id }}">{{ $professor->name }} ({{ $professor->email }})</option>
-                                @endforeach
-                            </select>
-                            <input type="text" name="professores[0][area]" class="w-full border-gray-300 rounded-md" value="{{ old('professores.0.area') }}" maxlength="100" placeholder="Área (opcional) ">
+                    
+                    <fieldset class="mb-8">
+                        <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Professores Orientadores</legend>
+                        <div id="professores-wrapper">
+                        
                         </div>
-                    </div>  
+                        <button type="button" id="add-professor-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Orientador</button>
+                    </fieldset>
 
-                <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
-
-
-                    <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
-                    <p><strong>Aluno 1</strong></p>
-                    <div id="alunos-wrapper">
-                        <div class="mb-4">
-                            <input type="text" name="alunos[0][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" value="{{ old('alunos.0.nome') }}" maxlength="100" required>
-                            <input type="text" name="alunos[0][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" value="{{ old('alunos.0.ra') }}" maxlength="50" required>
-                            <select name="alunos[0][curso_id]" class="w-full border-gray-300 rounded-md" required>
-                                <option value="">-- Selecione um curso --</option>
-                                @foreach($cursos as $curso)
-                                    <option value="{{ $curso->id }}" {{ old('alunos.0.curso_id') == $curso->id ? 'selected' : '' }}>
-                                        {{ $curso->nome }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <fieldset class="mb-8">
+                        <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Alunos Participantes</legend>
+                        <div id="alunos-wrapper">
+                            {{-- O primeiro campo de busca será inserido aqui pelo JS --}}
                         </div>
-                    </div>
-                    <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
+                        <button type="button" id="add-aluno-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Aluno</button>
+                    </fieldset>
 
                     <label class="block mb-2">Público Alvo:</label>
                     <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-1" placeholder="População em Geral" maxlength="100">{{ old('publico_alvo') }} </textarea>
@@ -161,17 +143,11 @@
                     <label class="block mb-2">4. Metodologia</label>
                     <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" maxlength="500">{{ old('metodologia') }}</textarea>
 
-
                     <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                     <small class="block mb-2 text-gray-600">(O que fazer, como fazer e carga horária)</small>
-                    <p><strong>Atividade 1</strong></p>
 
                     <div id="atividades-wrapper">
-                        <div class="mb-4">
-                            <textarea name="atividades[0][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" maxlength="1000" required>{{ old('atividades.0.o_que_fazer') }}</textarea>
-                            <textarea name="atividades[0][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" maxlength="1000" required>{{ old('atividades.0.como_fazer') }}</textarea>
-                            <input type="number" name="atividades[0][carga_horaria]" class="w-full border-gray-300 rounded-md" min=1 max=99999 placeholder="Carga horária" value="{{ old('atividades.0.carga_horaria') }}" required>
-                        </div>
+                        {{-- O JavaScript irá inserir a(s) atividade(s) aqui --}}
                     </div>
                     <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade</button>
 
@@ -221,273 +197,193 @@
     @endcan
 
     <script>
-        let professorCount = 1;
-        let alunoCount = 1;
-        let atividadeCount = 1;
-        let cronogramaCount = 1;
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // =========================================================================
+            // LÓGICA DE BUSCA DE ALUNOS E PROFESSORES (SEM ALTERAÇÃO)
+            // =========================================================================
+            const createSearchComponent = (type, pluralName, wrapperId, addButtonId) => {
+                const wrapper = document.getElementById(wrapperId);
+                const addButton = document.getElementById(addButtonId);
+                let userCount = 0;
 
-        // =========================================================================
-        // ALTERAÇÃO 1: CAPTURAR OBJETOS DE CURSO DO BLADE
-        // =========================================================================
-        // Transforma a coleção $cursos (com id e nome) do PHP em um array de objetos JavaScript.
-        const todosOsCursos = @json($cursos ?? []);
-        
-        // Cria o HTML para as opções do select, usando o ID do curso como 'value' e o NOME como texto.
-        const cursosOptionsHtml = todosOsCursos.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+                const addSearchField = () => {
+                    const index = userCount++;
+                    const searchComponent = document.createElement('div');
+                    searchComponent.classList.add('search-component', 'mb-4', 'p-4', 'border', 'rounded-md', 'relative');
+                    searchComponent.dataset.index = index;
 
-        // Opções de professores (código original, mantido)
-        const professorOptions = `
-            <option value="">-- Selecione um professor --</option>
-            ${Array.from(document.querySelector('select[name="professores[0][id]"]').options)
-                .slice(1)
-                .map(option => `<option value="${option.value}">${option.text}</option>`)
-                .join('')}
-        `;
+                    const placeholder = (type === 'aluno') ? 'Buscar por nome, RA ou curso...' : 'Buscar por nome ou email...';
 
-        // Lista de todos os meses (código original, mantido)
-        const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
+                    searchComponent.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <p><strong>${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}</strong></p>
+                            ${index > 0 ? '<button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>' : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="${placeholder}">
+                        </div>
+                        <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10"></ul>
+                        <div class="selected-user mt-2 text-sm text-gray-600"></div>
+                        <input type="hidden" name="${pluralName}[]" class="user-id-input">
+                    `;
+                    wrapper.appendChild(searchComponent);
+                };
 
-        // Função reindexarCampos (código original, mantida sem alterações)
-        function reindexarCampos(wrapperId, prefixoH4, nameBase) {
-            const items = document.querySelectorAll(`#${wrapperId} > div`);
-            items.forEach((div, i) => {
-                const h4 = div.querySelector('h4');
-                if (h4 && prefixoH4) {
-                    h4.textContent = `${prefixoH4} ${i + 1}`;
-                }
-                const inputsEselects = div.querySelectorAll('input[name], select[name], textarea[name]');
-                inputsEselects.forEach(field => {
-                    const nameAttr = field.getAttribute('name');
-                    const matches = nameAttr.match(/\[\d+\]\[(\w+)]$/);
-                    if (matches && matches[1]) {
-                        field.setAttribute('name', `${nameBase}[${i}][${matches[1]}]`);
+                addButton.addEventListener('click', addSearchField);
+
+                wrapper.addEventListener('input', async (e) => {
+                    if (e.target.classList.contains('search-input')) {
+                        const component = e.target.closest('.search-component');
+                        const resultsList = component.querySelector('.search-results');
+                        const searchTerm = e.target.value;
+
+                        if (searchTerm.length < 3) {
+                            resultsList.classList.add('hidden'); return;
+                        }
+
+                        const role = (type === 'aluno') ? 'aluno' : 'professor';
+                        const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}`);
+                        const users = await response.json();
+
+                        resultsList.innerHTML = '';
+                        if (users.length > 0) {
+                            users.forEach(user => {
+                                const li = document.createElement('li');
+                                li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
+                                li.textContent = `${user.name} (${user.ra || user.email})`;
+                                li.dataset.id = user.id;
+                                li.dataset.name = user.name;
+                                resultsList.appendChild(li);
+                            });
+                            resultsList.classList.remove('hidden');
+                        } else {
+                            resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
+                            resultsList.classList.remove('hidden');
+                        }
                     }
                 });
-            });
-        }
 
-        // Adicionar Professor (código original, mantido sem alterações)
-        document.getElementById('add-professor')?.addEventListener('click', () => {
-            const index = professorCount++;
-            const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-            div.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Professor ${document.querySelectorAll('#professores-wrapper > div').length + 1}</h4>
-                    <button type="button" onclick="this.closest('.mb-4').remove(); professorCount--; reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                    ${professorOptions}
-                </select>
-                <input maxlength="100" type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md" placeholder="Área (opcional)">
-            `;
-            document.getElementById('professores-wrapper').appendChild(div);
-            reindexarCampos('professores-wrapper', 'Professor', 'professores');
-        });
+                wrapper.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'LI' && e.target.closest('.search-results')) {
+                        const component = e.target.closest('.search-component');
+                        const selectedDiv = component.querySelector('.selected-user');
+                        const hiddenInput = component.querySelector('.user-id-input');
+                        const searchInput = component.querySelector('.search-input');
+                        const resultsList = component.querySelector('.search-results');
+                        
+                        selectedDiv.textContent = `Selecionado: ${e.target.dataset.name}`;
+                        hiddenInput.value = e.target.dataset.id;
+                        searchInput.value = e.target.dataset.name;
+                        resultsList.classList.add('hidden');
+                    }
 
-        // =========================================================================
-        // ALTERAÇÃO 2: ATUALIZAR A FUNÇÃO DE ADICIONAR ALUNO (USANDO CURSO_ID)
-        // =========================================================================
-        document.getElementById('add-aluno')?.addEventListener('click', () => {
-            const index = alunoCount++;
-            const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-            div.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Aluno ${document.querySelectorAll('#alunos-wrapper > div').length + 1}</h4>
-                    <button type="button" onclick="this.closest('.mb-4').remove(); alunoCount--; reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <input type="text" name="alunos[${index}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" maxlength="100" required>
-                <input type="text" name="alunos[${index}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" maxlength="50" required>
+                    if (e.target.classList.contains('remove-btn')) {
+                        e.target.closest('.search-component').remove();
+                        const allComponents = wrapper.querySelectorAll('.search-component');
+                        allComponents.forEach((comp, i) => {
+                            comp.querySelector('strong').textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} ${i + 1}`;
+                        });
+                        userCount--;
+                    }
+                });
+
+                addSearchField();
+            };
+
+            createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search');
+            createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search');
+
+            // =========================================================================
+            // CORREÇÃO PARA ATIVIDADES E CRONOGRAMA
+            // =========================================================================
+            // A contagem agora começa pelo número de itens que JÁ ESTÃO na tela.
+            let atividadeCount = document.querySelectorAll('#atividades-wrapper > div').length;
+            let cronogramaCount = document.querySelectorAll('#cronograma-wrapper > div.cronograma-item').length;
+
+            const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
+
+            // Adicionar Atividade
+            document.getElementById('add-atividade')?.addEventListener('click', () => {
+                // Usa a contagem atual como o índice para o novo item
+                const index = atividadeCount; 
+                atividadeCount++; // Incrementa para o próximo
                 
-                <select name="alunos[${index}][curso_id]" class="w-full border-gray-300 rounded-md" required>
-                    <option value="">-- Selecione um curso --</option>
-                    ${cursosOptionsHtml}
-                </select>
-            `;
-            document.getElementById('alunos-wrapper').appendChild(div);
-            reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
-        });
-
-        // Adicionar Atividade (código original, mantido sem alterações)
-        document.getElementById('add-atividade')?.addEventListener('click', () => {
-            const index = atividadeCount++;
-            const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-            div.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Atividade ${document.querySelectorAll('#atividades-wrapper > div').length + 1}</h4>
-                    <button type="button" onclick="this.closest('.mb-4').remove(); atividadeCount--; reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <label class="block mb-1 text-sm font-medium text-gray-700">O que fazer?</label>
-                <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" maxlength="1000" required></textarea>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Como fazer?</label>
-                <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" maxlength="1000" required></textarea>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Carga horária:</label>
-                <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" min="1" max="99999" placeholder="Carga horária" required>
-            `;
-            document.getElementById('atividades-wrapper').appendChild(div);
-            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
-        });
-
-        // Adicionar Cronograma (código original, mantido sem alterações)
-        document.getElementById('add-cronograma')?.addEventListener('click', () => {
-            const index = cronogramaCount++;
-            const divWrapper = document.createElement('div');
-            divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
-            divWrapper.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Atividade do Cronograma ${document.querySelectorAll('#cronograma-wrapper > div.cronograma-item').length +1}</h4>
-                    <button type="button" onclick="this.closest('.cronograma-item').remove(); cronogramaCount--; reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                    <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade do Cronograma" maxlength="100" required>
-                    <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
-                        <option value="">-- Mês de Início --</option>
-                        ${mesesOptionsHtml}
-                    </select>
-                    <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
-                        <option value="">-- Mês de Fim --</option>
-                        ${mesesOptionsHtml}
-                    </select>
-                </div>
-            `;
-            document.getElementById('cronograma-wrapper').appendChild(divWrapper);
-            reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
-        });
-
-        // Validação de Data (código original, mantido sem alterações)
-        document.getElementById('form-projeto').addEventListener('submit', function (e) {
-            const inicio = document.getElementById('data_inicio').value;
-            const fim = document.getElementById('data_fim').value;
-            if (inicio && fim && new Date(inicio) > new Date(fim)) {
-                e.preventDefault();
-                alert('A data de início deve ser anterior ou igual à data de término.');
-            }
-        });
-
-        // --- DADOS ANTIGOS PARA REPOPULAÇÃO ---
-        const oldProfessores = @json(old('professores', []));
-        const oldAlunos = @json(old('alunos', []));
-        const oldAtividades = @json(old('atividades', []));
-        const oldCronograma = @json(old('cronograma', []));
-
-        // Recria Professores (código original, mantido sem alterações)
-        if (oldProfessores.length > 1) {
-            oldProfessores.slice(1).forEach((professor) => {
-                const index = professorCount++;
                 const div = document.createElement('div');
                 div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
                 div.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold">Professor ${document.querySelectorAll('#professores-wrapper > div').length +1}</h4>
-                        <button type="button" onclick="this.closest('.mb-4').remove(); professorCount--; reindexarCampos('professores-wrapper', 'Professor', 'professores');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                        <p><strong>Atividade ${index + 1}</strong></p>
+                        <button type="button" class="remove-item-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
                     </div>
-                    <select name="professores[${index}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                        ${professorOptions}
-                    </select>
-                    <input maxlength="100" type="text" name="professores[${index}][area]" class="w-full border-gray-300 rounded-md" value="${professor.area ?? ''}" placeholder="Área (opcional)">
-                `;
-                document.getElementById('professores-wrapper').appendChild(div);
-                div.querySelector('select[name^="professores"]').value = professor.id ?? '';
-            });
-            reindexarCampos('professores-wrapper', 'Professor', 'professores');
-        }
-
-        // =========================================================================
-        // ALTERAÇÃO 3: ATUALIZAR A RECRIAÇÃO DE ALUNOS (USANDO CURSO_ID)
-        // =========================================================================
-        if (oldAlunos.length > 1) {
-            oldAlunos.slice(1).forEach((aluno) => {
-                const index = alunoCount++;
-                const div = document.createElement('div');
-                div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-
-                // Gera o HTML das opções, comparando o 'c.id' da lista de cursos
-                // com o 'aluno.curso_id' que veio do formulário antigo.
-                const oldCursosOptionsHtml = todosOsCursos.map(c => 
-                    `<option value="${c.id}" ${c.id == aluno.curso_id ? 'selected' : ''}>${c.nome}</option>`
-                ).join('');
-
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold">Aluno ${document.querySelectorAll('#alunos-wrapper > div').length + 1}</h4>
-                        <button type="button" onclick="this.closest('.mb-4').remove(); alunoCount--; reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                    </div>
-                    <input type="text" name="alunos[${index}][nome]" class="w-full border-gray-300 rounded-md mb-2" value="${aluno.nome ?? ''}" placeholder="Nome do aluno" maxlength="100" required>
-                    <input type="text" name="alunos[${index}][ra]" class="w-full border-gray-300 rounded-md mb-2" value="${aluno.ra ?? ''}" placeholder="RA" maxlength="50" required>
-                    
-                    <select name="alunos[${index}][curso_id]" class="w-full border-gray-300 rounded-md" required>
-                        <option value="">-- Selecione um curso --</option>
-                        ${oldCursosOptionsHtml}
-                    </select>
-                `;
-                document.getElementById('alunos-wrapper').appendChild(div);
-            });
-            reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
-        }
-
-        // Recria Atividades (código original, mantido sem alterações)
-        if (oldAtividades.length > 1) {
-            oldAtividades.slice(1).forEach((atividade) => {
-                const index = atividadeCount++;
-                const div = document.createElement('div');
-                div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold">Atividade ${document.querySelectorAll('#atividades-wrapper > div').length +1}</h4>
-                        <button type="button" onclick="this.closest('.mb-4').remove(); atividadeCount--; reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                    </div>
-                    <label class="block mb-1 text-sm font-medium text-gray-700">O que fazer?</label>
-                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" maxlength="1000" required>${atividade.o_que_fazer ?? ''}</textarea>
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Como fazer?</label>
-                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" maxlength="1000" required>${atividade.como_fazer ?? ''}</textarea>
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Carga horária:</label>
-                    <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" value="${atividade.carga_horaria ?? ''}" min="1" max="99999" placeholder="Carga horária" required>
+                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
+                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
+                    <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
                 `;
                 document.getElementById('atividades-wrapper').appendChild(div);
             });
-            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
-        }
 
-        // Recria Cronogramas (código original, mantido sem alterações)
-        if (oldCronograma && oldCronograma.length > 1) {
-            oldCronograma.slice(1).forEach((item) => {
-                const index = cronogramaCount++;
-                const divWrapper = document.createElement('div');
-                divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
+            // Adicionar Cronograma
+            document.getElementById('add-cronograma')?.addEventListener('click', () => {
+                const index = cronogramaCount;
+                cronogramaCount++;
 
-                const mesesInicioOptionsSelectedHtml = todosOsMeses.map(m =>
-                    `<option value="${m}" ${item.mes_inicio === m ? 'selected' : ''}>${m}</option>`
-                ).join('');
-                const mesesFimOptionsSelectedHtml = todosOsMeses.map(m =>
-                    `<option value="${m}" ${item.mes_fim === m ? 'selected' : ''}>${m}</option>`
-                ).join('');
-
-                divWrapper.innerHTML = `
+                const div = document.createElement('div');
+                div.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
+                div.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold">Atividade do Cronograma ${document.querySelectorAll('#cronograma-wrapper > div.cronograma-item').length +1}</h4>
-                        <button type="button" onclick="this.closest('.cronograma-item').remove(); cronogramaCount--; reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                        <p><strong>Atividade do Cronograma ${index + 1}</strong></p>
+                        <button type="button" class="remove-item-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                        <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" value="${item.atividade ?? ''}" placeholder="Título da Atividade do Cronograma" maxlength="100" required>
+                        <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
                         <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
                             <option value="">-- Mês de Início --</option>
-                            ${mesesInicioOptionsSelectedHtml}
+                            ${mesesOptionsHtml}
                         </select>
                         <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
                             <option value="">-- Mês de Fim --</option>
-                            ${mesesFimOptionsSelectedHtml}
+                            ${mesesOptionsHtml}
                         </select>
                     </div>
                 `;
-                document.getElementById('cronograma-wrapper').appendChild(divWrapper);
+                document.getElementById('cronograma-wrapper').appendChild(div);
             });
-            reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');
-        }
-    </script>
 
+            // Remover Itens
+            document.getElementById('form-projeto').addEventListener('click', function (e) {
+                if (e.target.matches('.remove-item-btn')) {
+                    const itemWrapper = e.target.closest('.mb-4, .cronograma-item');
+                    itemWrapper.remove();
+                    
+                    // Re-contar e re-indexar os títulos após a remoção
+                    const atividades = document.querySelectorAll('#atividades-wrapper > div');
+                    atividadeCount = atividades.length;
+                    atividades.forEach((div, index) => {
+                        div.querySelector('strong').textContent = `Atividade ${index + 1}`;
+                    });
+
+                    const cronogramas = document.querySelectorAll('#cronograma-wrapper > div');
+                    cronogramaCount = cronogramas.length;
+                    cronogramas.forEach((div, index) => {
+                        div.querySelector('strong').textContent = `Atividade do Cronograma ${index + 1}`;
+                    });
+                }
+            });
+
+            // Validação de Data (mantida)
+            document.getElementById('form-projeto').addEventListener('submit', function (e) {
+                const inicio = document.getElementById('data_inicio').value;
+                const fim = document.getElementById('data_fim').value;
+                if (inicio && fim && new Date(inicio) > new Date(fim)) {
+                    e.preventDefault();
+                    alert('A data de início deve ser anterior ou igual à data de término.');
+                }
+            });
+
+        });
+    </script>
 
 
 </x-app-layout>
