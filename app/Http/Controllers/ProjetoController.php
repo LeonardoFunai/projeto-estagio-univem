@@ -53,19 +53,27 @@ class ProjetoController extends Controller
     public function create()
     {
         $this->authorize('create', Projeto::class);
-        
-        $alunos = User::where('role', 'aluno')->orderBy('name')->get();
-        
+
+        // Carrega o usuário logado e seu relacionamento de curso para exibir na view.
+        $alunoLogado = auth()->user()->load('curso');
+
+        // Busca apenas os outros alunos (excluindo o que está logado) para o campo de busca.
+        $outrosAlunos = User::where('role', 'aluno')
+                            ->where('id', '!=', $alunoLogado->id)
+                            ->orderBy('name')
+                            ->get();
+
+        // Busca os professores e coordenadores para o campo de busca.
         $professores = User::where('role', 'like', 'professor%')
                         ->orWhere('role', 'like', 'coordenador%')
                         ->orderBy('name')
                         ->get();
 
-        $cursos = Curso::orderBy('nome')->get();
-
-        return view('projetos.create', compact('alunos', 'professores', 'cursos'));
+        // Envia as variáveis para a view.
+        return view('projetos.create', compact('alunoLogado', 'outrosAlunos', 'professores'));
     }
     
+
     public function searchUsers(Request $request)
     {
         $search = $request->input('search');
@@ -78,26 +86,28 @@ class ProjetoController extends Controller
         $query = User::query()->orderBy('name');
 
         if ($role === 'aluno') {
-            $query->where('role', 'aluno')
-                  ->where(function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
+            // CORREÇÃO: Adicionamos with('curso') para carregar os dados do curso
+            $query->with('curso')
+                ->where('role', 'aluno')
+                ->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
                         ->orWhere('ra', 'like', "%{$search}%")
                         ->orWhereHas('curso', function ($cq) use ($search) {
                             $cq->where('nome', 'like', "%{$search}%");
                         });
-                  });
+                });
         } elseif ($role === 'professor') {
             $query->where(function ($q) {
                 $q->where('role', 'like', 'professor%')
-                  ->orWhere('role', 'like', 'coordenador%');
+                ->orWhere('role', 'like', 'coordenador%');
             })
             ->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        $users = $query->limit(10)->get(['id', 'name', 'email', 'ra']);
+        $users = $query->limit(10)->get();
 
         return response()->json($users);
     }
@@ -109,7 +119,6 @@ class ProjetoController extends Controller
      * @param  \App\Http\Requests\StoreProjetoRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-
     public function store(StoreProjetoRequest $request)
     {
         $this->authorize('create', Projeto::class);
@@ -131,17 +140,17 @@ class ProjetoController extends Controller
             $data['periodo_realizacao'] = "$inicio a $fim";
         }
 
+        // Define o criador do projeto como o usuário logado
         $data['user_id'] = auth()->id();
         
         // Cria o projeto com os dados principais
         $projeto = Projeto::create($data);
-
-        // --- LÓGICA CORRIGIDA PARA REGISTRAR ALUNOS E PROFESSORES ---
-        $alunosIds = $request->input('alunos', []);
+        $alunoLogadoId = auth()->id();
+        $outrosAlunosIds = $request->input('alunos', []);
         $professoresIds = $request->input('professores', []);
         
-        // Combina todos os IDs (alunos e professores) em um único array
-        $todosOsParticipantesIds = array_unique(array_merge($alunosIds, $professoresIds));
+        // Une o ID do aluno logado com os outros alunos e professores selecionados
+        $todosOsParticipantesIds = array_unique(array_merge([$alunoLogadoId], $outrosAlunosIds, $professoresIds));
 
         // O método sync() anexa todos os participantes ao projeto de uma só vez
         if (!empty($todosOsParticipantesIds)) {
@@ -156,7 +165,7 @@ class ProjetoController extends Controller
             }
         }
 
-        // A lógica para atividades e cronograma permanece a mesma
+
         if ($request->has('atividades')) {
             foreach ($request->atividades as $atividadeData) {
                 if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {

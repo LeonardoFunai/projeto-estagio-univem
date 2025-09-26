@@ -99,21 +99,25 @@
                     <label class="block mb-2">Período:</label>
                     <input type="text" name="periodo" class="w-full border-gray-300 rounded-md mb-4" placeholder="Fevereiro a Junho de 2025." value="{{ old('periodo') }}" maxlength="50" required>
                     
-                    
                     <fieldset class="mb-8">
-                        <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Professores Orientadores</legend>
-                        <div id="professores-wrapper">
-                        
-                        </div>
+                        <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Professores Orientadores</legend>  
+                        <div id="professores-wrapper"></div>
                         <button type="button" id="add-professor-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Orientador</button>
                     </fieldset>
 
                     <fieldset class="mb-8">
                         <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Alunos Participantes</legend>
-                        <div id="alunos-wrapper">
-                            {{-- O primeiro campo de busca será inserido aqui pelo JS --}}
+                        
+                        {{-- Aluno Logado (Proponente) --}}
+                        <div class="mb-4 p-4 border rounded-md bg-gray-50">
+                            <p><strong>Proponente (Aluno 1):</strong></p>
+                            <p class="mt-2 text-gray-800"><strong>Nome:</strong> {{ $alunoLogado->name }}</p>
+                            <p class="text-gray-800"><strong>RA:</strong> {{ $alunoLogado->ra ?? 'Não informado' }}</p>
+                            <p class="text-gray-800"><strong>Curso:</strong> {{ $alunoLogado->curso->nome ?? 'Não informado' }}</p>
                         </div>
-                        <button type="button" id="add-aluno-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Aluno</button>
+                        {{-- Busca por outros alunos --}}
+                        <div id="alunos-wrapper"></div>
+                        <button type="button" id="add-aluno-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Outro Aluno</button>
                     </fieldset>
 
                     <label class="block mb-2">Público Alvo:</label>
@@ -198,7 +202,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            
             // =========================================================================
             // LÓGICA DE BUSCA DE ALUNOS E PROFESSORES (SEM ALTERAÇÃO)
             // =========================================================================
@@ -294,83 +297,91 @@
             createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search');
             createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search');
 
-            // =========================================================================
-            // CORREÇÃO PARA ATIVIDADES E CRONOGRAMA
-            // =========================================================================
-            // A contagem agora começa pelo número de itens que JÁ ESTÃO na tela.
-            let atividadeCount = document.querySelectorAll('#atividades-wrapper > div').length;
-            let cronogramaCount = document.querySelectorAll('#cronograma-wrapper > div.cronograma-item').length;
 
-            const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-            const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
+            // =========================================================================
+            // LÓGICA CORRIGIDA E ROBUSTA PARA ATIVIDADES E CRONOGRAMA
+            // =========================================================================
+            const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
+                const wrapper = document.getElementById(wrapperId);
+                const addButton = document.getElementById(addButtonId);
 
-            // Adicionar Atividade
-            document.getElementById('add-atividade')?.addEventListener('click', () => {
-                // Usa a contagem atual como o índice para o novo item
-                const index = atividadeCount; 
-                atividadeCount++; // Incrementa para o próximo
+                const reindexFields = () => {
+                    const items = wrapper.children;
+                    Array.from(items).forEach((item, index) => {
+                        // Atualiza o título (ex: "Atividade 1", "Atividade 2")
+                        item.querySelector('strong').textContent = `${type} ${index + 1}`;
+                        
+                        // Atualiza o 'name' de todos os inputs/textareas/selects
+                        item.querySelectorAll('[name]').forEach(field => {
+                            field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
+                        });
+
+                        // Mostra ou esconde o botão de remover
+                        const removeBtn = item.querySelector('.remove-item-btn');
+                        if (removeBtn) {
+                            removeBtn.style.display = index > 0 ? 'inline-block' : 'none';
+                        }
+                    });
+                };
+
+                const addField = () => {
+                    const index = wrapper.children.length;
+                    const newField = document.createElement('div');
+                    // O .firstElementChild é usado porque o template cria um container div
+                    newField.innerHTML = templateFunction(index); 
+                    wrapper.appendChild(newField.firstElementChild);
+                    reindexFields(); // Reindexa sempre que um novo campo é adicionado
+                };
                 
-                const div = document.createElement('div');
-                div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-                div.innerHTML = `
+                addButton.addEventListener('click', addField);
+
+                wrapper.addEventListener('click', (e) => {
+                    if (e.target && e.target.classList.contains('remove-item-btn')) {
+                        e.target.closest('.dynamic-item').remove();
+                        reindexFields(); // Reindexa sempre que um campo é removido
+                    }
+                });
+
+                // ===== A CORREÇÃO PRINCIPAL ESTÁ AQUI =====
+                // Garante que, se não houver nenhum campo, o primeiro seja adicionado ao carregar a página.
+                if (wrapper.children.length === 0) {
+                    addField();
+                }
+            };
+
+            // Template para Atividades
+            const atividadeTemplate = (index) => `
+                <div class="mb-4 border p-3 rounded-md dynamic-item">
                     <div class="flex justify-between items-center mb-2">
-                        <p><strong>Atividade ${index + 1}</strong></p>
-                        <button type="button" class="remove-item-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                        <strong>Atividade ${index + 1}</strong>
+                        <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
                     </div>
                     <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
                     <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
                     <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
-                `;
-                document.getElementById('atividades-wrapper').appendChild(div);
-            });
+                </div>`;
 
-            // Adicionar Cronograma
-            document.getElementById('add-cronograma')?.addEventListener('click', () => {
-                const index = cronogramaCount;
-                cronogramaCount++;
-
-                const div = document.createElement('div');
-                div.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
-                div.innerHTML = `
+            // Template para Cronograma
+            const cronogramaTemplate = (index) => {
+                const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
+                return `
+                <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
                     <div class="flex justify-between items-center mb-2">
-                        <p><strong>Atividade do Cronograma ${index + 1}</strong></p>
-                        <button type="button" class="remove-item-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                        <strong>Cronograma ${index + 1}</strong>
+                        <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                         <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
-                        <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
-                            <option value="">-- Mês de Início --</option>
-                            ${mesesOptionsHtml}
-                        </select>
-                        <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
-                            <option value="">-- Mês de Fim --</option>
-                            ${mesesOptionsHtml}
-                        </select>
+                        <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
+                        <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
                     </div>
-                `;
-                document.getElementById('cronograma-wrapper').appendChild(div);
-            });
+                </div>`;
+            };
 
-            // Remover Itens
-            document.getElementById('form-projeto').addEventListener('click', function (e) {
-                if (e.target.matches('.remove-item-btn')) {
-                    const itemWrapper = e.target.closest('.mb-4, .cronograma-item');
-                    itemWrapper.remove();
-                    
-                    // Re-contar e re-indexar os títulos após a remoção
-                    const atividades = document.querySelectorAll('#atividades-wrapper > div');
-                    atividadeCount = atividades.length;
-                    atividades.forEach((div, index) => {
-                        div.querySelector('strong').textContent = `Atividade ${index + 1}`;
-                    });
+            // Inicializa os campos dinâmicos
+            setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
+            setupDynamicFields('Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
 
-                    const cronogramas = document.querySelectorAll('#cronograma-wrapper > div');
-                    cronogramaCount = cronogramas.length;
-                    cronogramas.forEach((div, index) => {
-                        div.querySelector('strong').textContent = `Atividade do Cronograma ${index + 1}`;
-                    });
-                }
-            });
 
             // Validação de Data (mantida)
             document.getElementById('form-projeto').addEventListener('submit', function (e) {
@@ -381,7 +392,6 @@
                     alert('A data de início deve ser anterior ou igual à data de término.');
                 }
             });
-
         });
     </script>
 
