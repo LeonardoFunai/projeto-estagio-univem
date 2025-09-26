@@ -267,8 +267,13 @@
                     </tr>
                     <tr>
                         <td colspan="3"><strong>Professor(es) envolvidos:</strong>
-                            @if($projeto->professores && $projeto->professores->count() > 0)
-                                {{ $projeto->professores->map(function($prof) { return $prof->user->name ?? ($prof->nome_completo ?? 'Nome Indisponível'); })->implode(', ') }}
+                            @php
+                                $professores = $projeto->users->filter(function ($user) {
+                                    return str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador');
+                                });
+                            @endphp
+                            @if($professores->count() > 0)
+                                {{ $professores->pluck('name')->implode(', ') }}
                             @else
                                 Nenhum professor informado.
                             @endif
@@ -282,18 +287,17 @@
                         <th style="width: 20%;">R.A</th>
                         <th style="width: 40%;">Curso</th>
                     </tr>
-                    @forelse ($projeto->alunos as $aluno)
-                    <tr>
-                        <td>{{ $aluno->nome_completo ?? $aluno->nome }}</td>
-                        <td>{{ $aluno->ra }}</td>
-                        <td>{{ $aluno->curso->nome ?? 'Curso não informado' }}</td>
-
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3" style="text-align: center;">Nenhum aluno envolvido informado.</td>
-                    </tr>
-                    @endforelse
+                        @forelse ($projeto->users->where('role', 'aluno') as $aluno)
+                        <tr>
+                            <td>{{ $aluno->name }}</td>
+                            <td>{{ $aluno->ra }}</td>
+                            <td>{{ $aluno->curso->nome ?? 'Curso não informado' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" style="text-align: center;">Nenhum aluno envolvido informado.</td>
+                        </tr>
+                        @endforelse
                     <tr>
                         <td colspan="3"><strong>Público Alvo da Atividade Extensionista:</strong> {{ $projeto->publico_alvo }}</td>
                     </tr>

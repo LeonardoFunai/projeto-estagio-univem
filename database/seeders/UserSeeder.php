@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Curso; // 1. Importar o Model de Curso
 
 class UserSeeder extends Seeder
 {
@@ -33,76 +34,95 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // --- Coordenadores por Curso ---
+        // --- Coordenadores ---
+        // 2. Criar os coordenadores e depois associar os cursos
 
         // Coordenador de Administração
-        User::firstOrCreate(
-            ['email' => 'coordenador.adm@univem.edu.br'],
+        $coordAdm = User::firstOrCreate(
+            ['email' => 'leandrotenorio@univem.edu.br'],
             [
-                'name' => 'Nome do Coordenador de Administração',
+                'name' => 'Prof. Esp. Leandro Machado Tenório',
                 'password' => Hash::make('123'),
-                'role' => 'coordenador_adm',
+                'role' => 'coordenador', // Role genérica
             ]
         );
-
-        // Coordenador de Ciência da Computação
-        User::firstOrCreate(
-            ['email' => 'coordenador.cc@univem.edu.br'],
-            [
-                'name' => 'Nome do Coordenador de Ciência da Computação',
-                'password' => Hash::make('123'),
-                'role' => 'coordenador_cc',
-            ]
-        );
-
+        $cursoAdm = Curso::where('nome', 'Administração')->first();
+        if ($cursoAdm) {
+            $coordAdm->cursosCoordenados()->syncWithoutDetaching([$cursoAdm->id]);
+        }
+        
         // Coordenador de Ciências Contábeis
-        User::firstOrCreate(
-            ['email' => 'coordenador.contabeis@univem.edu.br'],
+        $coordContabeis = User::firstOrCreate(
+            ['email' => 'breda@univem.edu.br'],
             [
-                'name' => 'Nome do Coordenador de Ciências Contábeis',
+                'name' => 'Prof. Esp. Luis Otavio Simões',
                 'password' => Hash::make('123'),
-                'role' => 'coordenador_contabeis',
+                'role' => 'coordenador',
             ]
         );
+        $cursoContabeis = Curso::where('nome', 'Ciências Contábeis')->first();
+        if ($cursoContabeis) {
+            $coordContabeis->cursosCoordenados()->syncWithoutDetaching([$cursoContabeis->id]);
+        }
+
+        // Coordenador de CC e SI
+        $coordCcSi = User::firstOrCreate(
+            ['email' => 'everton.simoes@univem.edu.br'],
+            [
+                'name' => 'Prof. Ms. Everton Simões da Motta',
+                'password' => Hash::make('123'),
+                'role' => 'coordenador',
+            ]
+        );
+        $cursoCc = Curso::where('nome', 'Ciência da Computação')->first();
+        $cursoSi = Curso::where('nome', 'Sistemas de Informação')->first();
+        $cursosParaSincronizar = [];
+        if ($cursoCc) $cursosParaSincronizar[] = $cursoCc->id;
+        if ($cursoSi) $cursosParaSincronizar[] = $cursoSi->id;
+        if (!empty($cursosParaSincronizar)) {
+            $coordCcSi->cursosCoordenados()->syncWithoutDetaching($cursosParaSincronizar);
+        }
 
         // Coordenador de Design Gráfico
-        User::firstOrCreate(
-            ['email' => 'coordenador.design@univem.edu.br'],
+        $coordDesign = User::firstOrCreate(
+            ['email' => 'bertolini@univem.edu.br'],
             [
-                'name' => 'Nome do Coordenador de Design Gráfico',
+                'name' => 'Prof. Esp. Rogério Garrido Bertolini',
                 'password' => Hash::make('123'),
-                'role' => 'coordenador_design',
+                'role' => 'coordenador',
             ]
         );
+        $cursoDesign = Curso::where('nome', 'Design Gráfico')->first();
+        if ($cursoDesign) {
+            $coordDesign->cursosCoordenados()->syncWithoutDetaching([$cursoDesign->id]);
+        }
 
         // Coordenador de Direito
-        User::firstOrCreate(
-            ['email' => 'coordenador.direito@univem.edu.br'],
+        $coordDireito = User::firstOrCreate(
+            ['email' => 'teofilo@univem.edu.br'],
             [
-                'name' => 'Nome do Coordenador de Direito',
+                'name' => 'Prof. Dr. Teófilo Marcelo de Arêa Leão Junior',
                 'password' => Hash::make('123'),
-                'role' => 'coordenador_direito',
+                'role' => 'coordenador',
             ]
         );
+        $cursoDireito = Curso::where('nome', 'Direito')->first();
+        if ($cursoDireito) {
+            $coordDireito->cursosCoordenados()->syncWithoutDetaching([$cursoDireito->id]);
+        }
 
         // Coordenador de Engenharia de Produção
-        User::firstOrCreate(
-            ['email' => 'coordenador.producao@univem.edu.br'],
+        $coordProducao = User::firstOrCreate(
+            ['email' => 'vania@univem.edu.br'],
             [
-                'name' => 'Nome do Coordenador de Engenharia de Produção',
+                'name' => 'Profa. Dra. Vânia Erica Herrera',
                 'password' => Hash::make('123'),
-                'role' => 'coordenador_producao',
+                'role' => 'coordenador',
             ]
         );
-        
-        // Coordenador de Sistemas de Informação
-        User::firstOrCreate(
-            ['email' => 'coordenador.si@univem.edu.br'],
-            [
-                'name' => 'Nome do Coordenador de Sistemas de Informação',
-                'password' => Hash::make('123'),
-                'role' => 'coordenador_si',
-            ]
-        );
+        $cursoProducao = Curso::where('nome', 'Engenharia de Produção')->first();
+        if ($cursoProducao) {
+            $coordProducao->cursosCoordenados()->syncWithoutDetaching([$cursoProducao->id]);
+        }
     }
 }

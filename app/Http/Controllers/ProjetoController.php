@@ -18,7 +18,7 @@ use Illuminate\Database\QueryException;
 use Barryvdh\DomPDF\Facade\Pdf; 
 use App\Notifications\PropostaAvaliada;
 use App\Notifications\ProfessorVinculadoAProjeto;
-
+use Illuminate\Support\Facades\Auth;
 
 class ProjetoController extends Controller
 {
@@ -251,15 +251,16 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function edit(Projeto $projeto)
+    public function edit($id)
     {
+        // Busca o projeto manualmente para garantir que os dados estão 100% corretos
+        $projeto = Projeto::with('users', 'atividades', 'cronogramas')->findOrFail($id);
+
+        // Agora, a autorização funcionará, pois o $projeto está correto
         $this->authorize('update', $projeto);
 
-
-        $projeto->load('users', 'atividades', 'cronogramas');
-
+        // O restante do seu código para carregar dados para a view
         $alunos = User::where('role', 'aluno')->orderBy('name')->get();
-
 
         $professores = User::where('role', 'like', 'professor%')
                         ->orWhere('role', 'like', 'coordenador%')
@@ -268,7 +269,9 @@ class ProjetoController extends Controller
 
         $cursos = Curso::orderBy('nome')->get();
 
-        $participantesIds = $projeto->users()->pluck('id')->toArray();
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Especificamos que queremos o 'id' da tabela 'users'
+        $participantesIds = $projeto->users()->pluck('users.id')->toArray();
 
         return view('projetos.edit', compact('projeto', 'alunos', 'professores', 'cursos', 'participantesIds'));
     }
@@ -281,21 +284,15 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(UpdateProjetoRequest $request, Projeto $projeto)
+public function update(UpdateProjetoRequest $request, $id)
     {
+        // 1. Busca manualmente o projeto para garantir que os dados estão 100% corretos
+        $projeto = Projeto::findOrFail($id);
+
+        // 2. Agora a autorização funcionará, pois o objeto $projeto está completo
         $this->authorize('update', $projeto);
 
         $data = $request->validated();
-
-        if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
-            if ($projeto->arquivo && file_exists(public_path($projeto->arquivo))) {
-                unlink(public_path($projeto->arquivo));
-            }
-            $file = $request->file('arquivo');
-            $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
-            $file->move(public_path('arquivos_projetos'), $fileName);
-            $data['arquivo'] = 'arquivos_projetos/' . $fileName;
-        }
 
         if ($request->filled('data_inicio') && $request->filled('data_fim')) {
             $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
@@ -308,22 +305,15 @@ class ProjetoController extends Controller
         $alunosIds = $request->input('alunos', []);
         $professoresIds = $request->input('professores', []);
         
-        $allUserIds = array_unique(array_merge($alunosIds, $professoresIds));
-        $projeto->users()->sync($allUserIds);
+        // 3. CORREÇÃO CRÍTICA: Garante que o proponente original do projeto não seja removido
+        $todosOsParticipantesIds = array_unique(array_merge([$projeto->user_id], $alunosIds, $professoresIds));
+        
+        $projeto->users()->sync($todosOsParticipantesIds);
 
-        // Opcional: Lógica de notificação para professores recém-adicionados
-        if (!empty($professoresIds)) {
-            $professoresParaNotificar = User::findMany($professoresIds);
-            if ($professoresParaNotificar->isNotEmpty()) {
-                Notification::send($professoresParaNotificar, new \App\Notifications\ProfessorVinculadoAProjeto($projeto));
-            }
-        }
-
-        // A lógica para atualizar atividades e cronogramas deve ser mais complexa,
-        // usando sync() ou delete/create para evitar duplicatas.
-        // Por enquanto, manteremos a simplicidade de adicionar novos.
+        // A lógica para atualizar atividades e cronogramas deve ser mais robusta
+        // para evitar a perda de dados se o formulário for enviado vazio.
         if ($request->has('atividades')) {
-            $projeto->atividades()->delete(); // Apaga os antigos para adicionar os novos
+            $projeto->atividades()->delete();
             foreach ($request->atividades as $atividadeData) {
                 if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
                     $projeto->atividades()->create($atividadeData);
@@ -332,7 +322,7 @@ class ProjetoController extends Controller
         }
 
         if ($request->has('cronograma')) {
-            $projeto->cronogramas()->delete(); // Apaga os antigos para adicionar os novos
+            $projeto->cronogramas()->delete();
             foreach ($request->cronograma as $itemDataCronograma) {
                 if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
                     $projeto->cronogramas()->create($itemDataCronograma);
@@ -340,9 +330,8 @@ class ProjetoController extends Controller
             }
         }
 
-        return redirect()->route('projetos.index')->with('success', 'Projeto atualizado com sucesso!');
+        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto atualizado com sucesso!');
     }
-        
     /**
      * Processa a avaliação de um projeto pelo NAPEx.
      *
@@ -352,7 +341,8 @@ class ProjetoController extends Controller
      */
     public function avaliarNapex(Request $request, $id)
     {
-        $projeto = Projeto::with('user', 'professores.user')->findOrFail($id);
+
+        $projeto = Projeto::with('user', 'users')->findOrFail($id);
         $this->authorize('approveByNapex', $projeto);
 
         $validatedData = $request->validate([
@@ -370,7 +360,7 @@ class ProjetoController extends Controller
         $projeto->save();
 
         $aluno = $projeto->user;
-        $professores = $projeto->professores->map(fn($p) => $p->user)->filter();
+        $professores = $projeto->users->filter(fn($u) => str_starts_with($u->role, 'professor'));
         $destinatarios = collect([$aluno])->merge($professores)->filter()->unique('id');
 
         if ($destinatarios->isNotEmpty()) {
@@ -396,9 +386,11 @@ class ProjetoController extends Controller
         return redirect()->route('projetos.show', $projeto->id)->with('success', 'Parecer do NAPEx salvo com sucesso.');
     }
     
+
     public function avaliarCoordenador(Request $request, $id)
     {
-        $projeto = Projeto::with('user', 'professores.user')->findOrFail($id);
+
+        $projeto = Projeto::with('user', 'users')->findOrFail($id);
         $this->authorize('approveByCoordinator', $projeto);
 
         $validatedData = $request->validate([
@@ -412,7 +404,7 @@ class ProjetoController extends Controller
         $projeto->save();
 
         $aluno = $projeto->user;
-        $professores = $projeto->professores->map(fn($p) => $p->user)->filter();
+        $professores = $projeto->users->filter(fn($u) => str_starts_with($u->role, 'professor'));
         $destinatarios = collect([$aluno])->merge($professores)->filter()->unique('id');
 
         if ($destinatarios->isNotEmpty()) {
@@ -479,7 +471,8 @@ class ProjetoController extends Controller
 
     public function enviarProjeto($id)
     {
-        $projeto = \App\Models\Projeto::with('user', 'professores.user')->findOrFail($id);
+
+        $projeto = \App\Models\Projeto::with('users')->findOrFail($id);
         
         $this->authorize('submit', $projeto);
 
@@ -494,9 +487,9 @@ class ProjetoController extends Controller
         
         $projeto->save();
 
-        $professores = $projeto->professores->map(function ($professor) {
-            return $professor->user;
-        })->filter();
+        $professores = $projeto->users->filter(function ($user) {
+            return str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador');
+        });
 
         if ($professores->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ProjetoSubmetidoPeloAluno($projeto));
@@ -595,16 +588,21 @@ class ProjetoController extends Controller
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function gerarPdf($id)
-    {
-        $projeto = Projeto::with(['alunos', 'professores', 'atividades', 'cronogramas', 'user', 'rejeicoes'])->findOrFail($id);
+        {
+            $projeto = Projeto::with(['users', 'atividades', 'cronogramas', 'user', 'rejeicoes'])->findOrFail($id);
 
-        $this->authorize('view', $projeto);
+            $this->authorize('view', $projeto);
 
-        $pdf = Pdf::loadView('projetos.pdf', compact('projeto'));
-        
-       
-        return $pdf->download($projeto->id . '-proposta.pdf');
-    }
+            $alunos = $projeto->users->where('role', 'aluno');
+            
+            $professores = $projeto->users->filter(function ($user) {
+                return str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador');
+            });
+
+            $pdf = Pdf::loadView('projetos.pdf', compact('projeto', 'alunos', 'professores'));
+            
+            return $pdf->download($projeto->id . '-proposta.pdf');
+        }
 
     public function exportarLogPdf(Projeto $projeto)
     {

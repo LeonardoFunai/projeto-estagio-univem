@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -52,5 +52,9 @@ class User extends Authenticatable
         public function projeto()
     {
         return $this->belongsTo(Projeto::class);
+    }
+    public function cursosCoordenados(): BelongsToMany
+    {
+        return $this->belongsToMany(Curso::class, 'curso_user');
     }
 }

@@ -11,20 +11,41 @@ class ProjectSearchService
     /**
      * Retorna uma instância da query de projetos com filtros e regras de permissão aplicados.
      */
-    public function buildQuery(array $filters): Builder
+    public function buildQuery(array $filters)
     {
-        // Garante que o relacionamento 'users' seja carregado para evitar N+1 queries.
-        $query = Projeto::with(['user', 'users', 'resultado', 'atividades']);
+        $query = Projeto::query();
         $user = Auth::user();
+        // Se o usuário for um aluno, a consulta agora busca projetos que ele criou
+        // OU dos quais ele é um participante na tabela 'projeto_user'.
+        if ($user->role === 'aluno') {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id) 
+                  ->orWhereHas('users', function ($uq) use ($user) {
+                      $uq->where('users.id', $user->id); 
+                  });
+            });
+        }
 
-        // 1. Aplica as regras de visualização de acordo com o perfil do usuário
-        $this->applyRoleBasedVisibility($query, $user);
+        if ($user->role === 'professor') {
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
 
-        // 2. Aplica os filtros de busca do formulário
-        $this->applyRequestFilters($query, $filters);
+        if (!empty($filters['search'])) {
+            $searchTerm = '%' . $filters['search'] . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('titulo', 'like', $searchTerm)
+                  ->orWhere('status', 'like', $searchTerm)
+                  ->orWhere('etapa', 'like', $searchTerm);
+            });
+        }
 
-        // 3. Aplica a ordenação
-        $this->applyOrdering($query, $filters);
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $query->orderBy('created_at', 'desc');
 
         return $query;
     }

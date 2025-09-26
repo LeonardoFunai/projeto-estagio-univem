@@ -6,7 +6,6 @@
     </x-slot>
 
     <div class="py-12">
-        
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
             {{-- Alertas --}}
             @if (session('success'))
@@ -31,18 +30,17 @@
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <h3 class="text-lg font-bold">Lista de Usuários</h3>
                         
-                        {{-- FORMULÁRIO DE FILTRO ATUALIZADO --}}
                         <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap items-center gap-2 w-full md:w-auto">
-                            <input type="text" name="search" placeholder="Buscar por nome, email, CPF ou RA..." class="border-gray-300 rounded-md shadow-sm" value="{{ $search ?? '' }}">
+                            <input type="text" name="search" placeholder="Buscar por nome ou email..." class="border-gray-300 rounded-md shadow-sm" value="{{ $search ?? '' }}">
                             
                             <select name="role" class="border-gray-300 rounded-md shadow-sm">
                                 <option value="">Todos os Perfis</option>
                                 @foreach ($roles as $roleOption)
-                                    <option value="{{ $roleOption }}" @if(isset($role) && $role == $roleOption) selected @endif>{{ ucfirst(str_replace('_', ' ', $roleOption)) }}</option>
+                                    {{-- CORREÇÃO: Unifica as roles de coordenador para o filtro --}}
+                                    <option value="{{ $roleOption }}" @if(isset($role) && $role == $roleOption) selected @endif>{{ ucfirst($roleOption) }}</option>
                                 @endforeach
                             </select>
 
-                            {{-- NOVO FILTRO DE CURSO --}}
                             <select name="curso_id" class="border-gray-300 rounded-md shadow-sm">
                                 <option value="">Todos os Cursos</option>
                                 @foreach ($cursos as $curso)
@@ -53,7 +51,6 @@
                             <button type="submit" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">Filtrar</button>
                             <a href="{{ route('admin.users.index') }}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded text-center">Limpar</a>
                         </form>
-                        
                     </div>
 
                     <div class="overflow-x-auto">
@@ -62,8 +59,8 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perfil (Role)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perfil</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso(s)</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
                                 </tr>
                             </thead>
@@ -72,8 +69,17 @@
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->email }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $user->role }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $user->curso->nome ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($user->role) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {{-- CORREÇÃO: Exibe os cursos do coordenador ou do aluno --}}
+                                        @if ($user->role === 'coordenador' && $user->cursosCoordenados->isNotEmpty())
+                                            {{ $user->cursosCoordenados->pluck('nome')->implode(', ') }}
+                                        @elseif ($user->role === 'aluno' && $user->curso)
+                                            {{ $user->curso->nome }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline-block ml-4" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
@@ -85,7 +91,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado com os filtros aplicados.</td>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

@@ -9,12 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
-        Schema::table('projetos', function (Blueprint $table) {
-            $table->foreign('professor_id')
-                ->references('id')->on('professores')
-                ->onDelete('set null'); // ou a ação que desejar
+        Schema::create('curso_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('curso_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
         });
     }
 
@@ -23,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projetos', function (Blueprint $table) {
-            $table->dropForeign(['professor_id']);
-        });
+        Schema::dropIfExists('curso_user');
     }
 };

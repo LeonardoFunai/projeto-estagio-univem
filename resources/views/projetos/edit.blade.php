@@ -5,43 +5,34 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-9xl mx-auto mt-8 p-8 bg-white  rounded-lg">
+    <div class="max-w-9xl mx-auto mt-8 p-8 bg-white rounded-lg">
         <x-slot name="pageTitle">
             Editar Projeto de Extensão
         </x-slot>
 
-        <div class="flex items-end justify-center space-x-6 mt-3">
-            {{-- Etapas principais reduzidas --}}
+        {{-- Barra de Progresso --}}
+        <div class="flex items-end justify-center space-x-6 mt-3 mb-8">
             <div class="flex space-x-6 self-center">
-                @foreach ([
+                 @foreach ([
                     ['label' => 'Proposta Criada', 'classe' => 'concluida'],
                     ['label' => 'Editando', 'classe' => 'atual'],
                     ['label' => 'Entregue', 'classe' => 'futuro'],
                 ] as $i => $etapa)
                     <div class="flex flex-col items-center">
-                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center 
-                            @if($etapa['classe'] === 'concluida')
-                                bg-green-500 text-white border-green-600 shadow
-                            @elseif($etapa['classe'] === 'atual')
-                                bg-blue-600 text-white border-blue-800 shadow animate-pulse
-                            @else
-                                bg-gray-300 text-gray-600 border-gray-400 shadow-sm
-                            @endif text-xs font-bold">
+                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center
+                            @if($etapa['classe'] === 'concluida') bg-green-500 text-white border-green-600 shadow
+                            @elseif($etapa['classe'] === 'atual') bg-blue-600 text-white border-blue-800 shadow animate-pulse
+                            @else bg-gray-300 text-gray-600 border-gray-400 shadow-sm @endif text-xs font-bold">
                             {{ $i + 1 }}
                         </div>
                         <span class="mt-1 text-xs text-center">{{ $etapa['label'] }}</span>
                     </div>
-
                     @if ($i < 2)
                         <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 my-auto"></div>
                     @endif
                 @endforeach
             </div>
-
-            {{-- seta para aprovações --}}
             <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 self-center"></div>
-
-            {{-- Aprovações empilhadas compactas --}}
             <div class="flex flex-col justify-between space-y-4 items-center mt-[-20px]">
                 <div class="flex flex-col items-center">
                     <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">N</div>
@@ -52,24 +43,13 @@
                     <span class="mt-1 text-xs text-center">Coordenação</span>
                 </div>
             </div>
-
-            {{-- seta final --}}
             <div class="w-6 h-0.5 bg-gray-300 shadow-md skew-x-12 self-center"></div>
-
-            {{-- Aprovado Final compacto --}}
             <div class="flex flex-col self-center items-center">
-                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">
-                    ✓
-                </div>
+                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center bg-gray-300 text-gray-600 border-gray-400 shadow-sm text-xs font-bold">✓</div>
                 <span class="mt-1 text-xs font-medium text-center text-gray-400">Aprovado</span>
             </div>
         </div>
 
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {{ session('error') }}
-            </div>
-        @endif
         @if ($errors->any())
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 <ul class="list-disc list-inside">
@@ -80,425 +60,353 @@
             </div>
         @endif
 
-        <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST" enctype="multipart/form-data">
+        <form id="form-projeto" action="{{ route('projetos.update', $projeto->id) }}" method="POST">
             @csrf
             @method('PUT')
 
             <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4">Introdução</legend>
-
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Informações Básicas</legend>
                 <label class="block mb-2">Título do Projeto:</label>
-                <input type="text" name="titulo" value="{{ old('titulo', $projeto->titulo) }}"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot" 
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="255" required>
-
+                <input type="text" name="titulo" value="{{ old('titulo', $projeto->titulo) }}" class="w-full border-gray-300 rounded-md mb-4" required>
                 <label class="block mb-2">Período:</label>
-                <input type="text" name="periodo" value="{{ old('periodo', $projeto->periodo) }}"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="50" required>
-                    
-                <label class="block mb-2">Professor(es) envolvidos:</label>
-                <div id="professores-wrapper">
-                    @php
-                        $professoresVelhos = old('professores', $projeto->professores->map(function($p) {
-                            return ['id' => $p->user_id ?? $p->id, 'area' => $p->area];
-                        })->toArray());
-                    @endphp
-
-                    @foreach ($professoresVelhos as $index => $prof)
-                        @php
-                            $selectedId = is_array($prof) ? ($prof['id'] ?? null) : ($prof->user_id ?? $prof->id ?? null);
-                            $area = is_array($prof) ? ($prof['area'] ?? '') : ($prof->area ?? '');
-                        @endphp
-                        <div class="mb-4 flex items-center gap-4">
-                            <select name="professores[{{ $index }}][id]" class="w-full border-gray-300 rounded-md mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot" @cannot('update', $projeto) disabled @endcannot required>
-                                <option value="">-- Selecione um professor --</option>
-                                @foreach ($professores as $professor)
-                                    <option value="{{ $professor->id }}" {{ $selectedId == $professor->id ? 'selected' : '' }}>
-                                        {{ $professor->name }} ({{ $professor->email }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <input type="text" name="professores[{{ $index }}][area]" maxlength="100" value="{{ $area }}"
-                                class="w-full border-gray-300 rounded-md mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot" @cannot('update', $projeto) readonly disabled @endcannot placeholder="Área (opcional)">
-                            @can('update', $projeto)
-                                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
-                            @endcan
-                        </div>
-                    @endforeach
-                </div>
-
-                @can('update', $projeto)
-                    <button type="button" id="add-professor" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Professor</button>
-                @endcan
-
-                <label class="block mb-2">Alunos envolvidos / R.A / Curso:</label>
-                <div id="alunos-wrapper">
-                    @php
-                        // Usa o 'old' se existir (após erro de validação), senão usa os dados do projeto
-                        $alunosVelhos = old('alunos', $projeto->alunos->toArray());
-                    @endphp
-
-                    @foreach ($alunosVelhos as $index => $aluno)
-                        @php
-                            // Lida tanto com o array do 'old' quanto com o objeto do banco de dados
-                            $nome = is_array($aluno) ? ($aluno['nome'] ?? '') : ($aluno->nome ?? '');
-                            $ra = is_array($aluno) ? ($aluno['ra'] ?? '') : ($aluno->ra ?? '');
-                            $cursoIdSelecionado = is_array($aluno) ? ($aluno['curso_id'] ?? null) : ($aluno->curso_id ?? null);
-                        @endphp
-                        <div class="mb-4 border p-3 rounded-md">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold">Aluno {{ $index + 1 }}</h4>
-                                @can('update', $projeto)
-                                    <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                                @endcan
-                            </div>
-
-                            <input type="text" name="alunos[{{ $index }}][nome]" value="{{ $nome }}"
-                                class="w-full border-gray-300 rounded-md mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) readonly disabled @endcannot maxlength="100" required placeholder="Nome do Aluno">
-                                
-                            <input type="text" name="alunos[{{ $index }}][ra]" value="{{ $ra }}"
-                                class="w-full border-gray-300 rounded-md mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) readonly disabled @endcannot maxlength="50" required placeholder="R.A. do Aluno">
-                            
-                            {{-- Dropdown de Cursos --}}
-                            <select name="alunos[{{ $index }}][curso_id]"
-                                class="w-full border-gray-300 rounded-md @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) disabled @endcannot required>
-                                <option value="">-- Selecione um curso --</option>
-                                @foreach ($cursos as $cursoOption)
-                                    <option value="{{ $cursoOption->id }}" {{ $cursoIdSelecionado == $cursoOption->id ? 'selected' : '' }}>
-                                        {{ $cursoOption->nome }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endforeach
-                </div>
-
-                @can('update', $projeto)
-                    <button type="button" id="add-aluno" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Aluno</button>
-                @endcan
-
-                <label class="block mb-2">Público Alvo:</label>
-                <textarea name="publico_alvo" maxlength="100" class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot>{{ old('publico_alvo', $projeto->publico_alvo) }} </textarea>
-
-                <label class="block mb-2">Data de Início:</label>
-                <input type="date" name="data_inicio" value="{{ old('data_inicio', \Carbon\Carbon::parse($projeto->data_inicio)->format('Y-m-d')) }}"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot required>
-
-                <label class="block mb-2">Data de Término:</label>
-                <input type="date" name="data_fim" value="{{ old('data_fim', \Carbon\Carbon::parse($projeto->data_fim)->format('Y-m-d')) }}"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot required>
+                <input type="text" name="periodo" value="{{ old('periodo', $projeto->periodo) }}" class="w-full border-gray-300 rounded-md mb-4" required>
             </fieldset>
 
             <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
+                <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Professores Orientadores</legend>
+                <div id="professores-wrapper">
+                    @php
+                        $professoresDoProjeto = $projeto->users->filter(fn($u) => str_starts_with($u->role, 'professor') || str_starts_with($u->role, 'coordenador'));
+                    @endphp
+                    @foreach (old('professores', $professoresDoProjeto->pluck('id')->all()) as $professorId)
+                        @php $p = $professores->find($professorId); @endphp
+                        @if ($p)
+                        <div class="search-component mb-4 p-4 border rounded-md relative">
+                            <div class="flex justify-between items-center mb-2">
+                                <p><strong>Professor {{ $loop->iteration }}</strong></p>
+                                <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
+                            </div>
+                            <div class="search-container" style="display: none;">
+                                <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar por nome ou email...">
+                                <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
+                            </div>
+                            <div class="selected-user mt-2 text-sm text-gray-800 space-y-1">
+                                <p><strong>Nome:</strong> {{ $p->name }}</p>
+                                <p><strong>Email:</strong> {{ $p->email }}</p>
+                                <button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>
+                            </div>
+                            <input type="hidden" name="professores[]" class="user-id-input" value="{{ $p->id }}">
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+                <button type="button" id="add-professor-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Orientador</button>
+            </fieldset>
 
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Alunos Participantes</legend>
+                <div class="mb-4 p-4 border rounded-md bg-gray-50">
+                    <p><strong>Proponente (Aluno 1):</strong></p>
+                    <p><strong>Nome:</strong> {{ $projeto->user->name }}</p>
+                    <p><strong>RA:</strong> {{ $projeto->user->ra ?? 'N/A' }}</p>
+                    <p><strong>Curso:</strong> {{ $projeto->user->curso->nome ?? 'N/A' }}</p>
+                </div>
+                <div id="alunos-wrapper">
+                    @php
+                        $alunosDoProjeto = $projeto->users->where('role', 'aluno')->where('id', '!=', $projeto->user_id);
+                    @endphp
+                    @foreach (old('alunos', $alunosDoProjeto->pluck('id')->all()) as $alunoId)
+                        @php $a = $alunos->find($alunoId); @endphp
+                        @if ($a)
+                        <div class="search-component mb-4 p-4 border rounded-md relative">
+                            <div class="flex justify-between items-center mb-2">
+                                <p><strong>Aluno {{ $loop->iteration + 1 }}</strong></p>
+                                <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
+                            </div>
+                             <div class="search-container" style="display: none;">
+                                <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar por nome, RA ou curso...">
+                                <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
+                            </div>
+                            <div class="selected-user mt-2 text-sm text-gray-800 space-y-1">
+                                <p><strong>Nome:</strong> {{ $a->name }}</p>
+                                <p><strong>RA:</strong> {{ $a->ra ?? 'N/A' }}</p>
+                                <p><strong>Curso:</strong> {{ $a->curso->nome ?? 'N/A' }}</p>
+                                <button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>
+                            </div>
+                            <input type="hidden" name="alunos[]" class="user-id-input" value="{{ $a->id }}">
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+                <button type="button" id="add-aluno-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Outro Aluno</button>
+            </fieldset>
+
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Datas e Público</legend>
+                <label class="block mb-2">Público Alvo:</label>
+                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4">{{ old('publico_alvo', $projeto->publico_alvo) }}</textarea>
+                <label class="block mb-2">Data de Início:</label>
+                <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_inicio', $projeto->data_inicio) }}" required>
+                <label class="block mb-2">Data de Término:</label>
+                <input type="date" name="data_fim" id="data_fim" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_fim', $projeto->data_fim) }}" required>
+            </fieldset>
+
+            <fieldset class="mb-8">
+                <legend class="text-lg font-semibold text-blue-700 mb-4">Conteúdo do Projeto</legend>
                 <label class="block mb-2">1. Introdução</label>
-                <textarea name="introducao"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="1000">{{ old('introducao', $projeto->introducao) }}</textarea>
-
+                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4">{{ old('introducao', $projeto->introducao) }}</textarea>
                 <label class="block mb-2">2. Objetivos do Projeto</label>
-                <textarea name="objetivo_geral"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="1000">{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
-
+                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4">{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
                 <label class="block mb-2">3. Justificativa</label>
-                <textarea name="justificativa"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="1000">{{ old('justificativa', $projeto->justificativa) }}</textarea>
-
+                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4">{{ old('justificativa', $projeto->justificativa) }}</textarea>
                 <label class="block mb-2">4. Metodologia</label>
-                <textarea name="metodologia"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="500">{{ old('metodologia', $projeto->metodologia) }}</textarea>
+                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4">{{ old('metodologia', $projeto->metodologia) }}</textarea>
 
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                 <div id="atividades-wrapper">
-                    @php
-                        $atividadesVelhas = old('atividades', $projeto->atividades->toArray());
-                    @endphp
-
-                    @foreach ($atividadesVelhas as $index => $atividade)
-                        @php
-                            $oque = is_array($atividade) ? ($atividade['o_que_fazer'] ?? '') : ($atividade->o_que_fazer ?? '');
-                            $como = is_array($atividade) ? ($atividade['como_fazer'] ?? '') : ($atividade->como_fazer ?? '');
-                            $carga = is_array($atividade) ? ($atividade['carga_horaria'] ?? '') : ($atividade->carga_horaria ?? '');
-                        @endphp
-                        <div class="mb-4">
-                            <h4 class="font-semibold mb-2">Atividade {{ $index + 1 }}</h4>
-                            <label class="block mb-1">O que fazer</label>
-                            <textarea maxlength="1000" name="atividades[{{ $index }}][o_que_fazer]"
-                                class="form-control mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) readonly disabled @endcannot required>{{ $oque }}</textarea>
-                            <label class="block mb-1">Como fazer</label>
-                            <textarea maxlength="1000" name="atividades[{{ $index }}][como_fazer]"
-                                class="form-control mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) readonly disabled @endcannot required>{{ $como }}</textarea>
-                            <label min=1 max=99999 class="block mb-1">Carga horária</label>
-                            <input type="number" name="atividades[{{ $index }}][carga_horaria]" value="{{ $carga }}"
-                                class="form-control mb-2 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                @cannot('update', $projeto) readonly disabled @endcannot required>
+                    @foreach (old('atividades', $projeto->atividades->toArray()) as $index => $atividade)
+                        <div class="mb-4 border p-3 rounded-md dynamic-item">
+                            <div class="flex justify-between items-center mb-2">
+                                <strong>Atividade {{ $index + 1 }}</strong>
+                                <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
+                            </div>
+                            <textarea name="atividades[{{ $index }}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" required>{{ $atividade['o_que_fazer'] ?? '' }}</textarea>
+                            <textarea name="atividades[{{ $index }}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" required>{{ $atividade['como_fazer'] ?? '' }}</textarea>
+                            <input type="number" name="atividades[{{ $index }}][carga_horaria]" class="w-full border-gray-300 rounded-md" value="{{ $atividade['carga_horaria'] ?? '' }}" required min="1">
                         </div>
                     @endforeach
                 </div>
-
-                @can('update', $projeto)
-                    <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">
-                        + Adicionar Atividade
-                    </button>
-                @endcan
+                <button type="button" id="add-atividade" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade</button>
 
                 <label class="block mb-2 text-lg font-semibold text-blue-700">6. Cronograma</label>
                 <div id="cronograma-wrapper">
-                    @php
-                        $cronogramasDoProjeto = $projeto->cronogramas ? $projeto->cronogramas->map(function($c) {
-                            return [
-                                'atividade' => $c->atividade,
-                                'mes_inicio' => $c->mes_inicio,
-                                'mes_fim' => $c->mes_fim
-                            ];
-                        })->toArray() : [];
-                        $cronogramaVelho = old('cronograma', $cronogramasDoProjeto);
-                    @endphp
-
-                    @if (!empty($cronogramaVelho))
-                        @foreach ($cronogramaVelho as $index => $cronogramaItem)
-                            @php
-                                $atividadeValue = $cronogramaItem['atividade'] ?? '';
-                                $mesInicioSelecionado = $cronogramaItem['mes_inicio'] ?? '';
-                                $mesFimSelecionado = $cronogramaItem['mes_fim'] ?? '';
-                            @endphp
-                            <div class="border p-4 rounded-md mb-4 cronograma-item">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-semibold">Atividade do Cronograma {{ $index + 1 }}</h4>
-                                    @can('update', $projeto)
-                                        <button type="button" onclick="this.closest('.cronograma-item').remove(); reindexarCampos('cronograma-wrapper', 'Atividade do Cronograma', 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                                    @endcan
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                                    <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $atividadeValue }}"
-                                        class="form-input w-full border-gray-300 rounded-md @cannot('update', $projeto) bg-gray-100 opacity-70 cursor-not-allowed @endcannot"
-                                        @cannot('update', $projeto) readonly disabled @endcannot maxlength="100" required placeholder="Título da Atividade">
-
-                                    <select name="cronograma[{{ $index }}][mes_inicio]"
-                                            class="form-select w-full border-gray-300 rounded-md @cannot('update', $projeto) bg-gray-100 opacity-70 cursor-not-allowed @endcannot"
-                                            @cannot('update', $projeto) disabled @endcannot required>
-                                        <option value="">-- Mês de Início --</option>
-                                        @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
-                                            <option value="{{ $m }}" {{ $mesInicioSelecionado === $m ? 'selected' : '' }}>{{ $m }}</option>
-                                        @endforeach
-                                    </select>
-
-                                    <select name="cronograma[{{ $index }}][mes_fim]"
-                                            class="form-select w-full border-gray-300 rounded-md @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                                            @cannot('update', $projeto) disabled @endcannot required>
-                                        <option value="">-- Mês de Fim --</option>
-                                        @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $m)
-                                            <option value="{{ $m }}" {{ $mesFimSelecionado === $m ? 'selected' : '' }}>{{ $m }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                     @foreach (old('cronograma', $projeto->cronogramas->toArray()) as $index => $item)
+                        <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
+                            <div class="flex justify-between items-center mb-2">
+                                <strong>Atividade do Cronograma {{ $index + 1 }}</strong>
+                                <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                             </div>
-                        @endforeach
-                    @endif
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                <input type="text" name="cronograma[{{ $index }}][atividade]" value="{{ $item['atividade'] ?? '' }}" class="form-input w-full border-gray-300 rounded-md" required>
+                                <select name="cronograma[{{ $index }}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
+                                    @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $mes)
+                                        <option value="{{ $mes }}" {{ ($item['mes_inicio'] ?? '') == $mes ? 'selected' : '' }}>{{ $mes }}</option>
+                                    @endforeach
+                                </select>
+                                <select name="cronograma[{{ $index }}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
+                                     @foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $mes)
+                                        <option value="{{ $mes }}" {{ ($item['mes_fim'] ?? '') == $mes ? 'selected' : '' }}>{{ $mes }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-
-                @can('update', $projeto)
-                    <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">
-                        + Adicionar Atividade ao Cronograma
-                    </button>
-                @endcan
+                <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade ao Cronograma</button>
 
                 <label class="block mb-2">7. Recursos Necessários</label>
-                <textarea name="recursos"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="1000">{{ old('recursos', $projeto->recursos) }}</textarea>
-
+                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4">{{ old('recursos', $projeto->recursos) }}</textarea>
                 <label class="block mb-2">8. Resultados Esperados</label>
-                <textarea name="resultados_esperados"
-                    class="w-full border-gray-300 rounded-md mb-4 @cannot('update', $projeto) opacity-50 bg-gray-100 cursor-not-allowed @endcannot"
-                    @cannot('update', $projeto) readonly disabled @endcannot maxlength="1000">{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
+                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4">{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
             </fieldset>
 
-            <div class="flex justify-center gap-4 mb-8">
-                <a href="{{ request('origem') === 'show' ? route('projetos.show', $projeto->id) : route('projetos.index') }}"
-                class="bg-gray-600 flex hover:bg-gray-700 text-white font-bold gap-2 py-2 px-6 rounded">
-                    <img src="{{ asset('img/site/btn-voltar.png') }}" alt="Voltar" width="20" height="20">
-                    Voltar
-                </a>
-
-                @can('update', $projeto)
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white gap-2 flex font-bold py-2 px-6 rounded">
-                        <img src="{{ asset('img/site/btn-atualizar.png') }}" alt="Atualizar Projeto" width="20" height="20">
-                         Atualizar Projeto
-                    </button>
-                @endcan
+            <div class="flex justify-center gap-4">
+                <a href="{{ route('projetos.show', $projeto->id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">Cancelar</a>
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">Salvar Alterações</button>
             </div>
         </form>
-
-
     </div>
 
-    <script>
-        // =========================================================================
-        // 1. CAPTURAR OS DADOS DO BLADE (CURSOS E MESES)
-        // =========================================================================
-        // Transforma a coleção $cursos (com id e nome) do PHP em um array de objetos JavaScript.
-        const todosOsCursos = @json($cursos ?? []);
-        
-        // Cria o HTML para as opções do select de cursos uma única vez para reutilizar.
-        const cursosOptionsHtml = todosOsCursos.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const createSearchComponent = (type, pluralName, wrapperId, addButtonId, initialCount = 0) => {
+            const wrapper = document.getElementById(wrapperId);
+            const addButton = document.getElementById(addButtonId);
+            let userCount = wrapper.querySelectorAll('.search-component').length + initialCount;
 
-        // Opções de professores (do seu script original)
-        const selectProfessoresEl = document.querySelector('select[name^="professores["][name$="[id]"]');
-        const professorOptions = selectProfessoresEl ? `
-            <option value="">-- Selecione um professor --</option>
-            ${Array.from(selectProfessoresEl.options)
-                .slice(1)
-                .map(option => `<option value="${option.value}">${option.text}</option>`)
-                .join('')}
-        ` : '<option value="">Professores não carregados</option>';
-
-        // Lista de todos os meses para os selects do cronograma (do seu script original)
-        const todosOsMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        const mesesOptionsHtml = todosOsMeses.map(m => `<option value="${m}">${m}</option>`).join('');
-
-
-        // =========================================================================
-        // 2. FUNÇÃO PARA REINDEXAR OS CAMPOS APÓS REMOÇÃO
-        // =========================================================================
-        function reindexarCampos(wrapperId, prefixoH4, nameBase) {
-            // O seletor foi ajustado para ser mais robusto
-            const items = document.querySelectorAll(`#${wrapperId} > div[class*="mb-4"], #${wrapperId} > div[class*="cronograma-item"]`); 
-            items.forEach((div, i) => {
-                const h4 = div.querySelector('h4');
-                if (h4 && prefixoH4) {
-                    h4.textContent = `${prefixoH4} ${i + 1}`;
-                }
-
-                const inputsEselects = div.querySelectorAll('input[name], select[name], textarea[name]');
-                inputsEselects.forEach(field => {
-                    const nameAttr = field.getAttribute('name');
-                    const matches = nameAttr.match(/\[\d+\]\[(\w+)]$/); 
-                    if (matches && matches[1]) {
-                        field.setAttribute('name', `${nameBase}[${i}][${matches[1]}]`);
+            const reindexTitles = () => {
+                wrapper.querySelectorAll('.search-component').forEach((comp, i) => {
+                    const titleElement = comp.querySelector('p > strong');
+                    if (titleElement) {
+                        const newTitle = `${type.charAt(0).toUpperCase() + type.slice(1)} ${i + 1 + initialCount}`;
+                        titleElement.textContent = newTitle;
                     }
                 });
-            });
-        }
+                userCount = wrapper.querySelectorAll('.search-component').length + initialCount;
+            };
 
-        // =========================================================================
-        // 3. LÓGICA PARA ADICIONAR NOVOS CAMPOS DINAMICAMENTE
-        // =========================================================================
-        document.getElementById('add-professor')?.addEventListener('click', () => {
-            const wrapper = document.getElementById('professores-wrapper');
-            const currentItemCount = wrapper.querySelectorAll('div[class*="mb-4"]').length;
-            const div = document.createElement('div');
-            // Adicionando as classes do HTML para manter o layout
-            div.classList.add('mb-4', 'flex', 'items-center', 'gap-4');
-            div.innerHTML = `
-                <select name="professores[${currentItemCount}][id]" class="w-full border-gray-300 rounded-md mb-2" required>
-                    ${professorOptions}
-                </select>
-                <input type="text" name="professores[${currentItemCount}][area]" maxlength="100" class="w-full border-gray-300 rounded-md mb-2" placeholder="Área (opcional)">
-                <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">Remover</button>
-            `;
-            wrapper.appendChild(div);
-        });
-
-        document.getElementById('add-aluno')?.addEventListener('click', () => {
-            const wrapper = document.getElementById('alunos-wrapper');
-            const currentItemCount = wrapper.querySelectorAll('.mb-4, .border').length;
-            const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-            div.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Aluno ${currentItemCount + 1}</h4>
-                    <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <input type="text" name="alunos[${currentItemCount}][nome]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Nome do aluno" maxlength="100" required>
-                <input type="text" name="alunos[${currentItemCount}][ra]" class="w-full border-gray-300 rounded-md mb-2" placeholder="RA" maxlength="50" required>
+            const addSearchField = () => {
+                const title = `${type.charAt(0).toUpperCase() + type.slice(1)} ${userCount + 1}`;
+                userCount++;
                 
-                <select name="alunos[${currentItemCount}][curso_id]" class="w-full border-gray-300 rounded-md" required>
-                    <option value="">-- Selecione um curso --</option>
-                    ${cursosOptionsHtml}
-                </select>
-            `;
-            wrapper.appendChild(div);
-        });
+                const searchComponent = document.createElement('div');
+                searchComponent.className = 'search-component mb-4 p-4 border rounded-md relative';
+                
+                searchComponent.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <p><strong>${title}</strong></p>
+                        <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar...">
+                        <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
+                    </div>
+                    <div class="selected-user mt-2 text-sm text-gray-800 space-y-1" style="display: none;"></div>
+                    <input type="hidden" name="${pluralName}[]" class="user-id-input">
+                `;
+                wrapper.appendChild(searchComponent);
+            };
 
-        document.getElementById('add-atividade')?.addEventListener('click', () => {
-            const wrapper = document.getElementById('atividades-wrapper');
-            const currentItemCount = wrapper.querySelectorAll('.mb-4').length;
-            const div = document.createElement('div');
-            div.classList.add('mb-4', 'border', 'p-3', 'rounded-md');
-            div.innerHTML = `
+            addButton.addEventListener('click', addSearchField);
+
+            wrapper.addEventListener('input', async (e) => {
+                if (!e.target.classList.contains('search-input')) return;
+                const component = e.target.closest('.search-component');
+                const resultsList = component.querySelector('.search-results');
+                const searchTerm = e.target.value;
+
+                if (searchTerm.length < 3) {
+                    resultsList.classList.add('hidden');
+                    return;
+                }
+
+                const role = (type === 'aluno') ? 'aluno' : 'professor';
+                const excludeId = {{ $projeto->user->id }};
+                const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}&exclude=${excludeId}`);
+                const users = await response.json();
+
+                resultsList.innerHTML = '';
+                if (users.length > 0) {
+                    users.forEach(user => {
+                        const li = document.createElement('li');
+                        li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
+                        const courseName = user.curso ? user.curso.nome : 'N/A';
+                        li.textContent = type === 'aluno' ? `${user.name} (RA: ${user.ra || 'N/A'})` : `${user.name} (${user.email})`;
+                        li.dataset.id = user.id;
+                        li.dataset.name = user.name;
+                        li.dataset.ra = user.ra || '';
+                        li.dataset.curso = courseName;
+                        li.dataset.email = user.email || '';
+                        resultsList.appendChild(li);
+                    });
+                } else {
+                    resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
+                }
+                resultsList.classList.remove('hidden');
+            });
+
+            wrapper.addEventListener('click', (e) => {
+                if (e.target.tagName === 'LI' && e.target.closest('.search-results')) {
+                    const component = e.target.closest('.search-component');
+                    const selectedDiv = component.querySelector('.selected-user');
+                    const hiddenInput = component.querySelector('.user-id-input');
+                    const searchContainer = component.querySelector('.search-container');
+                    
+                    hiddenInput.value = e.target.dataset.id;
+                    
+                    let selectedHTML = `<p><strong>Nome:</strong> ${e.target.dataset.name}</p>`;
+                    if (type === 'aluno') {
+                        selectedHTML += `<p><strong>RA:</strong> ${e.target.dataset.ra || 'N/A'}</p><p><strong>Curso:</strong> ${e.target.dataset.curso || 'N/A'}</p>`;
+                    } else {
+                         selectedHTML += `<p><strong>Email:</strong> ${e.target.dataset.email || 'N/A'}</p>`;
+                    }
+                    selectedHTML += `<button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>`;
+                    
+                    selectedDiv.innerHTML = selectedHTML;
+                    selectedDiv.style.display = 'block';
+                    searchContainer.style.display = 'none';
+                }
+
+                if (e.target.classList.contains('remove-btn')) {
+                    e.target.closest('.search-component').remove();
+                    reindexTitles();
+                }
+                
+                if (e.target.classList.contains('change-btn')) {
+                    const component = e.target.closest('.search-component');
+                    component.querySelector('.selected-user').style.display = 'none';
+                    component.querySelector('.user-id-input').value = '';
+                    const searchContainer = component.querySelector('.search-container');
+                    searchContainer.style.display = 'block';
+                    searchContainer.querySelector('.search-input').focus();
+                }
+            });
+        };
+        
+        createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search', 0);
+        createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search', 1);
+
+        const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
+            const wrapper = document.getElementById(wrapperId);
+            const addButton = document.getElementById(addButtonId);
+
+            const reindexFields = () => {
+                const items = wrapper.children;
+                Array.from(items).forEach((item, index) => {
+                    item.querySelector('strong').textContent = `${type} ${index + 1}`;
+                    item.querySelectorAll('[name]').forEach(field => {
+                        field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
+                    });
+                    const removeBtn = item.querySelector('.remove-item-btn');
+                    if(removeBtn) {
+                       removeBtn.style.display = items.length > 1 ? 'inline-block' : 'none';
+                    }
+                });
+            };
+
+            const addField = () => {
+                const index = wrapper.children.length;
+                const newField = document.createElement('div');
+                newField.innerHTML = templateFunction(index); 
+                wrapper.appendChild(newField.firstElementChild);
+                reindexFields();
+            };
+            
+            addButton.addEventListener('click', addField);
+
+            wrapper.addEventListener('click', (e) => {
+                if (e.target && e.target.classList.contains('remove-item-btn')) {
+                    e.target.closest('.dynamic-item').remove();
+                    reindexFields();
+                }
+            });
+            
+            if (wrapper.children.length === 0) {
+                addField();
+            } else {
+                reindexFields();
+            }
+        };
+        
+        const atividadeTemplate = (index) => `
+            <div class="mb-4 border p-3 rounded-md dynamic-item">
                 <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Atividade ${currentItemCount + 1}</h4>
-                    <button type="button" onclick="this.closest('.mb-4').remove(); reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    <strong>Atividade ${index + 1}</strong>
+                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                 </div>
-                <label class="block mb-1 text-sm font-medium text-gray-700">O que fazer?</label>
-                <textarea name="atividades[${currentItemCount}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" maxlength="1000" required></textarea>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Como fazer?</label>
-                <textarea name="atividades[${currentItemCount}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" maxlength="1000" required></textarea>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Carga horária (horas):</label>
-                <input type="number" name="atividades[${currentItemCount}][carga_horaria]" class="w-full border-gray-300 rounded-md" min="1" max="99999" placeholder="Carga horária" required>
-            `;
-            wrapper.appendChild(div);
-            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
-        });
-
-        document.getElementById('add-cronograma')?.addEventListener('click', () => {
-            const wrapper = document.getElementById('cronograma-wrapper');
-            const currentItemCount = wrapper.querySelectorAll('.cronograma-item').length;
-            const divWrapper = document.createElement('div');
-            divWrapper.classList.add('border', 'p-4', 'rounded-md', 'mb-4', 'cronograma-item');
-
-            divWrapper.innerHTML = `
+                <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
+                <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
+                <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1">
+            </div>`;
+        
+        const cronogramaTemplate = (index) => {
+            const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
+            return `
+            <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
                 <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold">Atividade do Cronograma ${currentItemCount + 1}</h4>
-                    <button type="button" onclick="this.closest('.cronograma-item').remove(); reindexarCampos('cronograma-wrapper', null, 'cronograma');" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    <strong>Atividade do Cronograma ${index + 1}</strong>
+                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                    <input type="text" name="cronograma[${currentItemCount}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade do Cronograma" maxlength="100" required>
-                    <select name="cronograma[${currentItemCount}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
-                        <option value="">-- Mês de Início --</option>
-                        ${mesesOptionsHtml}
-                    </select>
-                    <select name="cronograma[${currentItemCount}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
-                        <option value="">-- Mês de Fim --</option>
-                        ${mesesOptionsHtml}
-                    </select>
+                    <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
+                    <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
+                    <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
                 </div>
-            `;
-            wrapper.appendChild(divWrapper);
-        });
+            </div>`;
+        };
 
-        // =========================================================================
-        // 4. VALIDAÇÕES E SCRIPTS AO CARREGAR A PÁGINA
-        // =========================================================================
-        document.getElementById('form-projeto')?.addEventListener('submit', function (e) {
-            const inicio = document.querySelector('input[name="data_inicio"]').value;
-            const fim = document.querySelector('input[name="data_fim"]').value;
-            if (inicio && fim && new Date(inicio) > new Date(fim)) {
-                e.preventDefault();
-                alert('A data de início deve ser anterior ou igual à data de término.');
-            }
-        });
-
-        // Reindexar campos ao carregar a página para garantir que os títulos estejam corretos
-        document.addEventListener('DOMContentLoaded', function() {
-            reindexarCampos('professores-wrapper', null, 'professores'); // Não precisa de prefixo se já estiver no HTML
-            reindexarCampos('alunos-wrapper', 'Aluno', 'alunos');
-            reindexarCampos('atividades-wrapper', 'Atividade', 'atividades');
-            reindexarCampos('cronograma-wrapper', null, 'cronograma'); // O h4 é recriado
-        });
+        setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
+        setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
+    });
     </script>
 </x-app-layout>

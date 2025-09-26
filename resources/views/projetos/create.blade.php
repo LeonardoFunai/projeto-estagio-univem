@@ -34,7 +34,6 @@
 
                 <fieldset class="mb-8">
                     
-                    <!-- Trilha de Status -->
                     <div class="flex items-end justify-center space-x-6 mt-3">
 
                         {{-- Etapas principais reduzidas --}}
@@ -157,26 +156,7 @@
 
                     <label class="block mb-2 text-lg font-semibold text-blue-700">Cronograma</label>
                                 <div id="cronograma-wrapper">
-                                    {{-- Primeiro item do cronograma --}}
-                                    <div class="border p-4 rounded-md mb-4 cronograma-item">
-                                        <p><strong>Atividade do Cronograma 1</strong></p>
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                                            <input type="text" name="cronograma[0][atividade]" class="form-input w-full border-gray-300 rounded-md" maxlength="100" placeholder="Título da Atividade do Cronograma" value="{{ old('cronograma.0.atividade') }}" required>
-                                            <select name="cronograma[0][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required>
-                                                <option value="">-- Mês de Início --</option>
-                                                @foreach(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $m)
-                                                    <option value="{{ $m }}" {{ old('cronograma.0.mes_inicio') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                                                @endforeach
-                                            </select>
-                                            <select name="cronograma[0][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required>
-                                                <option value="">-- Mês de Fim --</option>
-                                                @foreach(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $m)
-                                                    <option value="{{ $m }}" {{ old('cronograma.0.mes_fim') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        
-                                    </div>
+                                    {{-- O JavaScript irá inserir o(s) cronograma(s) aqui --}}
                                 </div>
                                 <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade ao Cronograma</button>
 
@@ -202,32 +182,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // =========================================================================
-            // LÓGICA DE BUSCA DE ALUNOS E PROFESSORES (SEM ALTERAÇÃO)
-            // =========================================================================
-            const createSearchComponent = (type, pluralName, wrapperId, addButtonId) => {
+            /**
+             * Função genérica para criar um componente de busca de usuário (aluno ou professor).
+             * @param {string} type - 'aluno' ou 'professor'.
+             * @param {string} pluralName - 'alunos' ou 'professores' (para o nome do campo do formulário).
+             * @param {string} wrapperId - ID do elemento que conterá os campos de busca.
+             * @param {string} addButtonId - ID do botão para adicionar um novo campo de busca.
+             * @param {number} initialCount - O número inicial para o contador de usuários.
+             * @param {boolean} addInitial - Se deve adicionar o primeiro campo de busca ao carregar a página.
+             */
+            const createSearchComponent = (type, pluralName, wrapperId, addButtonId, initialCount = 0, addInitial = false) => {
                 const wrapper = document.getElementById(wrapperId);
                 const addButton = document.getElementById(addButtonId);
-                let userCount = 0;
+                let userCount = initialCount;
 
                 const addSearchField = () => {
                     const index = userCount++;
                     const searchComponent = document.createElement('div');
-                    searchComponent.classList.add('search-component', 'mb-4', 'p-4', 'border', 'rounded-md', 'relative');
+                    searchComponent.className = 'search-component mb-4 p-4 border rounded-md relative';
                     searchComponent.dataset.index = index;
 
                     const placeholder = (type === 'aluno') ? 'Buscar por nome, RA ou curso...' : 'Buscar por nome ou email...';
+                    const title = `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`;
 
                     searchComponent.innerHTML = `
                         <div class="flex justify-between items-center mb-2">
-                            <p><strong>${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}</strong></p>
-                            ${index > 0 ? '<button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>' : ''}
+                            <p><strong>${title}</strong></p>
+                            <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="search-container">
                             <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="${placeholder}">
+                            <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
                         </div>
-                        <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10"></ul>
-                        <div class="selected-user mt-2 text-sm text-gray-600"></div>
+                        <div class="selected-user mt-2 text-sm text-gray-800 space-y-1" style="display: none;"></div>
                         <input type="hidden" name="${pluralName}[]" class="user-id-input">
                     `;
                     wrapper.appendChild(searchComponent);
@@ -236,16 +223,19 @@
                 addButton.addEventListener('click', addSearchField);
 
                 wrapper.addEventListener('input', async (e) => {
-                    if (e.target.classList.contains('search-input')) {
-                        const component = e.target.closest('.search-component');
-                        const resultsList = component.querySelector('.search-results');
-                        const searchTerm = e.target.value;
+                    if (!e.target.classList.contains('search-input')) return;
 
-                        if (searchTerm.length < 3) {
-                            resultsList.classList.add('hidden'); return;
-                        }
+                    const component = e.target.closest('.search-component');
+                    const resultsList = component.querySelector('.search-results');
+                    const searchTerm = e.target.value;
 
-                        const role = (type === 'aluno') ? 'aluno' : 'professor';
+                    if (searchTerm.length < 3) {
+                        resultsList.classList.add('hidden');
+                        return;
+                    }
+
+                    const role = (type === 'aluno') ? 'aluno' : 'professor';
+                    try {
                         const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}`);
                         const users = await response.json();
 
@@ -254,16 +244,28 @@
                             users.forEach(user => {
                                 const li = document.createElement('li');
                                 li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
-                                li.textContent = `${user.name} (${user.ra || user.email})`;
+                                
+                                const courseName = user.curso ? user.curso.nome : 'N/A';
+                                li.textContent = (type === 'aluno') 
+                                    ? `${user.name} (RA: ${user.ra || 'N/A'}, Curso: ${courseName})`
+                                    : `${user.name} (${user.email})`;
+
                                 li.dataset.id = user.id;
                                 li.dataset.name = user.name;
+                                li.dataset.ra = user.ra || '';
+                                li.dataset.curso = courseName;
+                                li.dataset.email = user.email || '';
+                                
                                 resultsList.appendChild(li);
                             });
-                            resultsList.classList.remove('hidden');
                         } else {
                             resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
-                            resultsList.classList.remove('hidden');
                         }
+                        resultsList.classList.remove('hidden');
+                    } catch (error) {
+                        console.error('Erro na busca:', error);
+                        resultsList.innerHTML = '<li class="p-2 text-red-500">Erro ao buscar.</li>';
+                        resultsList.classList.remove('hidden');
                     }
                 });
 
@@ -272,35 +274,64 @@
                         const component = e.target.closest('.search-component');
                         const selectedDiv = component.querySelector('.selected-user');
                         const hiddenInput = component.querySelector('.user-id-input');
-                        const searchInput = component.querySelector('.search-input');
-                        const resultsList = component.querySelector('.search-results');
+                        const searchContainer = component.querySelector('.search-container');
                         
-                        selectedDiv.textContent = `Selecionado: ${e.target.dataset.name}`;
                         hiddenInput.value = e.target.dataset.id;
-                        searchInput.value = e.target.dataset.name;
-                        resultsList.classList.add('hidden');
+                        
+                        let selectedHTML = `<p><strong>Nome:</strong> ${e.target.dataset.name}</p>`;
+                        if (type === 'aluno') {
+                            selectedHTML += `
+                                <p><strong>RA:</strong> ${e.target.dataset.ra || 'Não informado'}</p>
+                                <p><strong>Curso:</strong> ${e.target.dataset.curso || 'Não informado'}</p>
+                            `;
+                        } else {
+                             selectedHTML += `<p><strong>Email:</strong> ${e.target.dataset.email || 'Não informado'}</p>`;
+                        }
+                        selectedHTML += `<button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>`;
+                        
+                        selectedDiv.innerHTML = selectedHTML;
+                        selectedDiv.style.display = 'block';
+                        searchContainer.style.display = 'none';
                     }
 
                     if (e.target.classList.contains('remove-btn')) {
-                        e.target.closest('.search-component').remove();
-                        const allComponents = wrapper.querySelectorAll('.search-component');
-                        allComponents.forEach((comp, i) => {
-                            comp.querySelector('strong').textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} ${i + 1}`;
+                        const component = e.target.closest('.search-component');
+                        component.remove();
+                        // Re-indexar para manter a contagem correta
+                        wrapper.querySelectorAll('.search-component').forEach((comp, i) => {
+                            const title = `${type.charAt(0).toUpperCase() + type.slice(1)} ${initialCount + i + 1}`;
+                            comp.querySelector('strong').textContent = title;
                         });
                         userCount--;
                     }
+                    
+                    if (e.target.classList.contains('change-btn')) {
+                        const component = e.target.closest('.search-component');
+                        const selectedDiv = component.querySelector('.selected-user');
+                        const hiddenInput = component.querySelector('.user-id-input');
+                        const searchContainer = component.querySelector('.search-container');
+                        const searchInput = component.querySelector('.search-input');
+
+                        hiddenInput.value = '';
+                        selectedDiv.style.display = 'none';
+                        searchInput.value = '';
+                        searchContainer.style.display = 'block';
+                        searchInput.focus();
+                    }
                 });
 
-                addSearchField();
+                if (addInitial) {
+                    addSearchField();
+                }
             };
 
-            createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search');
-            createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search');
+            // Para alunos: Começa a contar do "Aluno 2", não adiciona campo inicial.
+            createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search', 1, false);
+            
+            // Para professores: Começa a contar do "Professor 1", não adiciona campo inicial.
+            createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search', 0, false);
 
-
-            // =========================================================================
-            // LÓGICA CORRIGIDA E ROBUSTA PARA ATIVIDADES E CRONOGRAMA
-            // =========================================================================
+            // --- Lógica para Atividades e Cronograma (mantida) ---
             const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
                 const wrapper = document.getElementById(wrapperId);
                 const addButton = document.getElementById(addButtonId);
@@ -308,15 +339,10 @@
                 const reindexFields = () => {
                     const items = wrapper.children;
                     Array.from(items).forEach((item, index) => {
-                        // Atualiza o título (ex: "Atividade 1", "Atividade 2")
                         item.querySelector('strong').textContent = `${type} ${index + 1}`;
-                        
-                        // Atualiza o 'name' de todos os inputs/textareas/selects
                         item.querySelectorAll('[name]').forEach(field => {
                             field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
                         });
-
-                        // Mostra ou esconde o botão de remover
                         const removeBtn = item.querySelector('.remove-item-btn');
                         if (removeBtn) {
                             removeBtn.style.display = index > 0 ? 'inline-block' : 'none';
@@ -327,10 +353,9 @@
                 const addField = () => {
                     const index = wrapper.children.length;
                     const newField = document.createElement('div');
-                    // O .firstElementChild é usado porque o template cria um container div
                     newField.innerHTML = templateFunction(index); 
                     wrapper.appendChild(newField.firstElementChild);
-                    reindexFields(); // Reindexa sempre que um novo campo é adicionado
+                    reindexFields();
                 };
                 
                 addButton.addEventListener('click', addField);
@@ -338,52 +363,45 @@
                 wrapper.addEventListener('click', (e) => {
                     if (e.target && e.target.classList.contains('remove-item-btn')) {
                         e.target.closest('.dynamic-item').remove();
-                        reindexFields(); // Reindexa sempre que um campo é removido
+                        reindexFields();
                     }
                 });
 
-                // ===== A CORREÇÃO PRINCIPAL ESTÁ AQUI =====
-                // Garante que, se não houver nenhum campo, o primeiro seja adicionado ao carregar a página.
                 if (wrapper.children.length === 0) {
                     addField();
                 }
             };
 
-            // Template para Atividades
             const atividadeTemplate = (index) => `
                 <div class="mb-4 border p-3 rounded-md dynamic-item">
                     <div class="flex justify-between items-center mb-2">
                         <strong>Atividade ${index + 1}</strong>
                         <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
                     </div>
-                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
-                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
-                    <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required>
+                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required maxlength="1000"></textarea>
+                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required maxlength="1000"></textarea>
+                    <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1" max="99999">
                 </div>`;
-
-            // Template para Cronograma
+            
             const cronogramaTemplate = (index) => {
                 const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
                 return `
                 <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
                     <div class="flex justify-between items-center mb-2">
-                        <strong>Cronograma ${index + 1}</strong>
+                        <strong>Atividade do Cronograma ${index + 1}</strong>
                         <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                        <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
+                        <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required maxlength="100">
                         <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
                         <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
                     </div>
                 </div>`;
             };
 
-            // Inicializa os campos dinâmicos
             setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
-            setupDynamicFields('Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
+            setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
 
-
-            // Validação de Data (mantida)
             document.getElementById('form-projeto').addEventListener('submit', function (e) {
                 const inicio = document.getElementById('data_inicio').value;
                 const fim = document.getElementById('data_fim').value;
@@ -394,6 +412,4 @@
             });
         });
     </script>
-
-
 </x-app-layout>

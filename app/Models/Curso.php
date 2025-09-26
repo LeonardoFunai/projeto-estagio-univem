@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Curso extends Model
 {
@@ -31,5 +32,9 @@ class Curso extends Model
     public function alunos(): HasMany
     {
         return $this->hasMany(Aluno::class, 'curso_id');
+    }
+    public function coordenadores(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'curso_user');
     }
 }
