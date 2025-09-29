@@ -21,6 +21,7 @@ class UpdateProjetoRequest extends FormRequest
      */
     public function rules(): array
     {
+        $cursoDoAutorId = auth()->user()->curso_id;
         $user = $this->user();
         $todosOsMeses = [
             'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -41,8 +42,12 @@ class UpdateProjetoRequest extends FormRequest
             'recursos' => ['nullable', 'string', 'max:1000'],
             'resultados_esperados' => ['nullable', 'string', 'max:1000'],
             'arquivo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf,doc,docx', 'max:5120'],
-            'alunos' => ['nullable', 'array'],
-            'alunos.*' => ['exists:users,id'],
+            'alunos.*' => [ 
+                            'integer',
+                            Rule::exists('users', 'id')->where(function ($query) use ($cursoDoAutorId) {
+                                return $query->where('curso_id', $cursoDoAutorId);
+                            }),
+                        ],
             'professores' => ['nullable', 'array'],
             'professores.*' => ['exists:users,id'],
             'atividades' => ['required', 'array', 'min:1', 'max:10'],

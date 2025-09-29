@@ -21,6 +21,7 @@ class StoreProjetoRequest extends FormRequest
      */
     public function rules(): array
     {
+        $cursoDoAutorId = auth()->user()->curso_id;
         $todosOsMeses = [
             'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -46,8 +47,14 @@ class StoreProjetoRequest extends FormRequest
             'arquivo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf,doc,docx', 'max:5120'],
 
             // --- NOVAS REGRAS PARA ALUNOS E PROFESSORES ---
-            'alunos' => ['nullable', 'array'],
-            'alunos.*' => ['exists:users,id'], // Valida se cada ID de aluno existe na tabela 'users'
+            'alunos' => 'nullable|array',
+            'alunos.*' => [
+                'integer',
+                
+                Rule::exists('users', 'id')->where(function ($query) use ($cursoDoAutorId) {
+                    return $query->where('curso_id', $cursoDoAutorId);
+                }),
+        ],
             'professores' => ['nullable', 'array'],
             'professores.*' => ['exists:users,id'], // Valida se cada ID de professor existe na tabela 'users'
 

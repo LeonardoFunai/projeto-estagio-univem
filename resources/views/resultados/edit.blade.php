@@ -157,11 +157,13 @@
                             </div>
                             <div>
                                 <x-input-label value="Professor(es) Envolvidos" />
-                                <p class="mt-1 text-gray-600">{{ $resultado->projeto->professores->pluck('nome')->implode(', ') }}</p>
+                                {{-- Usa a variável injetada ($professores) e o campo 'name' --}}
+                                <p class="mt-1 text-gray-600">{{ $professores->pluck('name')->implode(', ') }}</p>
                             </div>
                              <div>
                                 <x-input-label value="Alunos Envolvidos" />
-                                <p class="mt-1 text-gray-600">{{ $resultado->projeto->alunos->pluck('nome')->implode(', ') }}</p>
+                                {{-- Usa a variável injetada ($alunos) e o campo 'name' --}}
+                                <p class="mt-1 text-gray-600">{{ $alunos->pluck('name')->implode(', ') }}</p>
                             </div>
                         </div>
                     </div>
@@ -212,7 +214,6 @@
                             <textarea id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 rounded-md shadow-sm">{{ old('comunidade_externa', $resultado->comunidade_externa) }}</textarea>
                         </div>
 
-{{-- Em: resources/views/resultados/edit.blade.php --}}
 
                         <div class="mt-8 p-4 border border-gray-200 rounded-md">
                             <h3 class="text-lg font-bold text-gray-800 mb-4">Gerenciar Anexos</h3>

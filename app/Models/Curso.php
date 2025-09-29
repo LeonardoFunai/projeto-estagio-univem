@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Curso extends Model
 {
-    // 1. Permite o uso de "factories" para testes e popular o banco (seeding)
+    // Permite o uso de "factories" para testes e popular o banco (seeding)
     use HasFactory;
 
     /**
-     * 2. A propriedade $fillable define quais colunas da tabela 'cursos' 
+     * A propriedade $fillable define quais colunas da tabela 'cursos'
      * podem ser preenchidas em massa. Isso é uma proteção de segurança.
      * Neste caso, permitimos que o campo 'nome' seja preenchido.
      *
@@ -24,17 +24,42 @@ class Curso extends Model
     ];
 
     /**
-     * 3. Define o relacionamento "um-para-muitos": um Curso pode ter muitos Alunos.
-     * Esta função deve estar DENTRO da classe.
+     * Define o relacionamento "um-para-muitos": um Curso pode ter muitos Alunos (Users).
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function alunos(): HasMany
     {
-        return $this->hasMany(Aluno::class, 'curso_id');
+        // Alterado para apontar para User, assumindo que a lógica de alunos está no model User.
+        return $this->hasMany(User::class, 'curso_id');
     }
+
+    /**
+     * Define o relacionamento "muitos-para-muitos": um Curso pode ter muitos Coordenadores (Users).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
     public function coordenadores(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'curso_user');
+    }
+
+    /**
+     * ACCESSOR: Retorna o nome do curso de forma resumida (sigla).
+     *
+     * @return string
+     */
+    public function getNomeResumidoAttribute(): string
+    {
+        return match ($this->attributes['nome']) {
+            'Análise e Desenvolvimento de Sistemas' => 'ADS',
+            'Ciência da Computação' => 'CC',
+            'Ciências Contábeis' => 'Contábeis',
+            'Engenharia de Computação' => 'ECO',
+            'Sistemas de Informação' => 'SI',
+            'Direito' => 'Direito',
+            'Administração' => 'ADM',
+            default => $this->attributes['nome'], // Retorna o nome completo se não houver sigla
+        };
     }
 }

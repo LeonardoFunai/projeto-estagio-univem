@@ -24,24 +24,25 @@ class ResultadoController extends Controller
      */
     public function create(Projeto $projeto)
     {
-        // Policy: Verifica se o usuário logado pode criar um resultado para ESTE projeto.
+
         $this->authorize('create', [Resultado::class, $projeto]);
 
-        // Lógica de negócio ATUALIZADA
+        // CORREÇÃO: Carrega as relações necessárias ANTES das verificações.
+        $projeto->load(['users.curso', 'atividades']);
 
-        // 1. Verifica se um relatório já existe. Se sim, redireciona para a edição. (Esta lógica continua correta)
         if ($projeto->resultado) {
             return redirect()->route('resultados.edit', $projeto->resultado)->with('info', 'Este projeto já possui um relatório de resultados. Você pode editá-lo aqui.');
         }
-
-        // 2. CORREÇÃO: Verifica se a proposta foi aprovada.
-        // Só permite criar um relatório se a etapa for 'Proposta' e o status for 'aprovado'.
         if ($projeto->etapa !== 'Proposta' || $projeto->status !== 'aprovado') {
             return redirect()->route('projetos.index')->with('error', 'Só é possível adicionar um relatório após a proposta ser aprovada.');
         }
 
-        // 3. Se todas as verificações passarem, exibe a página de criação.
-        return view('resultados.create', compact('projeto'));
+        // CORREÇÃO: Cria as coleções esperadas pela view
+        $professores = $projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
+        $alunos = $projeto->users->where('role', 'aluno');
+        $cargaHorariaTotal = $projeto->atividades->sum('carga_horaria'); 
+
+        return view('resultados.create', compact('projeto', 'professores', 'alunos', 'cargaHorariaTotal'));
     }
 
     /**
@@ -49,6 +50,11 @@ class ResultadoController extends Controller
      */
    public function store(StoreResultadoRequest $request, Projeto $projeto)
     {
+        if ($projeto->resultado) {
+            return redirect()->route('resultados.edit', $projeto->resultado)
+                ->with('error', 'Este projeto já possui um relatório de resultados. Em vez de criar um novo, edite o existente.');
+        }
+
         $this->authorize('create', [Resultado::class, $projeto]);
 
         $data = $request->validated();
@@ -72,9 +78,11 @@ class ResultadoController extends Controller
         $projeto->etapa = 'Resultado';
         $projeto->save();
 
-        $resultado->load('projeto.user', 'projeto.professores.user');
+        // CORREÇÃO: Usa 'projeto.users' em vez de 'projeto.professores.user'
+        $resultado->load('projeto.user', 'projeto.users');
         
-        $professores = $resultado->projeto->professores->map(fn($p) => $p->user)->filter();
+        // Filtra a coleção 'users' para encontrar os professores/coordenadores
+        $professores = $resultado->projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
 
         if ($professores->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ResultadoCadastradoPeloAluno($resultado));
@@ -132,7 +140,18 @@ class ResultadoController extends Controller
         // Policy: Verifica se o usuário pode atualizar (editar) este resultado.
         $this->authorize('update', $resultado);
 
-        return view('resultados.edit', compact('resultado'));
+        // CORREÇÃO: Carrega as relações necessárias para a exibição na view (resolve o erro pluck() on null na edit.blade.php)
+        $resultado->load(['projeto.users.curso', 'projeto.atividades']);
+
+        // Cria as coleções esperadas pela view (professores e alunos)
+        $professores = $resultado->projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
+        $alunos = $resultado->projeto->users->where('role', 'aluno');
+        
+        // Calcula a carga horária total
+        $cargaHorariaTotal = $resultado->projeto->atividades->sum('carga_horaria'); 
+
+        // Passa as coleções filtradas para a view
+        return view('resultados.edit', compact('resultado', 'professores', 'alunos', 'cargaHorariaTotal'));
     }
 
     /**
@@ -204,7 +223,6 @@ class ResultadoController extends Controller
   
         $this->authorize('sendForEvaluation', $resultado);
 
-
         $resultado->status = 'entregue';
         $resultado->aprovado_napex = 'pendente';
         $resultado->parecer_napex = null;
@@ -214,14 +232,41 @@ class ResultadoController extends Controller
 
         $resultado->load('projeto.user');
         
-        $avaliadores = \App\Models\User::whereIn('role', ['napex', 'coordenador'])->get();
+        $projeto = $resultado->projeto;
+        $avaliadores = $this->getEvaluationRecipients($projeto);
 
         if ($avaliadores->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send($avaliadores, new \App\Notifications\ResultadoEnviado($resultado));
         }
 
-
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados enviado para avaliação!');
+    }
+
+        private function getEvaluationRecipients(Projeto $projeto)
+    {
+        $projeto->load('user.curso');
+    
+        $cursoId = $projeto->user->curso_id;
+    
+        if (!$cursoId) {
+            return User::where('role', 'napex')->get();
+        }
+    
+        $coordenador = User::where('role', 'coordenador')
+            ->whereHas('cursosCoordenados', function ($query) use ($cursoId) {
+                $query->where('curso_id', $cursoId);
+            })->first();
+
+        $napexUsers = User::where('role', 'napex')->get();
+
+        $recipients = collect([]);
+        if ($coordenador) {
+            $recipients->push($coordenador);
+        }
+        
+        $recipients = $recipients->merge($napexUsers)->unique('id');
+    
+        return $recipients;
     }
 
     /**
@@ -323,7 +368,8 @@ class ResultadoController extends Controller
 
         $this->authorize('view', $resultado);
 
-        $resultado->load(['projeto.professores', 'projeto.alunos.curso', 'anexos']);
+        // CORREÇÃO: Usa o relacionamento 'users' e remove a linha duplicada
+        $resultado->load(['projeto.users.curso', 'anexos']);
         $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
         
 

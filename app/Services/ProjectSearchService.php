@@ -15,13 +15,12 @@ class ProjectSearchService
     {
         $query = Projeto::query();
         $user = Auth::user();
-        // Se o usuário for um aluno, a consulta agora busca projetos que ele criou
-        // OU dos quais ele é um participante na tabela 'projeto_user'.
+
         if ($user->role === 'aluno') {
             $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id) 
+                $q->where('user_id', $user->id)
                   ->orWhereHas('users', function ($uq) use ($user) {
-                      $uq->where('users.id', $user->id); 
+                      $uq->where('users.id', $user->id);
                   });
             });
         }
@@ -30,6 +29,25 @@ class ProjectSearchService
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
+        }
+
+        if (!empty($filters['curso_id'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
+                $q->where('curso_id', $filters['curso_id']);
+            });
+        }
+
+        if (str_starts_with($user->role, 'coordenador')) {
+            $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
+
+            if ($cursosCoordenadosIds->isNotEmpty()) {
+                $query->whereHas('user', function ($q) use ($cursosCoordenadosIds) {
+                    $q->whereIn('curso_id', $cursosCoordenadosIds);
+                });
+            } else {
+                // Se um coordenador não estiver associado a nenhum curso, ele não verá nenhum projeto.
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if (!empty($filters['search'])) {
@@ -60,14 +78,26 @@ class ProjectSearchService
             $query->where('user_id', $user->id);
         }
 
-        // --- CORREÇÃO APLICADA AQUI ---
         // Professor: vê os projetos nos quais ele está vinculado como participante
-        if (str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador')) {
+        if (str_starts_with($user->role, 'professor')) {
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
         }
         
+        // Coordenador: Vê todos os projetos dos cursos que coordena
+        if (str_starts_with($user->role, 'coordenador')) {
+            $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
+            if ($cursosCoordenadosIds->isNotEmpty()) {
+                $query->whereHas('user', function ($q) use ($cursosCoordenadosIds) {
+                    $q->whereIn('curso_id', $cursosCoordenadosIds);
+                });
+            } else {
+                // Se não coordena cursos, não vê nenhum projeto
+                $query->whereRaw('1 = 0');
+            }
+        }
+
         // NAPEX: Vê todos os projetos que já foram entregues para avaliação
         if ($user->role === 'napex') {
             $query->where('status', '!=', 'editando');

@@ -84,18 +84,17 @@
                                 <x-input-label value="Período de Realização" />
                                 <p class="mt-1 text-gray-600">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }} até {{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</p>
                             </div>
-
                             <div>
                                 <x-input-label value="Carga Horária Total" />
-                                <p class="mt-1 text-gray-600">{{ $projeto->carga_horaria_total }} horas</p>
+                                <p class="mt-1 text-gray-600">{{ $cargaHorariaTotal }} horas</p>
                             </div>
                             <div>
                                 <x-input-label value="Professor(es) Envolvidos" />
-                                <p class="mt-1 text-gray-600">{{ $projeto->professores->pluck('nome')->implode(', ') }}</p>
+                                <p class="mt-1 text-gray-600">{{ $professores->pluck('name')->implode(', ') }}</p>
                             </div>
                              <div>
                                 <x-input-label value="Alunos Envolvidos" />
-                                <p class="mt-1 text-gray-600">{{ $projeto->alunos->pluck('nome')->implode(', ') }}</p>
+                                <p class="mt-1 text-gray-600">{{ $alunos->pluck('name')->implode(', ') }}</p>
                             </div>
                         </div>
                     </div>

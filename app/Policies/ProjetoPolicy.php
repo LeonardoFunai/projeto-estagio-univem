@@ -34,9 +34,16 @@ class ProjetoPolicy
      */
     public function view(User $user, Projeto $projeto): bool
     {
-        // Administradores, NAPEX e Coordenadores podem ver qualquer projeto.
-        if (in_array($user->role, ['admin', 'napex', 'coordenador'])) {
+        if (in_array($user->role, ['admin', 'napex'])) {
             return true;
+        }
+
+        if (str_starts_with($user->role, 'coordenador')) {
+            $cursoDoProjeto = $projeto->user->curso;
+            if (!$cursoDoProjeto) {
+                return false;
+            }
+            return $user->cursosCoordenados()->where('curso_id', $cursoDoProjeto->id)->exists();
         }
 
         return $projeto->users()->where('user_id', $user->id)->exists();
@@ -115,6 +122,13 @@ class ProjetoPolicy
 
         // NAPEX, Coordenadores e participantes do projeto podem reverter.
         if (in_array($user->role, ['napex', 'coordenador'])) {
+            if (str_starts_with($user->role, 'coordenador')) {
+                $cursoDoProjeto = $projeto->user->curso;
+                if (!$cursoDoProjeto) {
+                    return false;
+                }
+                return $user->cursosCoordenados()->where('curso_id', $cursoDoProjeto->id)->exists();
+            }
             return true;
         }
 
@@ -143,7 +157,7 @@ class ProjetoPolicy
     public function approveByCoordinator(User $user, Projeto $projeto): bool
     {
         // Regra 1: O usuário DEVE ter a role 'coordenador' e o projeto DEVE estar 'entregue'.
-        if ($user->role !== 'coordenador' || $projeto->status !== 'entregue') {
+        if (!str_starts_with($user->role, 'coordenador') || $projeto->status !== 'entregue') {
             return false;
         }
 

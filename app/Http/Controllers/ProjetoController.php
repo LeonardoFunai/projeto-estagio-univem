@@ -30,13 +30,22 @@ class ProjetoController extends Controller
      */
     public function index(Request $request, ProjectSearchService $searchService)
     {
-     
-        $query = $searchService->buildQuery($request->all());
+        // 1. Define os filtros permitidos, incluindo o novo 'curso_id'
+        $filters = $request->only(['search', 'status', 'curso_id']);
 
-        
+        // 2. Constrói a query com os filtros e já otimiza o carregamento do curso do usuário
+        $query = $searchService->buildQuery($filters)->with('user.curso');
+
+        // 3. Executa a paginação
         $projetos = $query->paginate(10)->appends($request->query());
 
-        $response = response(view('projetos.index', compact('projetos')));
+        // 4. Busca a lista de cursos para popular o dropdown de filtro na tela
+        $cursos = Curso::orderBy('nome')->get();
+
+        // 5. Envia os projetos e a lista de cursos para a view
+        $response = response(view('projetos.index', compact('projetos', 'cursos')));
+
+        // 6. Mantém seus headers de controle de cache
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');
@@ -54,30 +63,35 @@ class ProjetoController extends Controller
     {
         $this->authorize('create', Projeto::class);
 
-        // Carrega o usuário logado e seu relacionamento de curso para exibir na view.
-        $alunoLogado = auth()->user()->load('curso');
+        // A variável correta é '$alunoLogado'
+        $alunoLogado = auth()->user();
 
-        // Busca apenas os outros alunos (excluindo o que está logado) para o campo de busca.
-        $outrosAlunos = User::where('role', 'aluno')
-                            ->where('id', '!=', $alunoLogado->id)
-                            ->orderBy('name')
-                            ->get();
+        // Carrega o curso do aluno para evitar consultas extras
+        $alunoLogado->load('curso');
 
-        // Busca os professores e coordenadores para o campo de busca.
+        // Busca apenas os outros alunos (excluindo o que está logado) do mesmo curso
+        $alunos = User::where('role', 'aluno')
+                    // CORREÇÃO: Usar a variável '$alunoLogado'
+                    ->where('curso_id', $alunoLogado->curso_id)
+                    // CORREÇÃO: Usar a variável '$alunoLogado'
+                    ->where('id', '!=', $alunoLogado->id)
+                    ->orderBy('name')
+                    ->get();
+
+        // Busca os professores e coordenadores para o campo de busca
         $professores = User::where('role', 'like', 'professor%')
                         ->orWhere('role', 'like', 'coordenador%')
                         ->orderBy('name')
                         ->get();
 
-        // Envia as variáveis para a view.
-        return view('projetos.create', compact('alunoLogado', 'outrosAlunos', 'professores'));
+        return view('projetos.create', compact('alunoLogado', 'alunos', 'professores'));
     }
-    
 
     public function searchUsers(Request $request)
     {
         $search = $request->input('search');
         $role = $request->input('role');
+        $usuarioLogado = auth()->user();
 
         if (empty($search) || empty($role)) {
             return response()->json([]);
@@ -86,16 +100,18 @@ class ProjetoController extends Controller
         $query = User::query()->orderBy('name');
 
         if ($role === 'aluno') {
-            // CORREÇÃO: Adicionamos with('curso') para carregar os dados do curso
             $query->with('curso')
                 ->where('role', 'aluno')
+                // 1. GARANTE QUE OS ALUNOS BUSCADOS SÃO DO MESMO CURSO DO USUÁRIO LOGADO
+                ->where('curso_id', $usuarioLogado->curso_id)
+                // 2. GARANTE QUE O PRÓPRIO USUÁRIO NÃO APAREÇA NA LISTA
+                ->where('id', '!=', $usuarioLogado->id)
+                // 3. BUSCA APENAS POR NOME OU RA, JÁ QUE O CURSO JÁ ESTÁ FILTRADO
                 ->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('ra', 'like', "%{$search}%")
-                        ->orWhereHas('curso', function ($cq) use ($search) {
-                            $cq->where('nome', 'like', "%{$search}%");
-                        });
+                    ->orWhere('ra', 'like', "%{$search}%");
                 });
+
         } elseif ($role === 'professor') {
             $query->where(function ($q) {
                 $q->where('role', 'like', 'professor%')
@@ -111,7 +127,6 @@ class ProjetoController extends Controller
 
         return response()->json($users);
     }
-
     /**
      * Armazena um novo projeto no banco de dados.c
      * Utiliza StoreProjetoRequest para validação dos dados.
@@ -259,8 +274,13 @@ class ProjetoController extends Controller
         // Agora, a autorização funcionará, pois o $projeto está correto
         $this->authorize('update', $projeto);
 
+         $autorProjeto = $projeto->user;
+
         // O restante do seu código para carregar dados para a view
-        $alunos = User::where('role', 'aluno')->orderBy('name')->get();
+        $alunos = User::where('role', 'aluno')
+                  ->where('curso_id', $autorProjeto->curso_id)
+                  ->orderBy('name')
+                  ->get();
 
         $professores = User::where('role', 'like', 'professor%')
                         ->orWhere('role', 'like', 'coordenador%')
@@ -495,7 +515,9 @@ public function update(UpdateProjetoRequest $request, $id)
             \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ProjetoSubmetidoPeloAluno($projeto));
         }
         
-        $avaliadores = \App\Models\User::whereIn('role', ['napex', 'coordenador'])->get();
+        // CORREÇÃO: Envia notificação apenas para o coordenador do curso do aluno e o NAPEX.
+        $avaliadores = $this->getEvaluationRecipients($projeto);
+        
         if ($avaliadores->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send($avaliadores, new \App\Notifications\PropostaEnviada($projeto));
         }
@@ -503,14 +525,41 @@ public function update(UpdateProjetoRequest $request, $id)
         return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto enviado para avaliação com sucesso!');
     }
 
+    private function getEvaluationRecipients(Projeto $projeto)
+    {
+        // 1. Carrega o curso do aluno que criou o projeto (o criador é o user()).
+        $projeto->load('user.curso');
+    
+        $cursoId = $projeto->user->curso_id;
+    
+        if (!$cursoId) {
+            // Se o aluno não tem curso, apenas notifica o NAPEX
+            return User::where('role', 'napex')->get();
+        }
+    
+        // 2. Busca o coordenador do curso do aluno.
+        $coordenador = User::where('role', 'coordenador')
+            ->whereHas('cursosCoordenados', function ($query) use ($cursoId) {
+                // Filtra usuários que coordenam o curso do aluno.
+                $query->where('curso_id', $cursoId);
+            })->first();
+    
+        // 3. Busca todos os usuários NAPEX
+        $napexUsers = User::where('role', 'napex')->get();
+    
+        // 4. Combina o coordenador (se encontrado) e os usuários NAPEX
+        $recipients = collect([]);
+        if ($coordenador) {
+            $recipients->push($coordenador);
+        }
+        
+        // Garante que não haja duplicatas e retorna a coleção.
+        $recipients = $recipients->merge($napexUsers)->unique('id');
+    
+        return $recipients;
+    }
+
     /**
-     * Permite que um projeto 'entregue' (mas ainda não avaliado/aprovado) volte para o status 'editando'.
-     * Pode ser útil se o aluno/professor perceber um erro logo após o envio.
-     *
-     * @param  string  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-/**
      * Permite que um projeto 'entregue' (mas ainda não avaliado) volte para 'editando'.
      * A autorização é tratada pela ProjetoPolicy@revertToEditing.
      *

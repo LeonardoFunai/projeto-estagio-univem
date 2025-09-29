@@ -115,6 +115,18 @@
                             <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
+                        <div>
+                            <label for="curso_id" class="block mb-1">Curso:</label>
+                            <select name="curso_id" id="curso_id" class="w-full border-gray-300 rounded-md py-1">
+                                <option value="">-- Todos --</option>
+                                @foreach($cursos as $curso)
+                                    <option value="{{ $curso->id }}" {{ request('curso_id') == $curso->id ? 'selected' : '' }}>
+                                        {{ $curso->nome }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Data Início de/até -->
                         <div class="col-span-2">
                             <label class="block mb-1">Data Início:</label>
@@ -195,6 +207,7 @@
                                 <th class="py-1 px-4 text-left">#</th>
                                 <!-- <th class="py-1 px-4 text-left">Cadastrado por</th> -->
                                 <th class="py-1 px-4 text-center">Título</th>
+                                <th class="py-1 px-4 text-center">Curso</th>
                                 <th class="py-1 px-4 text-center">Data Início</th>
                                 <th class="py-1 px-4 text-center">Data Fim</th>
                                 <th class="py-1 px-4 text-center">Aprovação NAPEx</th>
@@ -221,6 +234,11 @@
                                     <!-- Título -->
                                     <td class="py-2 px-6 text-center" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
                                         {{ $projeto->titulo }}
+                                    </td>
+
+                                    <!-- Curso -->
+                                    <td class="py-2 px-6 text-center" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
+                                            {{ $projeto->user->curso->nome_resumido ?? 'N/D' }}
                                     </td>
 
 

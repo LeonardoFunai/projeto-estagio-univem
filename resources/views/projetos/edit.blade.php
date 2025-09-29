@@ -281,7 +281,7 @@
                         const li = document.createElement('li');
                         li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
                         const courseName = user.curso ? user.curso.nome : 'N/A';
-                        li.textContent = type === 'aluno' ? `${user.name} (RA: ${user.ra || 'N/A'})` : `${user.name} (${user.email})`;
+                        li.textContent = type === 'aluno' ? `${user.name} (RA: ${user.ra || 'N/A'}, Curso: ${courseName})` : `${user.name} (${user.email})`;
                         li.dataset.id = user.id;
                         li.dataset.name = user.name;
                         li.dataset.ra = user.ra || '';
