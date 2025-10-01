@@ -87,8 +87,8 @@
         <title>Proposta de Atividade Extensionista - {{ $projeto->numero_projeto ?? 'N/A' }}</title>
         <style>
             @page {
-                margin-top: 160px; /* Espaço para header */
-                margin-bottom: 80px; /* Espaço para footer */
+                margin-top: 160px; 
+                margin-bottom: 80px;
                 margin-left: 20px;
                 margin-right: 20px;
             }
@@ -101,15 +101,15 @@
             }
             header {
                 position: fixed;
-                top: -140px; /* Deve ser negativo e relacionado ao margin-top de @page */
+                top: -140px; 
                 left: 0px;
                 right: 0px;
-                height: 120px; /* Altura efetiva do conteúdo do header */
+                height: 120px; 
                 background-color: #fff;
             }
             footer {
                 position: fixed;
-                bottom: -60px; /* Deve ser negativo e relacionado ao margin-bottom de @page */
+                bottom: -60px; 
                 left: 0px;
                 right: 0px;
                 height: 60px;
@@ -124,7 +124,7 @@
                 margin: 1px 0;
             }
             .content-wrapper {
-                /* O conteúdo começa após a margem definida em @page, não precisa de padding-top aqui */
+                
             }
             table {
                 width: 100%;
@@ -139,8 +139,8 @@
                 padding: 5px;
                 text-align: left;
                 vertical-align: top;
-                word-wrap: break-word; /* Quebra palavras longas para evitar overflow */
-                /* hyphens: auto; pode não ser bem suportado em todos os renderizadores de PDF */
+                word-wrap: break-word; 
+                
             }
             th {
                 background-color: #f0f0f0;
@@ -203,14 +203,14 @@
                 margin-bottom: 30px;
             }
             .parecer-checkbox {
-                font-family: 'DejaVu Sans', sans-serif; /* Para o 'X' ou '✔' */
+                font-family: 'DejaVu Sans', sans-serif; 
                 display: inline-block;
-                width: 13px; /* Ajustado */
-                height: 13px; /* Ajustado */
-                line-height: 13px; /* Ajustado */
+                width: 13px; 
+                height: 13px; 
+                line-height: 13px; 
                 text-align: center;
                 margin-right: 2px;
-                vertical-align: middle; /* Alinha melhor com o texto */
+                vertical-align: middle; 
             }
             .section-title th {
                 text-align: center !important;

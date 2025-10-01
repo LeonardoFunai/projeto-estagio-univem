@@ -123,62 +123,56 @@
 
                 
 
-                @php
-                    $role = auth()->user()->role;
-                    $isAluno = $role === 'aluno';
-                    $isProfessor = $role === 'professor';
-                    $podeEditar = $projeto->status === 'editando';
-                    $podeVoltar = $projeto->status === 'entregue' 
-                        && $projeto->aprovado_napex === 'pendente' 
-                        && $projeto->aprovado_coordenador === 'pendente';
-                @endphp
+                {{-- ======================= BLOCO DE AÇÕES ======================= --}}
+                <div class="mb-4 flex flex-wrap items-start gap-2">
 
-               
-
-                <div class="mb-4 flex flex-wrap gap-2">
-                    {{-- Botão Gerar PDF agora está no mesmo contêiner --}}
-                    <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" class="w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded flex items-center gap-2">
-                        Gerar PDF
+                    {{-- Botão de Gerar PDF (visível para todos que podem ver a proposta) --}}
+                    <a href="{{ route('projetos.gerarPdf', $projeto->id) }}" 
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-red-700">
+                    Gerar PDF
                     </a>
-                    @if ($isAluno || $isProfessor)
-                        @if ($podeEditar)
-                            {{-- Botão Editar --}}
-                            <a href="{{ route('projetos.edit', ['id' => $projeto->id, 'origem' => 'show']) }}"
-                                class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4  rounded flex items-center gap-2">
-                                <img src="{{ asset('img/site/btn-editar.png') }}" alt="Editar" width="16" height="15">
-                                Editar Proposta
-                            </a>
 
-                            {{-- Botão Enviar (somente aluno) --}}
-                            @if ($isAluno)
-                                <form action="{{ route('projetos.enviar', $projeto->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit"
-                                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
-                                        <img src="{{ asset('img/site/btn-enviar.png') }}" alt="Enviar projeto" width="18" height="20">
-                                        Enviar Projeto
-                                    </button>
-                                </form>
-                            @endif
-                        @elseif ($podeVoltar)
-                            {{-- Botão Voltar para edição --}}
-                            <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
-                                @csrf
-                                <button type="submit"
-                                    class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
-                                    <img src="{{ asset('img/site/btn-voltar-editar.png') }}" alt="Voltar para edição" width="20" height="20">
+                    {{-- Botão de Editar (controlado pela Policy) --}}
+                    @can('update', $projeto)
+                        <a href="{{ route('projetos.edit', $projeto->id) }}" 
+                        class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-yellow-700">
+                        Editar Proposta
+                        </a>
+                    @endcan
+
+                    {{-- Botão de Enviar (controlado pela Policy) --}}
+                    @can('submit', $projeto)
+                        <form action="{{ route('projetos.enviar', $projeto->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" 
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-green-700">
+                                    Enviar Proposta
+                            </button>
+                        </form>
+                    @endcan
+
+                    {{-- Botão de Voltar para Edição (controlado pela Policy) --}}
+                    @can('revertToEditing', $projeto)
+                        <form action="{{ route('projetos.voltar', $projeto->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" 
+                                    class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-yellow-700">
                                     Voltar para Edição
-                                </button>
-                            </form>
-                        @endif
-                    @endif
+                            </button>
+                        </form>
+                    @endcan
 
-                   @if (($projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído') && $projeto->resultado)
-                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório"  class="w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded flex items-center gap-2" >Ver Resultado</a>
+                    {{-- Botão para Ver o Resultado --}}
+                    @if (($projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído') && $projeto->resultado)
+                        <a href="{{ route('resultados.show', $projeto->resultado) }}" 
+                        title="Visualizar Relatório" 
+                        class="inline-flex items-center px-4 py-2 bg-cyan-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-cyan-700">
+                        Ver Resultado
+                        </a>
                     @endif
-                    
 
                 </div>
+                {{-- ============================================================================== --}}
                 
                 
                 <!-- TABELA 1 - Detalhes do Projeto -->
@@ -470,7 +464,9 @@
                         <form id="form-parecer-napex" method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
                             @csrf
                             <label>Número do Projeto</label>
-                            <input type="text" name="numero_projeto" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('numero_projeto', $projeto->numero_projeto) }}">
+                            <div class="mb-4 p-3 bg-blue-100 border-l-4 border-blue-500 text-blue-700">
+                                <p class="text-sm">Ao aprovar, um número de projeto será gerado automaticamente no formato <strong>ANO-SEQUENCIAL</strong> (ex: {{ date('Y') }}-001).</p>
+                            </div>
 
 
                             <label>Aprovação</label>

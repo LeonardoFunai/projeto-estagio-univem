@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-9xl mx-auto sm:px-6 lg:px-0">
             {{-- Alertas --}}
             @if (session('success'))
                 <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -23,6 +23,9 @@
                 <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
                     Adicionar Usuário
                 </a>
+                <a href="{{ route('admin.users.showImportForm') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
+                    Importar Alunos
+                </a>
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -33,10 +36,13 @@
                         <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap items-center gap-2 w-full md:w-auto">
                             <input type="text" name="search" placeholder="Buscar por nome ou email..." class="border-gray-300 rounded-md shadow-sm" value="{{ $search ?? '' }}">
                             
+                            {{-- --- ADICIONADO: Novos campos de filtro para CPF e R.A. --- --}}
+                            <input type="text" name="cpf" placeholder="Filtrar por CPF..." class="border-gray-300 rounded-md shadow-sm" value="{{ $cpf ?? '' }}">
+                            <input type="text" name="ra" placeholder="Filtrar por R.A...." class="border-gray-300 rounded-md shadow-sm" value="{{ $ra ?? '' }}">
+                            
                             <select name="role" class="border-gray-300 rounded-md shadow-sm">
                                 <option value="">Todos os Perfis</option>
                                 @foreach ($roles as $roleOption)
-                                    {{-- CORREÇÃO: Unifica as roles de coordenador para o filtro --}}
                                     <option value="{{ $roleOption }}" @if(isset($role) && $role == $roleOption) selected @endif>{{ ucfirst($roleOption) }}</option>
                                 @endforeach
                             </select>
@@ -44,7 +50,7 @@
                             <select name="curso_id" class="border-gray-300 rounded-md shadow-sm">
                                 <option value="">Todos os Cursos</option>
                                 @foreach ($cursos as $curso)
-                                    <option value="{{ $curso->id }}" @if(isset($curso_id) && $curso_id == $curso->id) selected @endif>{{ $curso->nome }}</option>
+                                    <option value="{{ $curso->id }}" @if(isset($curso_id) && $curso_id == $curso->id) selected @endif>{{ $curso->nome_resumido }}</option>
                                 @endforeach
                             </select>
 
@@ -59,9 +65,12 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    {{-- --- ADICIONADO: Novas colunas na tabela --- --}}
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CPF</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">R.A.</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perfil</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso(s)</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase max-w-xs">Curso(s)</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -69,16 +78,30 @@
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->email }}</td>
+                                    {{-- --- ADICIONADO: Exibição dos novos dados --- --}}
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $user->cpf ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $user->ra ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($user->role) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {{-- CORREÇÃO: Exibe os cursos do coordenador ou do aluno --}}
-                                        @if ($user->role === 'coordenador' && $user->cursosCoordenados->isNotEmpty())
-                                            {{ $user->cursosCoordenados->pluck('nome')->implode(', ') }}
-                                        @elseif ($user->role === 'aluno' && $user->curso)
-                                            {{ $user->curso->nome }}
-                                        @else
-                                            N/A
-                                        @endif
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $cursosResumidos = 'N/A';
+                                            $cursosCompletos = 'N/A';
+
+                                            if ($user->role === 'coordenador' && $user->cursosCoordenados->isNotEmpty()) {
+                                                // Pega os nomes resumidos para exibir e os completos para o "title"
+                                                $cursosResumidos = $user->cursosCoordenados->map->nome_resumido->implode(', ');
+                                                $cursosCompletos = $user->cursosCoordenados->pluck('nome')->implode(', ');
+
+                                            } elseif ($user->role === 'aluno' && $user->curso) {
+                                                // Faz o mesmo para o aluno, para manter o padrão
+                                                $cursosResumidos = $user->curso->nome_resumido;
+                                                $cursosCompletos = $user->curso->nome;
+                                            }
+                                        @endphp
+                                        {{-- O title mostra os nomes completos, e o texto exibe os resumidos --}}
+                                        <div class="truncate" title="{{ $cursosCompletos }}">
+                                            {{ $cursosResumidos }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
@@ -91,7 +114,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

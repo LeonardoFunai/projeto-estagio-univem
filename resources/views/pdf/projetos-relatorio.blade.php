@@ -30,7 +30,7 @@
 
             footer {
                 position: fixed;
-                bottom: -60px;
+                bottom: -70px;
                 left: 0;
                 right: 0;
                 height: 60px;
@@ -63,10 +63,11 @@
             }
 
             table {
-                width: 90%;
-                margin: 20px auto;
+                width: 100%;
+                margin: 10px auto;
                 border-collapse: collapse;
                 margin-bottom: 80px;
+                table-layout: fixed; 
             }
 
             th, td {
@@ -140,6 +141,11 @@
                     if (!empty($filtros['titulo']))
                         $campos[] = "<strong>Título:</strong> {$filtros['titulo']}";
 
+                    if (!empty($filtros['curso_id'])) {
+                        $cursoNome = \App\Models\Curso::find($filtros['curso_id'])->nome ?? 'ID ' . $filtros['curso_id'];
+                        $campos[] = "<strong>Curso:</strong> {$cursoNome}";
+                    }
+
                     // LINHA ADICIONADA PARA O NOVO FILTRO
                     if (!empty($filtros['etapa']))
                         $campos[] = "<strong>Etapa:</strong> {$filtros['etapa']}";
@@ -191,6 +197,7 @@
             <tr>
                 <th>#</th>
                 <th>Título</th>
+                <th>Curso</th>
                 <th>Data Início</th>
                 <th>Data Fim</th>
                 <th>Aprovação NAPEx</th>
@@ -203,7 +210,8 @@
     @foreach($projetos as $index => $projeto)
         <tr>
             <td>{{ $index + 1 }}</td>
-            <td style="width: 30%;">{{ $projeto->titulo }}</td>
+            <td style="width: 30%; word-wrap: break-word;">{{ $projeto->titulo }}</td>
+            <td>{{ $projeto->user->curso->nome ?? 'N/D' }}</td>
             <td class="text-center">{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
             <td class="text-center">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
             

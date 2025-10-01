@@ -17,6 +17,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         // Mapeia o Model Projeto para a sua respectiva Policy
         Projeto::class => ProjetoPolicy::class,
+        User::class => UserPolicy::class,
     ];
 
     /**

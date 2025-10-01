@@ -13,7 +13,6 @@
                         @csrf
                         @method('PUT')
                         
-                        {{-- Informações Básicas --}}
                         <div>
                             <x-input-label for="name" :value="__('Nome Completo')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name)" required autofocus />
@@ -26,46 +25,42 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        {{-- Perfil (Role) --}}
                         <div class="mt-4">
                             <x-input-label for="role" :value="__('Perfil do Usuário')" />
-                            <select id="role" name="role" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
-                                <option value="aluno" @if(old('role', $user->role) == 'aluno') selected @endif>Aluno</option>
-                                <option value="professor" @if(old('role', $user->role) == 'professor') selected @endif>Professor</option>
-                                <option value="admin" @if(old('role', $user->role) == 'admin') selected @endif>Admin</option>
-                                <option value="napex" @if(old('role', $user->role) == 'napex') selected @endif>NAPEX</option>
-                                <optgroup label="Coordenadores">
-                                    <option value="coordenador_adm" @if(old('role', $user->role) == 'coordenador_adm') selected @endif>Coordenador de Administração</option>
-                                    <option value="coordenador_cc" @if(old('role', $user->role) == 'coordenador_cc') selected @endif>Coordenador de Ciência da Computação</option>
-                                    <option value="coordenador_contabeis" @if(old('role', $user->role) == 'coordenador_contabeis') selected @endif>Coordenador de Ciências Contábeis</option>
-                                    <option value="coordenador_design" @if(old('role', $user->role) == 'coordenador_design') selected @endif>Coordenador de Design Gráfico</option>
-                                    <option value="coordenador_direito" @if(old('role', $user->role) == 'coordenador_direito') selected @endif>Coordenador de Direito</option>
-                                    <option value="coordenador_producao" @if(old('role', $user->role) == 'coordenador_producao') selected @endif>Coordenador de Engenharia de Produção</option>
-                                    <option value="coordenador_si" @if(old('role', $user->role) == 'coordenador_si') selected @endif>Coordenador de Sistemas de Informação</option>
-                                </optgroup>
-                            </select>
+                            
+                            @if(auth()->user()->role === 'admin' && auth()->id() !== $user->id)
+                                <select id="role" name="role" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
+                                    <option value="aluno" @if(old('role', $user->role) == 'aluno') selected @endif>Aluno</option>
+                                    <option value="professor" @if(old('role', $user->role) == 'professor') selected @endif>Professor</option>
+                                    <option value="napex" @if(old('role', $user->role) == 'napex') selected @endif>NAPEX</option>
+                                    <option value="coordenador" @if(old('role', $user->role) == 'coordenador') selected @endif>Coordenador</option>
+                                    <option value="admin" @if(old('role', $user->role) == 'admin') selected @endif>Admin</option>
+                                </select>
+                            @else
+                                <x-text-input id="role-display" class="block mt-1 w-full bg-gray-100 cursor-not-allowed" type="text" :value="ucfirst($user->role)" disabled />
+                                <input type="hidden" name="role" value="{{ $user->role }}">
+                            @endif
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>
 
-                        {{-- Campos Condicionais para Aluno --}}
                         <div id="dados-aluno" class="hidden mt-4 space-y-4 p-4 border rounded-md bg-gray-50">
                              <p class="font-medium text-sm text-gray-700">Informações Adicionais do Aluno</p>
                             
-                            <div>
+                             <div>
                                 <x-input-label for="cpf" :value="__('CPF')" />
                                 <x-text-input id="cpf" class="block mt-1 w-full" type="text" name="cpf" :value="old('cpf', $user->cpf)" />
                                 <x-input-error :messages="$errors->get('cpf')" class="mt-2" />
                             </div>
-                            
+
                             <div>
                                 <x-input-label for="ra" :value="__('R.A.')" />
                                 <x-text-input id="ra" class="block mt-1 w-full" type="text" name="ra" :value="old('ra', $user->ra)" />
                                 <x-input-error :messages="$errors->get('ra')" class="mt-2" />
                             </div>
 
-                            <div>
+                             <div>
                                 <x-input-label for="data_nascimento" :value="__('Data de Nascimento')" />
-                                <x-text-input id="data_nascimento" class="block mt-1 w-full" type="date" name="data_nascimento" :value="old('data_nascimento', $user->data_nascimento ? $user->data_nascimento->format('Y-m-d') : '')" />
+                                <x-text-input id="data_nascimento" class="block mt-1 w-full" type="date" name="data_nascimento" :value="old('data_nascimento', $user->data_nascimento ? \Carbon\Carbon::parse($user->data_nascimento)->format('Y-m-d') : '')" />
                                 <x-input-error :messages="$errors->get('data_nascimento')" class="mt-2" />
                             </div>
 
@@ -80,8 +75,18 @@
                                 <x-input-error :messages="$errors->get('curso_id')" class="mt-2" />
                             </div>
                         </div>
+                        
+                        @if(auth()->user()->role === 'admin')
+                            <div id="dados-coordenador" class="hidden mt-4 space-y-4 p-4 border rounded-md bg-gray-50">
+                                 <p class="font-medium text-sm text-gray-700">Cursos Coordenados</p>
+                                 <select id="cursos_coordenados" name="cursos_coordenados[]" multiple class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                     @foreach ($cursos as $curso)
+                                         <option value="{{ $curso->id }}" @if($user->cursosCoordenados->contains($curso->id)) selected @endif>{{ $curso->nome }}</option>
+                                     @endforeach
+                                 </select>
+                            </div>
+                        @endif
 
-                        {{-- Senha --}}
                         <div class="mt-4">
                             <x-input-label for="password" :value="__('Nova Senha (deixe em branco para manter a atual)')" />
                             <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" autocomplete="new-password" />
@@ -111,17 +116,23 @@
         document.addEventListener('DOMContentLoaded', function () {
             const roleSelect = document.getElementById('role');
             const dadosAlunoDiv = document.getElementById('dados-aluno');
+            const dadosCoordenadorDiv = document.getElementById('dados-coordenador');
 
-            function toggleDadosAluno() {
-                if (roleSelect.value === 'aluno') {
-                    dadosAlunoDiv.classList.remove('hidden');
-                } else {
-                    dadosAlunoDiv.classList.add('hidden');
+            function toggleConditionalFields() {
+                const currentRole = roleSelect ? roleSelect.value : document.querySelector('input[name="role"]').value;
+
+                dadosAlunoDiv.classList.toggle('hidden', currentRole !== 'aluno');
+                
+                if (dadosCoordenadorDiv) {
+                    dadosCoordenadorDiv.classList.toggle('hidden', currentRole !== 'coordenador');
                 }
             }
             
-            toggleDadosAluno();
-            roleSelect.addEventListener('change', toggleDadosAluno);
+            toggleConditionalFields();
+
+            if (roleSelect) {
+                roleSelect.addEventListener('change', toggleConditionalFields);
+            }
         });
     </script>
 </x-app-layout>

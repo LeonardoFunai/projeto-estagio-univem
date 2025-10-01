@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\Projeto; 
 
 class UpdateProjetoRequest extends FormRequest
 {
@@ -21,7 +22,8 @@ class UpdateProjetoRequest extends FormRequest
      */
     public function rules(): array
     {
-        $cursoDoAutorId = auth()->user()->curso_id;
+        $projeto = Projeto::find($this->route('id'));
+        $cursoDoAutorId =$projeto->user->curso_id;
         $user = $this->user();
         $todosOsMeses = [
             'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -60,13 +62,7 @@ class UpdateProjetoRequest extends FormRequest
             'cronograma.*.mes_fim' => ['required', 'string', Rule::in($todosOsMeses)],
         ];
         
-        // Regras para o Coordenador (apenas parecer)
-        if (str_starts_with($user->role, 'coordenador')) {
-            return [
-                'aprovado_coordenador' => ['required', 'string', Rule::in(['sim', 'nao'])],
-                'motivo_coordenador' => ['nullable', 'string', 'required_if:aprovado_coordenador,nao', 'max:2000'],
-            ];
-        }
+        
 
         // Regras para o NAPEX (apenas parecer e número do projeto)
         if ($user->role === 'napex') {

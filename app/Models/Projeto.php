@@ -105,4 +105,24 @@ class Projeto extends Model
     {
         return $this->hasMany(ProjetoLog::class)->latest();
     }
+
+        /**
+     * Define a relação para buscar apenas os participantes que são ALUNOS.
+     */
+    public function alunos(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'projeto_user')->where('role', 'aluno');
+    }
+
+    /**
+     * Define a relação para buscar apenas os participantes que são PROFESSORES.
+     */
+    public function professores(): BelongsToMany
+        {
+            return $this->belongsToMany(User::class, 'projeto_user')
+                        ->where(function ($query) {
+                            $query->where('role', 'like', 'professor%')
+                                ->orWhere('role', 'like', 'coordenador%');
+                        });
+        }
 }

@@ -174,17 +174,57 @@
 
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                
                 <h3 class="text-lg font-bold text-gray-800 mb-4">IDENTIFICAÇÃO DO PROJETO</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    
+                    {{-- Título --}}
                     <div>
                         <strong class="text-gray-600">Título:</strong>
                         <p class="text-gray-900">{{ $resultado->projeto->titulo }}</p>
                     </div>
+
+                    {{-- Número do Projeto --}}
+                    <div>
+                        <strong class="text-gray-600">Número do Projeto:</strong>
+                        <p class="text-gray-900 font-mono">{{ $resultado->projeto->numero_projeto ?? 'Aguardando aprovação do NAPEX' }}</p>
+                    </div>
+
+                    {{-- Período --}}
                     <div>
                         <strong class="text-gray-600">Período:</strong>
                         <p class="text-gray-900">{{ $resultado->projeto->periodo }}</p>
                     </div>
+
+                    {{-- Carga Horária Total --}}
+                    <div>
+                        <strong class="text-gray-600">Carga Horária Total:</strong>
+                        <p class="text-gray-900">{{ $resultado->projeto->atividades->sum('carga_horaria') }} horas</p>
+                    </div>
+
+                    {{-- Professores Envolvidos --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <strong class="text-gray-600">Professor(es) Orientador(es):</strong>
+                        <p class="text-gray-900">
+                            @if($resultado->projeto->professores && $resultado->projeto->professores->isNotEmpty())
+                                {{ $resultado->projeto->professores->pluck('name')->implode(', ') }}
+                            @else
+                                Nenhum professor vinculado.
+                            @endif
+                        </p>
+                    </div>
+                    
+                    {{-- Alunos Envolvidos --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <strong class="text-gray-600">Alunos Envolvidos:</strong>
+                        <ul class="list-disc list-inside mt-1 text-gray-900">
+                            @forelse($resultado->projeto->alunos ?? [] as $aluno)
+                                <li>{{ $aluno->name }} (RA: {{ $aluno->ra ?? 'N/A' }})</li>
+                            @empty
+                                <li>Nenhum aluno vinculado.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+
                 </div>
             </div>
 

@@ -98,14 +98,18 @@ class ResultadoController extends Controller
     {
         $this->authorize('view', $resultado);
 
-        // Pega a direção da ordenação da URL (?sort=asc), o padrão é 'desc'
         $sortDirection = $request->query('sort', 'desc');
         if (!in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
-
-        // Carrega as relações necessárias, incluindo todos os logs do projeto
-        $resultado->load(['projeto.user', 'rejeicoes.user', 'projeto.todosOsLogs.user']);
+        $resultado->load([
+                'projeto.user',
+                'projeto.alunos',          // Carrega a nova relação de alunos
+                'projeto.professores',     // Carrega a nova relação de professores
+                'projeto.atividades', 
+                'rejeicoes.user',
+                'projeto.todosOsLogs.user'
+            ]);
 
         // Ordena a coleção de logs
         $logs = $resultado->projeto->todosOsLogs;
@@ -368,14 +372,13 @@ class ResultadoController extends Controller
 
         $this->authorize('view', $resultado);
 
-        // CORREÇÃO: Usa o relacionamento 'users' e remove a linha duplicada
         $resultado->load(['projeto.users.curso', 'anexos']);
         $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
         
 
-        $nomeArquivo = "relatorio_resultados_{$resultado->projeto->id}.pdf";
+        $numero = $resultado->projeto->numero_projeto ?? "ID-{$resultado->projeto->id}";
+        $nomeArquivo = "{$numero}-relatorio.pdf";
         
-
         return $pdf->download($nomeArquivo);
     }
 }

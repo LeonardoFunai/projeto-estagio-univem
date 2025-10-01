@@ -361,22 +361,33 @@ public function update(UpdateProjetoRequest $request, $id)
      */
     public function avaliarNapex(Request $request, $id)
     {
-
         $projeto = Projeto::with('user', 'users')->findOrFail($id);
         $this->authorize('approveByNapex', $projeto);
 
         $validatedData = $request->validate([
             'aprovado_napex' => 'required|in:sim,nao',
             'motivo_napex' => 'nullable|string|required_if:aprovado_napex,nao|max:2000',
-            'numero_projeto' => 'nullable|string|max:255',
         ]);
 
         $projeto->fill($validatedData);
         $projeto->data_parecer_napex = now();
-        if ($projeto->aprovado_napex === 'sim' && isset($validatedData['numero_projeto'])) {
-            $projeto->numero_projeto = $validatedData['numero_projeto'];
+
+        if ($projeto->aprovado_napex === 'sim' && empty($projeto->numero_projeto)) {
+            $ano = now()->year;
+
+            $ultimoProjeto = Projeto::where('numero_projeto', 'like', $ano . '-%')
+                                    ->orderBy('numero_projeto', 'desc')
+                                    ->first();
+
+            $proximoNumero = 1;
+            if ($ultimoProjeto) {
+                $ultimoSequencial = (int) substr($ultimoProjeto->numero_projeto, -3);
+                $proximoNumero = $ultimoSequencial + 1;
+            }
+
+            $projeto->numero_projeto = $ano . '-' . str_pad($proximoNumero, 3, '0', STR_PAD_LEFT);
         }
-        
+
         $projeto->save();
 
         $aluno = $projeto->user;
@@ -649,8 +660,11 @@ public function update(UpdateProjetoRequest $request, $id)
             });
 
             $pdf = Pdf::loadView('projetos.pdf', compact('projeto', 'alunos', 'professores'));
+             $numero = $projeto->numero_projeto ?? "ID-{$projeto->id}";
+            $nomeArquivo = "{$numero}-proposta.pdf";
+
             
-            return $pdf->download($projeto->id . '-proposta.pdf');
+            return $pdf->download($nomeArquivo);
         }
 
     public function exportarLogPdf(Projeto $projeto)

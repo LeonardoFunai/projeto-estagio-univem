@@ -55,7 +55,7 @@ class Curso extends Model
             'Análise e Desenvolvimento de Sistemas' => 'ADS',
             'Ciência da Computação' => 'CC',
             'Ciências Contábeis' => 'Contábeis',
-            'Engenharia de Computação' => 'ECO',
+            'Engenharia de Produção' => 'Produção',
             'Sistemas de Informação' => 'SI',
             'Direito' => 'Direito',
             'Administração' => 'ADM',

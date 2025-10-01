@@ -60,7 +60,13 @@
         <h3 class="section-title">Identificação</h3>
         <p><strong>Título:</strong> {{ $resultado->projeto->titulo }}</p>
         <p><strong>Período:</strong> {{ $resultado->projeto->periodo }}</p>
-        <p><strong>Professor(es) envolvidos:</strong> {{ $resultado->projeto->professores->pluck('nome')->implode(', ') }}</p>
+        <p><strong>Professor(es) envolvidos:</strong>
+            @if($resultado->projeto && $resultado->projeto->professores && $resultado->projeto->professores->isNotEmpty())
+                {{ $resultado->projeto->professores->pluck('name')->implode(', ') }}
+            @else
+                Nenhum professor vinculado.
+            @endif
+        </p>
     </div>
 
     <div class="content-box">
@@ -68,12 +74,22 @@
         <table>
             <thead><tr><th>Nome do Aluno</th><th>RA</th><th>Curso</th></tr></thead>
             <tbody>
-                @foreach($resultado->projeto->alunos as $aluno)
-                <tr><td>{{ $aluno->nome }}</td><td>{{ $aluno->ra }}</td><td>{{ $aluno->curso->nome }}</td></tr>
-                @endforeach
+                {{-- Bloco corrigido para Alunos --}}
+                @forelse($resultado->projeto->alunos ?? [] as $aluno)
+                <tr>
+                    <td>{{ $aluno->name ?? 'N/A' }}</td>
+                    <td>{{ $aluno->ra ?? 'N/A' }}</td>
+                    <td>{{ $aluno->curso->nome ?? 'N/A' }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="3">Nenhum aluno vinculado.</td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
+
 
     @if($resultado->parceiro_organizacao)
     <div class="content-box">

@@ -25,30 +25,22 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        {{-- Perfil (Role) --}}
-                        <div class="mt-4">
-                            <x-input-label for="role" :value="__('Perfil do Usuário')" />
-                            <select id="role" name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-                                <option value="">-- Selecione um perfil --</option>
-                                <option value="aluno" @if(old('role') == 'aluno') selected @endif>Aluno</option>
-                                <option value="professor" @if(old('role') == 'professor') selected @endif>Professor</option>
-                                <option value="admin" @if(old('role') == 'admin') selected @endif>Admin</option>
-                                <option value="napex" @if(old('role') == 'napex') selected @endif>NAPEX</option>
-                                <optgroup label="Coordenadores">
-                                    <option value="coordenador_adm" @if(old('role') == 'coordenador_adm') selected @endif>Coordenador de Administração</option>
-                                    <option value="coordenador_cc" @if(old('role') == 'coordenador_cc') selected @endif>Coordenador de Ciência da Computação</option>
-                                    <option value="coordenador_contabeis" @if(old('role') == 'coordenador_contabeis') selected @endif>Coordenador de Ciências Contábeis</option>
-                                    <option value="coordenador_design" @if(old('role') == 'coordenador_design') selected @endif>Coordenador de Design Gráfico</option>
-                                    <option value="coordenador_direito" @if(old('role') == 'coordenador_direito') selected @endif>Coordenador de Direito</option>
-                                    <option value="coordenador_producao" @if(old('role') == 'coordenador_producao') selected @endif>Coordenador de Engenharia de Produção</option>
-                                    <option value="coordenador_si" @if(old('role') == 'coordenador_si') selected @endif>Coordenador de Sistemas de Informação</option>
-                                </optgroup>
-                            </select>
-                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-                        </div>
+                        @if(auth()->user()->role === 'admin')
+                            <div class="mt-4">
+                                <x-input-label for="role" :value="__('Perfil do Usuário')" />
+                                <select id="role" name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                    <option value="">-- Selecione um perfil --</option>
+                                    <option value="aluno" @if(old('role') == 'aluno') selected @endif>Aluno</option>
+                                    <option value="professor" @if(old('role') == 'professor') selected @endif>Professor</option>
+                                    <option value="napex" @if(old('role') == 'napex') selected @endif>NAPEX</option>
+                                    <option value="coordenador" @if(old('role') == 'coordenador') selected @endif>Coordenador</option>
+                                    <option value="admin" @if(old('role') == 'admin') selected @endif>Admin</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                            </div>
+                        @endif
 
-                        {{-- Campos Condicionais para Aluno --}}
-                        <div id="dados-aluno" class="hidden mt-4 space-y-4 p-4 border rounded-md bg-gray-50">
+                        <div id="dados-aluno" class="{{ auth()->user()->role === 'admin' ? 'hidden' : '' }} mt-4 space-y-4 p-4 border rounded-md bg-gray-50">
                             <p class="font-medium text-sm text-gray-700">Informações Adicionais do Aluno</p>
                             
                             <div>
@@ -80,8 +72,16 @@
                                 <x-input-error :messages="$errors->get('curso_id')" class="mt-2" />
                             </div>
                         </div>
+                        
+                        <div id="dados-coordenador" class="hidden mt-4 space-y-4 p-4 border rounded-md bg-gray-50">
+                             <p class="font-medium text-sm text-gray-700">Cursos Coordenados</p>
+                             <select id="cursos_coordenados" name="cursos_coordenados[]" multiple class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                 @foreach ($cursos as $curso)
+                                     <option value="{{ $curso->id }}">{{ $curso->nome }}</option>
+                                 @endforeach
+                             </select>
+                        </div>
 
-                        {{-- Senha --}}
                         <div class="mt-4">
                             <x-input-label for="password" :value="__('Senha')" />
                             <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
@@ -111,20 +111,19 @@
         document.addEventListener('DOMContentLoaded', function () {
             const roleSelect = document.getElementById('role');
             const dadosAlunoDiv = document.getElementById('dados-aluno');
+            const dadosCoordenadorDiv = document.getElementById('dados-coordenador');
 
-            function toggleDadosAluno() {
-                if (roleSelect.value === 'aluno') {
-                    dadosAlunoDiv.classList.remove('hidden');
-                } else {
-                    dadosAlunoDiv.classList.add('hidden');
-                }
+            function toggleConditionalFields() {
+                if (!roleSelect) return;
+
+                dadosAlunoDiv.classList.toggle('hidden', roleSelect.value !== 'aluno');
+                dadosCoordenadorDiv.classList.toggle('hidden', roleSelect.value !== 'coordenador');
             }
 
-            // Executa a função quando a página carrega
-            toggleDadosAluno();
-
-            // Adiciona o listener para mudanças no select
-            roleSelect.addEventListener('change', toggleDadosAluno);
+            if(roleSelect) {
+                toggleConditionalFields();
+                roleSelect.addEventListener('change', toggleConditionalFields);
+            }
         });
     </script>
 </x-app-layout>

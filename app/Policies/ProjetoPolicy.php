@@ -99,8 +99,8 @@ class ProjetoPolicy
      */
     public function submit(User $user, Projeto $projeto): bool
     {
-        // Apenas participantes podem enviar, e somente se o status for 'editando'.
-        if ($projeto->status === 'editando') {
+        // Apenas participantes com o perfil 'aluno' podem enviar, e somente se o status for 'editando'.
+        if ($projeto->status === 'editando' && $user->role === 'aluno') {
             return $projeto->users()->where('user_id', $user->id)->exists();
         }
         return false;
