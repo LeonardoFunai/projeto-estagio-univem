@@ -17,7 +17,7 @@
         .header-logo { height: 50px; }
         .main-title { text-align: center; font-size: 14px; font-weight: bold; margin-top: 10px; margin-bottom: 20px; }
         .section-title { font-size: 12px; font-weight: bold; margin-top: 10px; margin-bottom: 5px; }
-        .content-box { border: 1px solid #ccc; padding: 5px; margin-bottom:5px; page-break-inside: avoid; }
+        .content-box { border: 1px solid #ccc; padding: 5px; margin-bottom:5px;  }
         .signature-line { border-top: 1px solid #000; margin-top: 20px; width: 300px; }
         .signature-container { margin-top: 60px; page-break-inside: avoid; }
         .signature-container h3 { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 12px; }
@@ -27,30 +27,12 @@
         .validation-container td { height: 60px; text-align: center; vertical-align: middle; }
         .final-date { text-align: center; margin-top: 40px; }
 
-        /* --- ESTILOS PARA FIGURAS (ABNT) --- */
-        .figura-container {
-            width: 100%;
-            text-align: center; /* Centraliza a imagem e a legenda */
-            margin-top: 15px;
-            margin-bottom: 25px;
-            page-break-inside: avoid;
-        }
-        .figura-container img {
-            max-width: 85%; /* Evita que a imagem ultrapasse as margens */
-            height: auto;
-            border: 1px solid #ddd;
-        }
-        .legenda {
-            font-size: 10px; /* Fonte menor para a legenda */
-            margin-top: 8px;
-            text-align: center;
-        }
-        .fonte {
-            font-size: 10px;
-            margin-top: 4px;
-            text-align: center;
-        }
-        /* --- FIM DOS ESTILOS --- */
+        .anexo-imagem {
+        max-width: 100%;   
+        height: auto;      
+        margin-top: 10px; 
+        margin-bottom: 15px; 
+    }
     </style>
 </head>
 <body>
@@ -75,11 +57,14 @@
     <h2 class="main-title">RELATÓRIO DE MENSURAÇÃO DE RESULTADOS<br><small style="font-weight: normal;">CURRICULARIZAÇÃO DA EXTENSÃO <br> Resolução CNE/CES Nº 7 de 18/12/2018</small></h2>
 
     <div class="content-box">
-        <h3 class="section-title">Identificação</h3>
+        <h3 class="section-title">1. IDENTIFICAÇÃO DO PROJETO</h3>
         <p><strong>Título:</strong> {{ $resultado->projeto->titulo }}</p>
+        <p><strong>Número do Projeto:</strong> {{ $resultado->projeto->numero_projeto ?? 'Aguardando aprovação do NAPEX' }}</p>
         <p><strong>Período:</strong> {{ $resultado->projeto->periodo }}</p>
-        <p><strong>Professor(es) envolvidos:</strong>
-            @if($resultado->projeto && $resultado->projeto->professores && $resultado->projeto->professores->isNotEmpty())
+        <p><strong>Carga Horária Total:</strong> {{ $resultado->projeto->atividades->sum('carga_horaria') }} horas</p>
+        <p>
+            <strong>Professor(es) Orientador(es):</strong>
+            @if($resultado->projeto->professores->isNotEmpty())
                 {{ $resultado->projeto->professores->pluck('name')->implode(', ') }}
             @else
                 Nenhum professor vinculado.
@@ -92,6 +77,7 @@
         <table>
             <thead><tr><th>Nome do Aluno</th><th>RA</th><th>Curso</th></tr></thead>
             <tbody>
+                {{-- Bloco corrigido para Alunos --}}
                 @forelse($resultado->projeto->alunos ?? [] as $aluno)
                 <tr>
                     <td>{{ $aluno->name ?? 'N/A' }}</td>
@@ -106,6 +92,7 @@
             </tbody>
         </table>
     </div>
+
 
     @if($resultado->parceiro_organizacao)
     <div class="content-box">
@@ -128,60 +115,63 @@
         <p style="white-space: pre-wrap;">{{ $resultado->atividades_desenvolvidas }}</p>
     </div>
 
-    {{-- ========================================================== --}}
-    {{--                INÍCIO DA SEÇÃO ATUALIZADA                  --}}
-        {{-- ========================================================== --}}
-    @if($resultado->anexos->isNotEmpty())
-        <div class="content-box">
-            <h3 class="section-title">Anexos Comprobatórios</h3>
 
-            @php
-                $figuraCount = 1;
-                $outrosArquivos = $resultado->anexos->filter(fn($anexo) => !Str::startsWith($anexo->mime_type, 'image/'));
-            @endphp
-            
-            {{-- Loop para renderizar as IMAGENS com legenda --}}
-            @foreach($resultado->anexos as $anexo)
-                @if(Str::startsWith($anexo->mime_type, 'image/'))
-                    <div class="figura-container">
-                        {{-- CORREÇÃO: Usando storage_path() para o caminho absoluto do arquivo --}}
-                        <img src="{{ storage_path('app/public/' . $anexo->path) }}" alt="{{ $anexo->descricao }}">
-                        <p class="legenda">
-                            <strong>Figura {{ $figuraCount++ }}</strong> – {{ $anexo->descricao }}
-                        </p>
-                        <p class="fonte">
-                            Fonte: Elaborado pelo autor ({{ date('Y') }})
-                        </p>
-                    </div>
-                @endif
-            @endforeach
+    <div class="content-box">
+        <h3 class="section-title">Anexos</h3>
+        @if($resultado->anexos->isNotEmpty())
+            <div class="content-box">
+                <h3 class="section-title">Anexos Comprobatórios</h3>
 
-            {{-- Loop para listar OUTROS ARQUIVOS (não imagens) --}}
-            @if($outrosArquivos->isNotEmpty())
-                <h4 style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">Outros Arquivos:</h4>
-                <ul>
-                    @foreach($outrosArquivos as $anexo)
-                        {{-- CORREÇÃO: Mostrando a descrição corretamente --}}
-                        <li>{{ $anexo->nome_original }} ({{ $anexo->descricao }})</li>
+                @php
+                    $figuraCount = 1; // Contador para as figuras
+
+                    // Separa os anexos que são imagens dos que não são
+                    $imagens = $resultado->anexos->filter(fn($anexo) => Str::startsWith($anexo->mime_type, 'image/'));
+                    $outrosArquivos = $resultado->anexos->filter(fn($anexo) => !Str::startsWith($anexo->mime_type, 'image/'));
+                @endphp
+
+                {{-- 1. Loop para renderizar as IMAGENS com suas descrições individuais --}}
+                @if($imagens->isNotEmpty())
+                    @foreach($imagens as $anexo)
+                        <div class="figura-container" style="margin-bottom: 20px; text-align: center; page-break-inside: avoid;">
+                            {{-- O `storage_path()` é crucial para o DomPDF encontrar o caminho físico do arquivo --}}
+                            <img src="{{ storage_path('app/public/' . $anexo->path) }}" alt="{{ $anexo->descricao }}" style="max-width: 80%; height: auto; margin: 0 auto; display: block;">
+                            <p class="legenda" style="margin-top: 5px; font-size: 12px; text-align: center;">
+                                <strong>Figura {{ $figuraCount++ }}</strong> – {{ $anexo->descricao }}
+                            </p>
+                            <p class="fonte" style="font-size: 10px; text-align: center;">
+                                Fonte: Elaborado pelo autor ({{ date('Y') }})
+                            </p>
+                        </div>
                     @endforeach
-                </ul>
-            @endif
-        </div>
-    @else
-        <div class="content-box">
-            <h3 class="section-title">Anexos</h3>
-            <p>Nenhum arquivo foi anexado a este relatório.</p>
-        </div>
-    @endif
-    {{-- ========================================================== --}}
-    {{--                  FIM DA SEÇÃO ATUALIZADA                   --}}
-    {{-- ========================================================== --}}
+                @endif
+
+                {{-- 2. Loop para listar OUTROS ARQUIVOS com suas descrições --}}
+                @if($outrosArquivos->isNotEmpty())
+                    <h4 style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">Outros Arquivos:</h4>
+                    <ul>
+                        @foreach($outrosArquivos as $anexo)
+                            {{-- Mostra o nome original do arquivo e sua descrição individual --}}
+                            <li>{{ $anexo->nome_original }} ({{ $anexo->descricao }})</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        @else
+            {{-- Mensagem caso não exista nenhum anexo --}}
+            <div class="content-box">
+                <h3 class="section-title">Anexos</h3>
+                <p>Nenhum arquivo foi anexado a este relatório.</p>
+            </div>
+        @endif
+
+    </div>
 
     @if($resultado->status === 'aprovado')
         @php
             $totalHoras = $resultado->projeto->atividades->sum('carga_horaria');
             $alunoRepresentante = $resultado->projeto->user->name ?? 'Não definido';
-            $professorOrientador = $resultado->projeto->professores->first()->name ?? 'Não definido';
+            $professorOrientador = $resultado->projeto->professores->first()->nome ?? 'Não definido';
             $responsavelOrganizacao = $resultado->parceiro_responsavel ?? 'Não aplicável';
         @endphp
 
@@ -212,5 +202,6 @@
             <p>Marília, {{ $resultado->updated_at->locale('pt_BR')->isoFormat('DD [de] MMMM [de] YYYY') }}.</p>
         </div>
     @endif
+
 </body>
 </html>
