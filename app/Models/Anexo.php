@@ -14,6 +14,7 @@ class Anexo extends Model
         'nome_original',
         'path',
         'mime_type',
+        'descricao',
     ];
 
     public function resultado()

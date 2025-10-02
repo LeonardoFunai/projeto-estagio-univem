@@ -62,26 +62,28 @@ class ResultadoController extends Controller
 
         $resultado = Resultado::create($data);
 
-        if ($request->hasFile('anexos')) {
-            foreach ($request->file('anexos') as $arquivo) {
-                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
-                
-                Anexo::create([
-                    'resultado_id' => $resultado->id,
-                    'nome_original' => $arquivo->getClientOriginalName(),
-                    'path' => $caminho,
-                    'mime_type' => $arquivo->getMimeType(),
-                ]);
+        if ($request->has('anexos')) {
+            foreach ($request->anexos as $anexoData) {
+                if (isset($anexoData['arquivo']) && $anexoData['arquivo']->isValid()) {
+                    $file = $anexoData['arquivo'];
+                    $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
+                    $filePath = $file->storeAs('anexos_resultados', $fileName, 'public');
+
+                    // Cria um anexo para cada item do array
+                    $resultado->anexos()->create([
+                        'descricao' => $anexoData['descricao'],
+                        'path' => $filePath, 
+                        'nome_original' => $file->getClientOriginalName(),
+                    ]);
+                }
             }
         }
 
         $projeto->etapa = 'Resultado';
         $projeto->save();
 
-        // CORREÇÃO: Usa 'projeto.users' em vez de 'projeto.professores.user'
         $resultado->load('projeto.user', 'projeto.users');
-        
-        // Filtra a coleção 'users' para encontrar os professores/coordenadores
+
         $professores = $resultado->projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
 
         if ($professores->isNotEmpty()) {
@@ -104,8 +106,8 @@ class ResultadoController extends Controller
         }
         $resultado->load([
                 'projeto.user',
-                'projeto.alunos',          // Carrega a nova relação de alunos
-                'projeto.professores',     // Carrega a nova relação de professores
+                'projeto.alunos',          
+                'projeto.professores',     
                 'projeto.atividades', 
                 'rejeicoes.user',
                 'projeto.todosOsLogs.user'
@@ -163,65 +165,47 @@ class ResultadoController extends Controller
      */
     public function update(StoreResultadoRequest $request, Resultado $resultado)
     {
-        // 1. Autorização (seu código original, mantido)
         $this->authorize('update', $resultado);
 
-        // 2. Pega os dados validados do formulário
         $validatedData = $request->validated();
 
-        // 3. GERENCIAR EXCLUSÃO DE ANEXOS MARCADOS
         if ($request->has('anexos_a_deletar')) {
-            // Encontra os anexos pelos IDs enviados no formulário
-            $anexosParaDeletar = Anexo::whereIn('id', $request->anexos_a_deletar)->get();
+            $anexosParaDeletar = Anexo::whereIn('id', $request->anexos_a_deletar)
+                                    ->where('resultado_id', $resultado->id) 
+                                    ->get();
             
             foreach ($anexosParaDeletar as $anexo) {
-                // Apaga o arquivo físico do disco
                 Storage::disk('public')->delete($anexo->path);
-                // Deleta o registro do banco de dados
                 $anexo->delete();
             }
         }
 
-        // 4. GERENCIAR UPLOAD DE NOVOS ANEXOS
-        if ($request->hasFile('anexos')) {
-            foreach ($request->file('anexos') as $arquivo) {
-                // Salva o novo arquivo na pasta correta
-                $caminho = $arquivo->store('resultados/' . $resultado->id, 'public');
-                // Cria o registro do novo anexo no banco
-                Anexo::create([
-                    'resultado_id' => $resultado->id,
-                    'nome_original' => $arquivo->getClientOriginalName(),
-                    'path' => $caminho,
-                    'mime_type' => $arquivo->getMimeType(),
-                ]);
+        if ($request->has('anexos')) {
+            foreach ($request->anexos as $anexoData) {
+                if (isset($anexoData['arquivo']) && $anexoData['arquivo']->isValid()) {
+                    $file = $anexoData['arquivo'];
+                    $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
+                    $filePath = $file->storeAs('anexos_resultados', $fileName, 'public');
+
+                    $resultado->anexos()->create([
+                        'descricao' => $anexoData['descricao'],
+                        'path' => $filePath,
+                        'nome_original' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                    ]);
+                }
             }
         }
 
-        // 5. ATUALIZAR OS DADOS DO RELATÓRIO
-        // Primeiro, atualiza os campos de texto que foram validados
+        unset($validatedData['anexos']); 
         $resultado->update($validatedData);
 
-        // 6. APLICAR A LÓGICA DE REENVIO (seu código original, mantido e otimizado)
-        // Se o relatório estava reprovado, ele é resetado para uma nova avaliação.
-        if ($resultado->status === 'reprovado') {
-            $resultado->update([
-                'status' => 'enviado',
-                'aprovado_napex' => 'pendente',
-                'parecer_napex' => null,
-                'aprovado_coordenador' => 'pendente',
-                'parecer_coordenador' => null,
-            ]);
-        }
-
-        // 7. Redirecionar para a página de visualização com mensagem de sucesso
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados atualizado com sucesso!');
-    }
+}
 
     /**
      * Submete o resultado para avaliação.
      */
-
-
     public function enviar(Resultado $resultado)
     {
   
@@ -369,15 +353,30 @@ class ResultadoController extends Controller
 
     public function gerarPdf(Resultado $resultado)
     {
-
         $this->authorize('view', $resultado);
 
-        $resultado->load(['projeto.users.curso', 'anexos']);
-        $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
-        
+        $resultado->load([
+            'projeto.professores', 
+            'projeto.alunos.curso', 
+            'projeto.atividades', 
+            'anexos'
+        ]);
 
-        $numero = $resultado->projeto->numero_projeto ?? "ID-{$resultado->projeto->id}";
-        $nomeArquivo = "{$numero}-relatorio.pdf";
+        $projeto = $resultado->projeto;
+        $professores = $projeto->professores;
+        $alunos = $projeto->alunos;
+        $cargaHorariaTotal = $projeto->atividades->sum('carga_horaria');
+
+        $pdf = Pdf::loadView('pdf.resultados-relatorio', compact(
+            'resultado', 
+            'projeto', 
+            'professores', 
+            'alunos', 
+            'cargaHorariaTotal'
+        ));
+        
+        $numero = $projeto->numero_projeto ?? "ID-{$projeto->id}";
+        $nomeArquivo = "{$numero}-relatorio-resultados.pdf";
         
         return $pdf->download($nomeArquivo);
     }

@@ -23,13 +23,24 @@ trait LogaAlteracoes
         static::updating(function ($model) {
             $alteracoes = $model->getDirty();
 
+            // Log de alteração de status
             if (isset($alteracoes['status'])) {
                 $model->registrarLog(
                     'STATUS_ALTERADO',
                     "Status alterado de '{$model->getOriginal('status')}' para '{$alteracoes['status']}'."
                 );
             }
+            
+            // --- ADICIONE O NOVO BLOCO AQUI ---
+            // Log do parecer do Coordenador
+            if (isset($alteracoes['aprovado_coordenador']) && $alteracoes['aprovado_coordenador'] !== 'pendente') {
+                $status = $alteracoes['aprovado_coordenador'] === 'sim' ? 'Aprovado' : 'Reprovado';
+                $descricao = "Coordenação: $status. Motivo: " . ($model->motivo_coordenador ?? 'N/A');
+                $model->registrarLog('PARECER_COORDENACAO', $descricao);
+            }
+            // --- FIM DO NOVO BLOCO ---
 
+            // Log de alteração de etapa
             if (isset($alteracoes['etapa'])) {
                 if ($model->getOriginal('etapa') === 'Resultado' && $alteracoes['etapa'] === 'Concluído') {
                     return;

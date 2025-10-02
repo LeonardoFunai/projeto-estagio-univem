@@ -524,7 +524,7 @@
                 @endif
 
                 <!-- FORMULÁRIO/VISAO DO COORDENADOR -->
-                @if(auth()->user()->role === 'coordenador')
+                @if(str_starts_with(auth()->user()->role, 'coordenador'))
 
                     <!-- Tabela do napex que aparece para coordenador -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>

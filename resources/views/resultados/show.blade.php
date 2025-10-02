@@ -260,34 +260,26 @@
                         </div>
                     <hr>
 
+                    {{-- Anexos do Relatório --}}
                     <div class="mt-8">
-                        <h3 class="text-xl font-semibold border-b pb-2">Anexos do Relatório</h3>
-
-                        {{-- Mostra a DESCRIÇÃO DOS ANEXOS que o aluno escreveu --}}
-                        @if ($resultado->anexos_descricao)
-                            <div class="mt-4">
-                                <p class="font-semibold text-gray-700">Descrição Fornecida:</p>
-                                <p class="mt-1 text-gray-600 bg-gray-50 p-3 rounded-md">{{ $resultado->anexos_descricao }}</p>
-                            </div>
-                        @endif
-
-                        {{-- Lista os ARQUIVOS ANEXADOS --}}
-                        <div class="mt-4">
-                            <p class="font-semibold text-gray-700">Arquivos Enviados:</p>
-
-                            {{-- A diretiva @forelse é perfeita aqui: ela faz um loop se houver anexos,
-                                ou mostra uma mensagem se a lista estiver vazia. --}}
+                        <h3 class="text-xl font-semibold border-b pb-2 mb-4">Anexos Comprobatórios</h3>
+                        
+                        <div class="space-y-4">
                             @forelse ($resultado->anexos as $anexo)
-                                <div class="mt-2 p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50">
-                                    {{-- Link para abrir o arquivo em uma nova aba --}}
-                                    <a href="{{ Storage::url($anexo->path) }}" target="_blank" class="text-blue-600 hover:underline">
-                                        {{ $anexo->nome_original }}
-                                    </a>
-                                    {{-- Mostra o tipo do arquivo (Ex: image/jpeg) --}}
-                                    <span class="text-sm text-gray-500">{{ $anexo->mime_type }}</span>
+                                <div class="p-4 border rounded-lg bg-gray-50/50">
+                                    <p class="font-bold text-gray-700">
+                                        {{-- Utiliza a variável $loop->iteration para a numeração --}}
+                                        Anexo {{ $loop->iteration }}: 
+                                        <span class="font-normal text-gray-900">{{ $anexo->descricao }}</span>
+                                    </p>
+                                    <div class="mt-2">
+                                        <a href="{{ Storage::url($anexo->path) }}" target="_blank" class="text-blue-600 hover:underline text-sm inline-flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                            {{ $anexo->nome_original }}
+                                        </a>
+                                    </div>
                                 </div>
                             @empty
-                                {{-- Esta mensagem aparece se nenhum anexo foi enviado --}}
                                 <p class="mt-2 text-gray-600">Nenhum arquivo foi anexado a este relatório.</p>
                             @endforelse
                         </div>

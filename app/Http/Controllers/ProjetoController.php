@@ -19,6 +19,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Notifications\PropostaAvaliada;
 use App\Notifications\ProfessorVinculadoAProjeto;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProjetoLog;
 
 class ProjetoController extends Controller
 {
@@ -434,6 +435,7 @@ public function update(UpdateProjetoRequest $request, $id)
         
         $projeto->save();
 
+
         $aluno = $projeto->user;
         $professores = $projeto->users->filter(fn($u) => str_starts_with($u->role, 'professor'));
         $destinatarios = collect([$aluno])->merge($professores)->filter()->unique('id');
@@ -526,7 +528,7 @@ public function update(UpdateProjetoRequest $request, $id)
             \Illuminate\Support\Facades\Notification::send($professores, new \App\Notifications\ProjetoSubmetidoPeloAluno($projeto));
         }
         
-        // CORREÇÃO: Envia notificação apenas para o coordenador do curso do aluno e o NAPEX.
+  
         $avaliadores = $this->getEvaluationRecipients($projeto);
         
         if ($avaliadores->isNotEmpty()) {

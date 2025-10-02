@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('projeto_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('projeto_id')->constrained('projetos')->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null'); // Quem realizou a ação
-            $table->string('acao'); // Ex: 'PROPOSTA_CRIADA', 'ETAPA_ALTERADA', 'STATUS_ALTERADO'
-            $table->text('descricao'); // Ex: "Status alterado de 'Editando' para 'Entregue'"
-            $table->json('dados_antigos')->nullable(); // Opcional: Para guardar o estado anterior
-            $table->json('dados_novos')->nullable();   // Opcional: Para guardar o novo estado
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null'); 
+            $table->string('acao'); 
+            $table->text('descricao');
+            $table->json('dados_antigos')->nullable(); 
+            $table->json('dados_novos')->nullable();   
             $table->timestamps();
         });
     }

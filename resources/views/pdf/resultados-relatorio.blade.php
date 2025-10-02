@@ -17,7 +17,7 @@
         .header-logo { height: 50px; }
         .main-title { text-align: center; font-size: 14px; font-weight: bold; margin-top: 10px; margin-bottom: 20px; }
         .section-title { font-size: 12px; font-weight: bold; margin-top: 10px; margin-bottom: 5px; }
-        .content-box { border: 1px solid #ccc; padding: 5px; margin-bottom:5px;  }
+        .content-box { border: 1px solid #ccc; padding: 5px; margin-bottom:5px; page-break-inside: avoid; }
         .signature-line { border-top: 1px solid #000; margin-top: 20px; width: 300px; }
         .signature-container { margin-top: 60px; page-break-inside: avoid; }
         .signature-container h3 { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 12px; }
@@ -27,12 +27,30 @@
         .validation-container td { height: 60px; text-align: center; vertical-align: middle; }
         .final-date { text-align: center; margin-top: 40px; }
 
-        .anexo-imagem {
-        max-width: 100%;   
-        height: auto;      
-        margin-top: 10px; 
-        margin-bottom: 15px; 
-    }
+        /* --- ESTILOS PARA FIGURAS (ABNT) --- */
+        .figura-container {
+            width: 100%;
+            text-align: center; /* Centraliza a imagem e a legenda */
+            margin-top: 15px;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        .figura-container img {
+            max-width: 85%; /* Evita que a imagem ultrapasse as margens */
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        .legenda {
+            font-size: 10px; /* Fonte menor para a legenda */
+            margin-top: 8px;
+            text-align: center;
+        }
+        .fonte {
+            font-size: 10px;
+            margin-top: 4px;
+            text-align: center;
+        }
+        /* --- FIM DOS ESTILOS --- */
     </style>
 </head>
 <body>
@@ -74,7 +92,6 @@
         <table>
             <thead><tr><th>Nome do Aluno</th><th>RA</th><th>Curso</th></tr></thead>
             <tbody>
-                {{-- Bloco corrigido para Alunos --}}
                 @forelse($resultado->projeto->alunos ?? [] as $aluno)
                 <tr>
                     <td>{{ $aluno->name ?? 'N/A' }}</td>
@@ -89,7 +106,6 @@
             </tbody>
         </table>
     </div>
-
 
     @if($resultado->parceiro_organizacao)
     <div class="content-box">
@@ -112,47 +128,60 @@
         <p style="white-space: pre-wrap;">{{ $resultado->atividades_desenvolvidas }}</p>
     </div>
 
+    {{-- ========================================================== --}}
+    {{--                INÍCIO DA SEÇÃO ATUALIZADA                  --}}
+        {{-- ========================================================== --}}
+    @if($resultado->anexos->isNotEmpty())
+        <div class="content-box">
+            <h3 class="section-title">Anexos Comprobatórios</h3>
 
-    <div class="content-box">
-        <h3 class="section-title">Anexos</h3>
-        <p><strong>Descrição:</strong> {{ $resultado->anexos_descricao ?? 'Nenhuma descrição fornecida.' }}</p>
-
-        @if($resultado->anexos->isNotEmpty())
-            {{-- Separa os anexos entre imagens e outros arquivos --}}
             @php
-                $imagens = $resultado->anexos->filter(fn($anexo) => Str::startsWith($anexo->mime_type, 'image/'));
+                $figuraCount = 1;
                 $outrosArquivos = $resultado->anexos->filter(fn($anexo) => !Str::startsWith($anexo->mime_type, 'image/'));
             @endphp
+            
+            {{-- Loop para renderizar as IMAGENS com legenda --}}
+            @foreach($resultado->anexos as $anexo)
+                @if(Str::startsWith($anexo->mime_type, 'image/'))
+                    <div class="figura-container">
+                        {{-- CORREÇÃO: Usando storage_path() para o caminho absoluto do arquivo --}}
+                        <img src="{{ storage_path('app/public/' . $anexo->path) }}" alt="{{ $anexo->descricao }}">
+                        <p class="legenda">
+                            <strong>Figura {{ $figuraCount++ }}</strong> – {{ $anexo->descricao }}
+                        </p>
+                        <p class="fonte">
+                            Fonte: Elaborado pelo autor ({{ date('Y') }})
+                        </p>
+                    </div>
+                @endif
+            @endforeach
 
-            {{-- Mostra as imagens, se houver --}}
-            @if($imagens->isNotEmpty())
-                <h4 style="font-weight: bold; margin-top: 15px;">Imagens Anexadas:</h4>
-                @foreach($imagens as $anexo)
-                    {{-- Usa o caminho absoluto do arquivo para o PDF conseguir renderizar --}}
-                    <img src="{{ storage_path('app/public/' . $anexo->path) }}" class="anexo-imagem">
-                @endforeach
-            @endif
-
-            {{-- Lista os outros arquivos, se houver --}}
+            {{-- Loop para listar OUTROS ARQUIVOS (não imagens) --}}
             @if($outrosArquivos->isNotEmpty())
-                <h4 style="font-weight: bold; margin-top: 15px;">Outros Arquivos:</h4>
+                <h4 style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">Outros Arquivos:</h4>
                 <ul>
                     @foreach($outrosArquivos as $anexo)
-                        <li>{{ $anexo->nome_original }}</li>
+                        {{-- CORREÇÃO: Mostrando a descrição corretamente --}}
+                        <li>{{ $anexo->nome_original }} ({{ $anexo->descricao }})</li>
                     @endforeach
                 </ul>
             @endif
-
-        @else
-            <p>Nenhum arquivo anexado.</p>
-        @endif
-</div>
+        </div>
+    @else
+        <div class="content-box">
+            <h3 class="section-title">Anexos</h3>
+            <p>Nenhum arquivo foi anexado a este relatório.</p>
+        </div>
+    @endif
+    {{-- ========================================================== --}}
+    {{--                  FIM DA SEÇÃO ATUALIZADA                   --}}
+    {{-- ========================================================== --}}
 
     @if($resultado->status === 'aprovado')
         @php
             $totalHoras = $resultado->projeto->atividades->sum('carga_horaria');
             $alunoRepresentante = $resultado->projeto->user->name ?? 'Não definido';
-            $professorOrientador = $resultado->projeto->professores->first()->nome ?? 'Não definido';
+            $professorOrientador = $resultado->projeto->professores->first()->name ?? 'Não definido';
             $responsavelOrganizacao = $resultado->parceiro_responsavel ?? 'Não aplicável';
         @endphp
 
@@ -183,6 +212,5 @@
             <p>Marília, {{ $resultado->updated_at->locale('pt_BR')->isoFormat('DD [de] MMMM [de] YYYY') }}.</p>
         </div>
     @endif
-
 </body>
 </html>

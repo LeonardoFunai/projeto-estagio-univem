@@ -1,67 +1,67 @@
 <section>
-    <x-slot name="pageTitle">
-        Perfil
-    </x-slot>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
             {{ __('Informações do Perfil') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('Atualize as informações do perfil da sua conta e o endereço de e-mail.') }}
+            {{ __('Aqui estão os seus dados cadastrados no sistema.') }}
         </p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
-
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
-        @csrf
-        @method('patch')
-
-        <div>
-            <x-input-label for="name" :value="__('Nome')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
-        </div>
-
-        <div>
-            <x-input-label for="email" :value="__('E-mail')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Seu endereço de e-mail não foi verificado.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Clique aqui para reenviar o e-mail de verificação.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('Um novo link de verificação foi enviado para o seu endereço de e-mail.') }}
-                        </p>
-                    @endif
+    <div class="mt-6 border-t border-gray-200">
+        <dl class="divide-y divide-gray-200">
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                <dt class="text-sm font-medium text-gray-500">
+                    Nome Completo
+                </dt>
+                <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    <span class="flex-grow">{{ $user->name }}</span>
+                </dd>
+            </div>
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                <dt class="text-sm font-medium text-gray-500">
+                    Endereço de E-mail
+                </dt>
+                <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    <span class="flex-grow">{{ $user->email }}</span>
+                </dd>
+            </div>
+            
+            @if(auth()->user()->role === 'aluno')
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <dt class="text-sm font-medium text-gray-500">
+                        CPF
+                    </dt>
+                    <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="flex-grow">{{ $user->cpf ?? 'Não informado' }}</span>
+                    </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <dt class="text-sm font-medium text-gray-500">
+                        R.A.
+                    </dt>
+                    <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="flex-grow">{{ $user->ra ?? 'Não informado' }}</span>
+                    </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <dt class="text-sm font-medium text-gray-500">
+                        Data de Nascimento
+                    </dt>
+                    <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="flex-grow">{{ $user->data_nascimento ? \Carbon\Carbon::parse($user->data_nascimento)->format('d/m/Y') : 'Não informada' }}</span>
+                    </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <dt class="text-sm font-medium text-gray-500">
+                        Curso
+                    </dt>
+                    <dd class="mt-1 flex text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="flex-grow">{{ $user->curso->nome ?? 'Não definido' }}</span>
+                    </dd>
                 </div>
             @endif
-        </div>
-
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Salvar') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Salvo.') }}</p>
-            @endif
-        </div>
-    </form>
+        </dl>
+    </div>
 </section>
