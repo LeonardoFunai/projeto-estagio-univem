@@ -72,8 +72,9 @@ class ResultadoController extends Controller
                     // Cria um anexo para cada item do array
                     $resultado->anexos()->create([
                         'descricao' => $anexoData['descricao'],
-                        'path' => $filePath, 
+                        'path' => $filePath,
                         'nome_original' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(), // <-- ADICIONE ESTA LINHA
                     ]);
                 }
             }

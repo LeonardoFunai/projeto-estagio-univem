@@ -1,4 +1,6 @@
-@php use Illuminate\Support\Str; @endphp
+@php use Illuminate\Support\Str; 
+    use Carbon\Carbon;@endphp
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -54,8 +56,7 @@
         <p>Mantido Pela Fundação de Ensino Eurípides Soares da Rocha - CNPJ: 52.059.573/0001-94 - Telefone: (14) 2105-0800 - univem.edu.br</p>
     </footer>
 
-    <h2 class="main-title">RELATÓRIO DE MENSURAÇÃO DE RESULTADOS<br><small style="font-weight: normal;">CURRICULARIZAÇÃO DA EXTENSÃO <br> Resolução CNE/CES Nº 7 de 18/12/2018</small></h2>
-
+    <h2 class="main-title">RELATÓRIO DE MENSURAÇÃO DE RESULTADOS<br><small style="font-weight: normal;">CURRICULARIZAÇÃO DA EXTENSÃO <br> Resolução CNE/CES Nº 7 de 18/12/2018 <br>Nº {{ $projeto->numero_projeto ?? '_____' }} / {{ $projeto->ano_proposta ?? Carbon::now()->year }}</small></h2>
     <div class="content-box">
         <h3 class="section-title">1. IDENTIFICAÇÃO DO PROJETO</h3>
         <p><strong>Título:</strong> {{ $resultado->projeto->titulo }}</p>
@@ -160,7 +161,7 @@
         @else
             {{-- Mensagem caso não exista nenhum anexo --}}
             <div class="content-box">
-                <h3 class="section-title">Anexos</h3>
+                
                 <p>Nenhum arquivo foi anexado a este relatório.</p>
             </div>
         @endif
