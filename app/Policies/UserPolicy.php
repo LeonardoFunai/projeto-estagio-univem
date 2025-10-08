@@ -42,29 +42,49 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        // Napex e Coordenadores podem editar seus próprios perfis.
-        if ($user->id === $model->id) {
-            return true;
+        if ($user->role === 'admin') {
+            return $user->id !== $model->id;
         }
 
-        // Napex e Coordenadores podem editar apenas alunos.
-        if (in_array($user->role, ['napex', 'coordenador'])) {
+        if ($user->role === 'napex') {
             return $model->role === 'aluno';
         }
 
+        if ($user->role === 'coordenador') {
+            if ($model->role !== 'aluno') {
+                return false;
+            }
+            $coordenadorCursosIds = $user->cursosCoordenados->pluck('id')->toArray();
+            return in_array($model->curso_id, $coordenadorCursosIds);
+        }
+
+        // Por padrão, nega a permissão.
         return false;
     }
+
 
     public function delete(User $user, User $model): bool
     {
         if ($user->id === $model->id) {
             return false;
         }
-
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            return $model->role === 'aluno';
+        if ($user->role === 'napex' && $model->role === 'coordenador') {
+            return false;
         }
-        
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'napex') {
+            return true;
+        }
+
+        if ($user->role === 'coordenador' && $model->role === 'aluno') {
+            $coordenadorCursosIds = $user->cursosCoordenados->pluck('id')->toArray();
+            return in_array($model->curso_id, $coordenadorCursosIds);
+        }
+
         return false;
     }
 }

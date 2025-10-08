@@ -21,6 +21,8 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        $currentUser = auth()->user(); 
+
         $search = $request->input('search');
         $role = $request->input('role');
         $curso_id = $request->input('curso_id');
@@ -29,11 +31,18 @@ class UserController extends Controller
 
         $query = User::with('curso', 'cursosCoordenados')->orderBy('name');
 
-        if ($search) {
+        if ($currentUser->role === 'coordenador') {
+            $coordenadorCursosIds = $currentUser->cursosCoordenados->pluck('id')->toArray();
+            $query->where('role', 'aluno')->whereIn('curso_id', $coordenadorCursosIds);
 
+        } elseif ($currentUser->role === 'napex') {
+            $query->where('role', 'aluno');
+        }
+
+        if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -46,28 +55,50 @@ class UserController extends Controller
         }
 
         if ($role) {
-            $query->where('role', $role);
+            $query->where('role', 'like', "%{$role}%");
         }
 
         if ($curso_id) {
             $query->where(function ($q) use ($curso_id) {
                 $q->where('curso_id', $curso_id)
-                  ->orWhereHas('cursosCoordenados', function ($cq) use ($curso_id) {
-                      $cq->where('cursos.id', $curso_id);
-                  });
+                ->orWhereHas('cursosCoordenados', function ($cq) use ($curso_id) {
+                    $cq->where('cursos.id', $curso_id);
+                });
             });
         }
-
+        
         $users = $query->paginate(15)->withQueryString();
-        $roles = User::select('role')->distinct()->pluck('role');
-        $cursos = Curso::orderBy('nome')->get();
+        
+        if ($currentUser->role === 'coordenador') {
+            $cursos = $currentUser->cursosCoordenados()->orderBy('nome')->get();
+            $roles = ['aluno']; 
+        } elseif ($currentUser->role === 'napex') {
+            $cursos = Curso::orderBy('nome')->get();
+            $roles = ['aluno'];
+        }
+        else {
+            $cursos = Curso::orderBy('nome')->get();
+            $roles = User::select('role')->distinct()->pluck('role');
+        }
 
         return view('admin.users.index', compact('users', 'roles', 'cursos', 'search', 'role', 'curso_id', 'cpf', 'ra'));
     }
 
     public function create()
     {
-        $cursos = Curso::orderBy('nome')->get();
+        $this->authorize('create', User::class);
+        $cursos = [];
+        $user = auth()->user();
+
+        // Correção: Compara a propriedade 'role' diretamente
+        if ($user->role === 'admin' || $user->role === 'napex') {
+            $cursos = Curso::all();
+        } 
+        elseif ($user->role === 'coordenador') {
+            // A relação aqui deve ser a que você definiu para os cursos que um coordenador gerencia
+            $cursos = $user->cursosCoordenados; 
+        }
+
         return view('admin.users.create', compact('cursos'));
     }
 
@@ -89,9 +120,19 @@ class UserController extends Controller
             'curso_id' => ['required', 'exists:cursos,id'],
         ];
 
-        if (in_array($currentUser->role, ['napex', 'coordenador'])) {
+        if ($currentUser->role === 'coordenador') {
+            $request->merge(['role' => 'aluno']);
+            
+            $coordenadorCursosIds = $currentUser->cursosCoordenados->pluck('id')->toArray();
+            
+            $alunoRules['curso_id'] = ['required', 'exists:cursos,id', Rule::in($coordenadorCursosIds)];
+            
+            $rules = array_merge($baseRules, $alunoRules, ['role' => ['required', Rule::in(['aluno'])]]);
+
+        } elseif ($currentUser->role === 'napex') {
             $request->merge(['role' => 'aluno']);
             $rules = array_merge($baseRules, $alunoRules, ['role' => ['required', Rule::in(['aluno'])]]);
+
         } else {
             $rules = array_merge($baseRules, [
                 'role' => ['required', 'string', Rule::in(['aluno', 'professor', 'admin', 'napex', 'coordenador'])],
@@ -118,14 +159,32 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $user->load('cursosCoordenados');
-        $cursos = Curso::orderBy('nome')->get();
-        return view('admin.users.edit', compact('user', 'cursos'));
+        $this->authorize('update', $user);
+
+        $currentUser = auth()->user();
+        $cursos = [];
+        $roles = [];
+
+        if ($currentUser->role === 'admin') {
+            $cursos = Curso::orderBy('nome')->get();
+            $roles = ['aluno', 'professor', 'coordenador', 'napex', 'admin'];
+        } elseif ($currentUser->role === 'napex') {
+            $cursos = Curso::orderBy('nome')->get();
+            $roles = ['aluno']; 
+        } elseif ($currentUser->role === 'coordenador') {
+            $cursos = $currentUser->cursosCoordenados()->orderBy('nome')->get();
+            $roles = ['aluno']; 
+        }
+
+        $cursos_coordenados = $user->cursosCoordenados->pluck('id')->toArray();
+        
+        return view('admin.users.edit', compact('user', 'cursos', 'roles', 'cursos_coordenados'));
     }
 
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);
+        $currentUser = auth()->user();
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
@@ -133,26 +192,30 @@ class UserController extends Controller
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
 
-        $currentUser = auth()->user();
+        if ($currentUser->role === 'admin') {
+            $rules = array_merge($rules, [
+                'role' => ['required', 'string', Rule::in(['aluno', 'professor', 'admin', 'napex', 'coordenador'])],
+                'cursos_coordenados' => ['nullable', 'array', 'required_if:role,coordenador'],
+                'cursos_coordenados.*' => ['exists:cursos,id'],
+                'cpf' => ['nullable', 'required_if:role,aluno', 'string', 'max:14', Rule::unique('users')->ignore($user->id)],
+                'ra' => ['nullable', 'required_if:role,aluno', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
+                'curso_id' => ['nullable', 'required_if:role,aluno', 'exists:cursos,id'],
+            ]);
+        } else {
+            $alunoRules = [
+                'cpf' => ['nullable', 'string', 'max:14', Rule::unique('users')->ignore($user->id)],
+                'ra' => ['required', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
+                'curso_id' => ['required', 'exists:cursos,id'],
+            ];
 
-        if ($currentUser->role === 'admin' && $currentUser->id !== $user->id) {
-            $rules['role'] = ['required', 'string', Rule::in(['aluno', 'professor', 'admin', 'napex', 'coordenador'])];
+            if ($currentUser->role === 'coordenador') {
+                $coordenadorCursosIds = $currentUser->cursosCoordenados->pluck('id')->toArray();
+                $alunoRules['curso_id'][] = Rule::in($coordenadorCursosIds);
+            }
+            $rules = array_merge($rules, $alunoRules);
         }
-
-        if ($user->role === 'aluno' || $request->input('role') === 'aluno') {
-            $rules['cpf'] = ['nullable', 'string', 'max:14', Rule::unique('users', 'cpf')->ignore($user->id)];
-            $rules['ra'] = ['required', 'string', 'max:20', Rule::unique('users', 'ra')->ignore($user->id)];
-            $rules['data_nascimento'] = ['nullable', 'date'];
-            $rules['curso_id'] = ['required', 'exists:cursos,id'];
-        }
-
-        if ($request->input('role') === 'coordenador') {
-            $rules['cursos_coordenados'] = ['nullable', 'array'];
-            $rules['cursos_coordenados.*'] = ['exists:cursos,id'];
-        }
-
-        // Valida os dados usando as mensagens de erro padronizadas
-        $validated = $request->validate($rules, $this->validationMessages());
+        
+        $validated = $request->validate($rules);
 
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -160,45 +223,14 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
 
-        $user->fill($validated);
+        $user->update($validated);
 
-        if ($user->role !== 'aluno') {
-            $user->ra = null;
-            $user->curso_id = null;
-            $user->cpf = null;
-            $user->data_nascimento = null;
-        }
-        
-        if ($user->role !== 'coordenador' && $currentUser->role === 'admin') {
-            $user->cursosCoordenados()->sync([]);
-        }
-
-        $user->save();
-        
-        if ($user->role === 'coordenador' && $currentUser->role === 'admin') {
-            $user->cursosCoordenados()->sync($request->cursos_coordenados ?? []);
+        if ($currentUser->role === 'admin' && $user->role === 'coordenador') {
+            $cursos_coordenados = $request->input('cursos_coordenados', []);
+            $user->cursosCoordenados()->sync($cursos_coordenados);
         }
 
         return redirect()->route('admin.users.index')->with('success', 'Usuário atualizado com sucesso!');
-    }
-
-    private function validationMessages()
-    {
-        return [
-            'name.required' => 'O campo nome é obrigatório.',
-            'email.required' => 'O campo e-mail é obrigatório.',
-            'email.email' => 'Por favor, insira um e-mail válido.',
-            'email.unique' => 'Este e-mail já está cadastrado no sistema.',
-            'password.required' => 'O campo senha é obrigatório.',
-            'password.confirmed' => 'A confirmação de senha não confere.',
-            'password.min' => 'A senha deve ter no mínimo :min caracteres.',
-            'role.required' => 'A seleção de um perfil é obrigatória.',
-            'ra.required' => 'O campo R.A. é obrigatório para alunos.',
-            'ra.unique' => 'Este R.A. já está cadastrado no sistema.',
-            'cpf.unique' => 'Este CPF já está cadastrado no sistema.',
-            'curso_id.required' => 'A seleção de um curso é obrigatória para alunos.',
-            'required_if' => 'O campo :attribute é obrigatório.',
-        ];
     }
 
     public function destroy(User $user)
@@ -214,7 +246,7 @@ class UserController extends Controller
     }
     public function showImportForm()
     {
-        // Apenas autoriza se o usuário pode criar novos usuários
+
         $this->authorize('create', User::class);
         return view('admin.users.import');
     }
