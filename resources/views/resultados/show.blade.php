@@ -146,20 +146,20 @@
                     </form>
                 @endif
 
-                
-                @if ($isAluno && $podeEditarOuEnviar)
-                    <!-- Botão de Editar -->
+                                
+                @can('update', $resultado)
                     <a href="{{ route('resultados.edit', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700">
                         Editar Relatório
                     </a>
-                    <!-- Botão de Enviar -->
-                    <form action="{{ route('resultados.enviar', $resultado) }}" method="POST" onsubmit="return confirm('Você tem certeza que deseja enviar o relatório para avaliação? Você poderá retorná-lo para o modo de edição caso ainda não tenha sido avaliado.')">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
-                            Enviar para Avaliação
-                        </button>
-                    </form>
-                @endif
+                    @if (auth()->user()->role === 'aluno')
+                        <form action="{{ route('resultados.enviar', $resultado) }}" method="POST" onsubmit="return confirm('Você tem certeza que deseja enviar o relatório para avaliação? ...')">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
+                                Enviar para Avaliação
+                            </button>
+                        </form>
+                    @endif
+                @endcan
 
                 <a href="{{ route('projetos.show', $resultado->projeto_id) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                     Ver Proposta
@@ -294,8 +294,8 @@
                     <div>
                         <h4 class="font-semibold">Parecer do NAPEX</h4>
                         @php
-                            // Condição para mostrar o formulário: ser do perfil e a avaliação não estar finalizada
-                            $podeAvaliarNapex = auth()->user()->role === 'napex' && !in_array($resultado->status, ['aprovado', 'reprovado']);
+                            // Condição para mostrar o formulário: ser do NAPEx E o relatório ter sido entregue.
+                            $podeAvaliarNapex = auth()->user()->role === 'napex' && $resultado->status === 'entregue';
                         @endphp
 
                         @if($podeAvaliarNapex)
@@ -326,7 +326,8 @@
                     <div>
                         <h4 class="font-semibold">Parecer da Coordenação</h4>
                         @php
-                            $podeAvaliarCoord = auth()->user()->role === 'coordenador' && !in_array($resultado->status, ['aprovado', 'reprovado']);
+                            // Condição para mostrar o formulário: ser Coordenador E o relatório ter sido entregue.
+                            $podeAvaliarCoord = auth()->user()->role === 'coordenador' && $resultado->status === 'entregue';
                         @endphp
 
                         @if($podeAvaliarCoord)

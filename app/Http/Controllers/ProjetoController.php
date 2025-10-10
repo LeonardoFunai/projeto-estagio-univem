@@ -35,7 +35,7 @@ class ProjetoController extends Controller
         $filters = $request->only(['search', 'status', 'curso_id']);
 
         // 2. Constrói a query com os filtros e já otimiza o carregamento do curso do usuário
-        $query = $searchService->buildQuery($filters)->with('user.curso');
+        $query = $searchService->buildQuery($filters);
 
         // 3. Executa a paginação
         $projetos = $query->paginate(10)->appends($request->query());

@@ -35,8 +35,6 @@
                         
                         <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col md:flex-row flex-wrap items-center gap-2 w-full md:w-auto">
                             <input type="text" name="search" placeholder="Buscar por nome ou email..." class="border-gray-300 rounded-md shadow-sm" value="{{ $search ?? '' }}">
-                            
-                            {{-- --- ADICIONADO: Novos campos de filtro para CPF e R.A. --- --}}
                             <input type="text" name="cpf" placeholder="Filtrar por CPF..." class="border-gray-300 rounded-md shadow-sm" value="{{ $cpf ?? '' }}">
                             <input type="text" name="ra" placeholder="Filtrar por R.A...." class="border-gray-300 rounded-md shadow-sm" value="{{ $ra ?? '' }}">
                             
@@ -61,15 +59,72 @@
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-100">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
+
+                                    {{-- Cabeçalho Ordenável: Nome --}}
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <a href="{{ route('admin.users.index', array_merge(request()->query(), ['sort_by' => 'name', 'sort_direction' => $sortBy == 'name' && $sortDirection == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                            Nome
+                                            <span class="ml-2">
+                                                @if ($sortBy == 'name')
+                                                    @if ($sortDirection == 'asc')
+                                                        {{-- Seta para Cima (Ativa) --}}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                                                    @else
+                                                        {{-- Seta para Baixo (Ativa) --}}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                    @endif
+                                                @else
+                                                    {{-- Ícone Neutro (Cima e Baixo) --}}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                                                @endif
+                                            </span>
+                                        </a>
+                                    </th>
+
+                                    {{-- Cabeçalhos Não Ordenáveis --}}
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CPF</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">R.A.</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perfil</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase max-w-xs">Curso(s)</th>
+
+                                    {{-- Cabeçalho Ordenável: Perfil --}}
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <a href="{{ route('admin.users.index', array_merge(request()->query(), ['sort_by' => 'role', 'sort_direction' => $sortBy == 'role' && $sortDirection == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                            Perfil
+                                            <span class="ml-2">
+                                                @if ($sortBy == 'role')
+                                                    @if ($sortDirection == 'asc')
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                                                    @else
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                    @endif
+                                                @else
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                                                @endif
+                                            </span>
+                                        </a>
+                                    </th>
+
+                                    {{-- Cabeçalho Ordenável: Curso --}}
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <a href="{{ route('admin.users.index', array_merge(request()->query(), ['sort_by' => 'curso_id', 'sort_direction' => $sortBy == 'curso_id' && $sortDirection == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                            Curso(s)
+                                            <span class="ml-2">
+                                                @if ($sortBy == 'curso_id')
+                                                    @if ($sortDirection == 'asc')
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                                                    @else
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                    @endif
+                                                @else
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                                                @endif
+                                            </span>
+                                        </a>
+                                    </th>
+
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
                                 </tr>
                             </thead>
@@ -79,7 +134,6 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration + $users->firstItem() - 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->email }}</td>
-                                    {{-- --- ADICIONADO: Exibição dos novos dados --- --}}
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->cpf ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $user->ra ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($user->role) }}</td>

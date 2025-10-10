@@ -14,21 +14,27 @@ class ResultadoPolicy
     /**
      * Determina se o usuário pode ver um relatório de resultado.
      */
+
     public function view(User $user, Resultado $resultado): bool
     {
-        // Avaliadores (napex, coordenador) podem ver se estiver entregue ou aprovado.
-        if (in_array($user->role, ['napex', 'coordenador'])) {
+        // Admin pode ver tudo.
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($resultado->projeto->users()->where('users.id', $user->id)->exists()) {
+            return true;
+        }
+
+        if ($user->role === 'napex') {
             return in_array($resultado->status, ['entregue', 'aprovado']);
         }
 
-        // Aluno criador do projeto pode ver.
-        if ($user->id === $resultado->projeto->user_id) {
-            return true;
-        }
-
-        // Professor vinculado ao projeto pode ver.
-        if ($user->role === 'professor' && $resultado->projeto->professores()->where('user_id', $user->id)->exists()) {
-            return true;
+        if ($user->role === 'coordenador') {
+            if (in_array($resultado->status, ['entregue', 'aprovado'])) {
+                $coordenadorCursosIds = $user->cursosCoordenados->pluck('id')->toArray();
+                return in_array($resultado->projeto->curso_id, $coordenadorCursosIds);
+            }
         }
 
         return false;
@@ -40,7 +46,8 @@ class ResultadoPolicy
      */
     public function create(User $user, Projeto $projeto): bool
     {
-        return $user->id === $projeto->user_id;
+
+        return $projeto->users()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -48,20 +55,12 @@ class ResultadoPolicy
      */
     public function update(User $user, Resultado $resultado): bool
     {
-        // 1. O relatório precisa estar em um estado editável.
+
         if (!in_array($resultado->status, ['editando', 'reprovado'])) {
             return false;
         }
 
-        // 2. O usuário precisa ser o criador (aluno) ou um professor vinculado.
-        if ($user->id === $resultado->projeto->user_id) {
-            return true;
-        }
-        if ($user->role === 'professor' && $resultado->projeto->professores()->where('user_id', $user->id)->exists()) {
-            return true;
-        }
-
-        return false;
+        return $resultado->projeto->users()->where('users.id', $user->id)->exists();
     }
 
     /**

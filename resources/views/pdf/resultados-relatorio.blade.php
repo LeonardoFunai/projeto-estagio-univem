@@ -168,11 +168,15 @@
 
     </div>
 
+
+
+    
+
     @if($resultado->status === 'aprovado')
         @php
             $totalHoras = $resultado->projeto->atividades->sum('carga_horaria');
             $alunoRepresentante = $resultado->projeto->user->name ?? 'Não definido';
-            $professorOrientador = $resultado->projeto->professores->first()->nome ?? 'Não definido';
+            $professorOrientador =  $resultado->projeto->professores->pluck('name')->implode(', ');
             $responsavelOrganizacao = $resultado->parceiro_responsavel ?? 'Não aplicável';
         @endphp
 

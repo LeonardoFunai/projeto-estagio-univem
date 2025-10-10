@@ -460,7 +460,7 @@
 
                     <!-- Form do Napex -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
-                    @if(request('editar') === 'napex' || is_null($projeto->aprovado_napex))
+                    @if($projeto->status === 'entregue' && (request('editar') === 'napex' || is_null($projeto->aprovado_napex)))
                         <form id="form-parecer-napex" method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
                             @csrf
                             <label>Número do Projeto</label>
@@ -523,7 +523,6 @@
                     @endif
                 @endif
 
-                <!-- FORMULÁRIO/VISAO DO COORDENADOR -->
                 @if(str_starts_with(auth()->user()->role, 'coordenador'))
 
                     <!-- Tabela do napex que aparece para coordenador -->
@@ -557,7 +556,7 @@
                         </tbody>
                     </table>
                     <!-- Form do coordenador -->
-                    @if(request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador))
+                     @if($projeto->status === 'entregue' && (request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador)))
                         <form id="form-parecer-coordenador" method="POST" action="{{ route('projetos.avaliar.coordenador', $projeto->id) }}" class="mb-10">
                             @csrf
                             <label>Aprovação</label>
@@ -602,7 +601,7 @@
                     </table>
 
                         <!-- Botão de Editar -->
-                    @if($projeto->status != 'aprovado')
+                    @if($projeto->status === 'entregue')
                         <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
                             Editar Parecer

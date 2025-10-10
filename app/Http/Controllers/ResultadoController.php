@@ -27,7 +27,7 @@ class ResultadoController extends Controller
 
         $this->authorize('create', [Resultado::class, $projeto]);
 
-        // CORREÇÃO: Carrega as relações necessárias ANTES das verificações.
+       
         $projeto->load(['users.curso', 'atividades']);
 
         if ($projeto->resultado) {
@@ -37,7 +37,7 @@ class ResultadoController extends Controller
             return redirect()->route('projetos.index')->with('error', 'Só é possível adicionar um relatório após a proposta ser aprovada.');
         }
 
-        // CORREÇÃO: Cria as coleções esperadas pela view
+      
         $professores = $projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
         $alunos = $projeto->users->where('role', 'aluno');
         $cargaHorariaTotal = $projeto->atividades->sum('carga_horaria'); 
@@ -69,12 +69,12 @@ class ResultadoController extends Controller
                     $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
                     $filePath = $file->storeAs('anexos_resultados', $fileName, 'public');
 
-                    // Cria um anexo para cada item do array
+                    
                     $resultado->anexos()->create([
                         'descricao' => $anexoData['descricao'],
                         'path' => $filePath,
                         'nome_original' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(), // <-- ADICIONE ESTA LINHA
+                        'mime_type' => $file->getMimeType(),
                     ]);
                 }
             }
@@ -100,6 +100,7 @@ class ResultadoController extends Controller
     public function show(Resultado $resultado, Request $request)
     {
         $this->authorize('view', $resultado);
+        $resultado->load('projeto.users');
 
         $sortDirection = $request->query('sort', 'desc');
         if (!in_array($sortDirection, ['asc', 'desc'])) {

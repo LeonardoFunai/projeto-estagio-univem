@@ -19,70 +19,84 @@ class UserController extends Controller
         $this->authorizeResource(User::class, 'user');
     }
 
-    public function index(Request $request)
-    {
-        $currentUser = auth()->user(); 
+public function index(Request $request)
+{
+    $currentUser = auth()->user(); 
 
-        $search = $request->input('search');
-        $role = $request->input('role');
-        $curso_id = $request->input('curso_id');
-        $cpf = $request->input('cpf');
-        $ra = $request->input('ra');
+    // Lógica de Ordenação
+    $sortableColumns = ['name', 'email', 'ra', 'role', 'created_at', 'curso_id']; 
+    $sortBy = in_array($request->input('sort_by'), $sortableColumns) ? $request->input('sort_by') : 'name';
+    $sortDirection = in_array($request->input('sort_direction'), ['asc', 'desc']) ? $request->input('sort_direction') : 'asc';
 
-        $query = User::with('curso', 'cursosCoordenados')->orderBy('name');
+    // Lógica de Filtros da View
+    $search = $request->input('search');
+    $role = $request->input('role');
+    $curso_id = $request->input('curso_id');
+    $cpf = $request->input('cpf');
+    $ra = $request->input('ra');
 
-        if ($currentUser->role === 'coordenador') {
-            $coordenadorCursosIds = $currentUser->cursosCoordenados->pluck('id')->toArray();
-            $query->where('role', 'aluno')->whereIn('curso_id', $coordenadorCursosIds);
+    // Inicia a query com a ordenação dinâmica
+    $query = User::with('curso', 'cursosCoordenados')->orderBy($sortBy, $sortDirection);
 
-        } elseif ($currentUser->role === 'napex') {
-            $query->where('role', 'aluno');
-        }
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        if ($cpf) {
-            $query->where('cpf', 'like', "%{$cpf}%");
-        }
-
-        if ($ra) {
-            $query->where('ra', 'like', "%{$ra}%");
-        }
-
-        if ($role) {
-            $query->where('role', 'like', "%{$role}%");
-        }
-
-        if ($curso_id) {
-            $query->where(function ($q) use ($curso_id) {
-                $q->where('curso_id', $curso_id)
-                ->orWhereHas('cursosCoordenados', function ($cq) use ($curso_id) {
-                    $cq->where('cursos.id', $curso_id);
-                });
-            });
-        }
-        
-        $users = $query->paginate(15)->withQueryString();
-        
-        if ($currentUser->role === 'coordenador') {
-            $cursos = $currentUser->cursosCoordenados()->orderBy('nome')->get();
-            $roles = ['aluno']; 
-        } elseif ($currentUser->role === 'napex') {
-            $cursos = Curso::orderBy('nome')->get();
-            $roles = ['aluno'];
-        }
-        else {
-            $cursos = Curso::orderBy('nome')->get();
-            $roles = User::select('role')->distinct()->pluck('role');
-        }
-
-        return view('admin.users.index', compact('users', 'roles', 'cursos', 'search', 'role', 'curso_id', 'cpf', 'ra'));
+    // --- LÓGICA DE PERMISSÃO (FILTRO BASE) ---
+    // Esta é a restrição principal que sempre será aplicada
+    if ($currentUser->role === 'coordenador') {
+        $coordenadorCursosIds = $currentUser->cursosCoordenados->pluck('id')->toArray();
+        $query->where('role', 'aluno')->whereIn('curso_id', $coordenadorCursosIds);
+    } elseif ($currentUser->role === 'napex') {
+        $query->where('role', 'aluno');
     }
+
+    // --- FILTROS DO USUÁRIO ---
+    // Estes filtros agora operam sobre a query já restrita pelas permissões
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+
+    if ($cpf) {
+        $query->where('cpf', 'like', "%{$cpf}%");
+    }
+
+    if ($ra) {
+        $query->where('ra', 'like', "%{$ra}%");
+    }
+
+    if ($role) {
+        // Esta condição agora não causará conflito, pois o dropdown de roles
+        // para napex/coordenador só conterá 'aluno'.
+        $query->where('role', $role);
+    }
+
+    if ($curso_id) {
+        $query->where(function ($q) use ($curso_id) {
+            $q->where('curso_id', $curso_id)
+              ->orWhereHas('cursosCoordenados', function ($cq) use ($curso_id) {
+                  $cq->where('cursos.id', $curso_id);
+              });
+        });
+    }
+    
+    $users = $query->paginate(15)->withQueryString();
+    
+    // --- LÓGICA PARA PREENCHER OS DROPDOWNS DO FILTRO ---
+    // Esta parte é crucial para evitar o conflito na interface
+    if ($currentUser->role === 'coordenador') {
+        $cursos = $currentUser->cursosCoordenados()->orderBy('nome')->get();
+        $roles = ['aluno']; // Só pode filtrar por aluno
+    } elseif ($currentUser->role === 'napex') {
+        $cursos = Curso::orderBy('nome')->get();
+        $roles = ['aluno']; // Só pode filtrar por aluno
+    }
+    else { // Admin vê tudo
+        $cursos = Curso::orderBy('nome')->get();
+        $roles = User::select('role')->distinct()->pluck('role');
+    }
+
+    return view('admin.users.index', compact('users', 'roles', 'cursos', 'search', 'role', 'curso_id', 'cpf', 'ra', 'sortBy', 'sortDirection'));
+}
 
     public function create()
     {
@@ -145,7 +159,7 @@ class UserController extends Controller
             ]);
         }
 
-        $validated = $request->validate($rules, $this->validationMessages());
+        $validated = $request->validate($rules);
         $validated['password'] = Hash::make($validated['password']);
         
         $user = User::create($validated);

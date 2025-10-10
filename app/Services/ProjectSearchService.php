@@ -13,7 +13,7 @@ class ProjectSearchService
      */
     public function buildQuery(array $filters)
     {
-        $query = Projeto::query();
+        $query = Projeto::query()->with(['user.curso', 'resultado', 'users']);
         $user = Auth::user();
 
         if ($user->role === 'aluno') {
