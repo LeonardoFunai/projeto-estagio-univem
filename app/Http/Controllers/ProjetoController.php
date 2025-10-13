@@ -216,15 +216,12 @@ class ProjetoController extends Controller
         if (!in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
-
-        // --- CORREÇÃO APLICADA AQUI ---
-        // Trocamos 'alunos' e 'professores' pelo novo relacionamento 'users'.
         $projeto = Projeto::with([
-            'users', // Carrega todos os participantes (alunos e professores)
+            'users', 
             'atividades', 
             'cronogramas', 
             'rejeicoes', 
-            'user', // Carrega o criador do projeto
+            'user',
             'todosOsLogs.user', 
             'resultado'
         ])->findOrFail($id);
@@ -238,7 +235,6 @@ class ProjetoController extends Controller
             $logs = $logs->sortByDesc('created_at');
         }
 
-        // Separa os participantes em alunos e professores para a view
         $alunos = $projeto->users->where('role', 'aluno');
         $professores = $projeto->users->filter(function ($user) {
             return str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador');

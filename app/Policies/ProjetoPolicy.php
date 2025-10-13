@@ -32,21 +32,42 @@ class ProjetoPolicy
     /**
      * Determina se o usuário pode ver os detalhes de um projeto específico.
      */
+// app/Policies/ProjetoPolicy.php
+
     public function view(User $user, Projeto $projeto): bool
     {
-        if (in_array($user->role, ['admin', 'napex'])) {
+        // REGRA 1: Admin pode ver tudo.
+        if ($user->role === 'admin') {
             return true;
         }
 
-        if (str_starts_with($user->role, 'coordenador')) {
-            $cursoDoProjeto = $projeto->user->curso;
-            if (!$cursoDoProjeto) {
-                return false;
-            }
-            return $user->cursosCoordenados()->where('curso_id', $cursoDoProjeto->id)->exists();
+        // REGRA 2: Se o usuário for um participante do projeto (aluno ou professor/coordenador),
+        // ele sempre poderá visualizar.
+        if ($projeto->users()->where('users.id', $user->id)->exists()) {
+            return true;
         }
 
-        return $projeto->users()->where('user_id', $user->id)->exists();
+        // REGRA 3: Se não for participante, verifica se é um avaliador com permissão.
+
+        // NAPEx só pode ver se o status NÃO for 'editando'.
+        if ($user->role === 'napex') {
+            return $projeto->status !== 'editando';
+        }
+
+        // Coordenador só pode ver se o projeto for do seu curso E o status NÃO for 'editando'.
+        if (str_starts_with($user->role, 'coordenador')) {
+            // Bloqueia imediatamente se o status for 'editando' (e ele não for participante, verificado na Regra 2)
+            if ($projeto->status === 'editando') {
+                return false;
+            }
+            
+            $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
+            // Permite se o curso do proponente do projeto estiver na lista de cursos do coordenador.
+            return $cursosCoordenadosIds->contains($projeto->user->curso_id);
+        }
+
+        // Nega o acesso por padrão para qualquer outro caso.
+        return false;
     }
 
     /**
