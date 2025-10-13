@@ -329,16 +329,30 @@
   
 
                                     <!-- Ações -->
-                                    {{-- ======================= CÉLULA DE AÇÕES CORRIGIDA ======================= --}}
+                                    {{-- ======================= CÉLULA DE AÇÕES  ======================= --}}
                                     <td class="py-2 px-6" style="min-width: 200px;" x-data="{ openModal: false }">
                                         <div class="flex items-center justify-start gap-2 flex-nowrap">
 
                                             @php
                                                 $baseBtnClass = 'inline-flex justify-center font-bold py-1 px-2 rounded text-sm whitespace-nowrap';
+                                                $user = auth()->user();
+                                                $canEvaluate = false;
+
+                                                // A proposta só pode ser avaliada se estiver 'entregue'
+                                                if ($projeto->status === 'entregue') {
+                                                    if ($user->can('approveByNapex', $projeto) || $user->can('approveByCoordinator', $projeto)) {
+                                                        $canEvaluate = true;
+                                                    }
+                                                }
                                             @endphp
 
-                                            {{-- BOTÃO DE VISUALIZAR (Sempre visível se tiver acesso ao projeto) --}}
-                                            <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="{{ $baseBtnClass }} bg-blue-600 hover:bg-blue-700 text-white">Ver Proposta</a>
+                                            @if ($canEvaluate)
+                                                {{-- BOTÃO DE AVALIAR PROPOSTA (Avaliadores) --}}
+                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Avaliar Proposta" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white">Avaliar</a>
+                                            @else
+                                                {{-- BOTÃO DE VISUALIZAR (Padrão para todos os outros casos) --}}
+                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="{{ $baseBtnClass }} bg-blue-600 hover:bg-blue-700 text-white">Ver Proposta</a>
+                                            @endif
 
                                             {{-- BOTÃO DE EDITAR PROPOSTA --}}
                                             @can('update', $projeto)
@@ -350,26 +364,21 @@
                                                 <button @click="openModal = true" title="Apagar Proposta" class="{{ $baseBtnClass }} bg-red-600 hover:bg-red-700 text-white">Apagar</button>
                                             @endcan
 
-                                            {{-- BOTÃO DE AVALIAR PROPOSTA (Avaliadores) --}}
-                                            @can('avaliar', $projeto)
-                                                <a href="{{ route('projetos.show', $projeto->id) }}" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white" title="Analisar Proposta">Avaliar Proposta</a>
-                                            @endcan
-
 
                                             {{-- --- LÓGICA PARA RELATÓRIO --- --}}
-                                            @if ($projeto->resultado)
-                                                {{-- Se o relatório já existe --}}
-                                                <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="{{ $baseBtnClass }} bg-cyan-600 hover:bg-cyan-700 text-white">Ver Resultado</a>
+                                                @if ($projeto->resultado)
+                                                    @can('evaluate', $projeto->resultado)
+                                                        {{-- Se o usuário pode AVALIAR, mostra somente o botão de avaliar --}}
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white" title="Avaliar Relatório">Avaliar</a>
+                                                    @elsecan('view', $projeto->resultado)
+                                                        {{-- Senão, se ele pode apenas VISUALIZAR, mostra o botão de ver --}}
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="{{ $baseBtnClass }} bg-cyan-600 hover:bg-cyan-700 text-white">Ver Resultado</a>
+                                                    @endcan
 
-                                                {{-- BOTÃO DE EDITAR RELATÓRIO --}}
-                                                @can('update', $projeto->resultado)
-                                                    <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="{{ $baseBtnClass }} bg-yellow-600 hover:bg-yellow-700 text-white font-bold">Editar Relatório</a>
-                                                @endcan
-                                                
-                                                {{-- BOTÃO DE AVALIAR RELATÓRIO (Avaliadores) --}}
-                                                @can('avaliar', $projeto->resultado)
-                                                    <a href="{{ route('resultados.show', $projeto->resultado) }}" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white" title="Analisar Relatório">Avaliar Resultado</a>
-                                                @endcan
+                                                    {{-- O botão de editar continua com sua própria lógica, sem interferir --}}
+                                                    @can('update', $projeto->resultado)
+                                                        <a href="{{ route('resultados.edit', $projeto->resultado) }}" title="Editar Relatório" class="{{ $baseBtnClass }} bg-yellow-600 hover:bg-yellow-700 text-white font-bold">Editar Relatório</a>
+                                                    @endcan
 
                                                 @else
                                                     

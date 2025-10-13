@@ -286,11 +286,11 @@ class ProjetoController extends Controller
 
         $cursos = Curso::orderBy('nome')->get();
 
-        // --- CORREÇÃO APLICADA AQUI ---
-        // Especificamos que queremos o 'id' da tabela 'users'
+       $role = auth()->user()->role;
+
         $participantesIds = $projeto->users()->pluck('users.id')->toArray();
 
-        return view('projetos.edit', compact('projeto', 'alunos', 'professores', 'cursos', 'participantesIds'));
+        return view('projetos.edit', compact('projeto', 'alunos', 'professores', 'cursos', 'participantesIds','role'));
     }
 
     /**
