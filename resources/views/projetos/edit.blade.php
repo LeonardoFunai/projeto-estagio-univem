@@ -72,76 +72,72 @@
                 <input type="text" name="periodo" value="{{ old('periodo', $projeto->periodo) }}" class="w-full border-gray-300 rounded-md mb-4" required>
             </fieldset>
 
-            <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Professores Orientadores</legend>
-                <div id="professores-wrapper">
-                    @php
-                        $professoresDoProjeto = $projeto->users->filter(fn($u) => str_starts_with($u->role, 'professor') || str_starts_with($u->role, 'coordenador'));
-                    @endphp
-                    @foreach (old('professores', $professoresDoProjeto->pluck('id')->all()) as $professorId)
-                        @php $p = $professores->find($professorId); @endphp
-                        @if ($p)
-                        <div class="search-component mb-4 p-4 border rounded-md relative">
-                            <div class="flex justify-between items-center mb-2">
-                                <p><strong>Professor {{ $loop->iteration }}</strong></p>
-                                <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
-                            </div>
-                            <div class="search-container" style="display: none;">
-                                <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar por nome ou email...">
-                                <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
-                            </div>
-                            <div class="selected-user mt-2 text-sm text-gray-800 space-y-1">
-                                <p><strong>Nome:</strong> {{ $p->name }}</p>
-                                <p><strong>Email:</strong> {{ $p->email }}</p>
-                                <button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>
-                            </div>
-                            <input type="hidden" name="professores[]" class="user-id-input" value="{{ $p->id }}">
-                        </div>
-                        @endif
-                    @endforeach
-                </div>
-                <button type="button" id="add-professor-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Orientador</button>
-            </fieldset>
+        <fieldset class="mb-8">
+            <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Gerenciar Participantes</legend>
 
-            <fieldset class="mb-8">
-                <legend class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2">Alunos Participantes</legend>
-                <div class="mb-4 p-4 border rounded-md bg-gray-50">
-                    <p><strong>Proponente (Aluno 1):</strong></p>
-                    <p><strong>Nome:</strong> {{ $projeto->user->name }}</p>
-                    <p><strong>RA:</strong> {{ $projeto->user->ra ?? 'N/A' }}</p>
-                    <p><strong>Curso:</strong> {{ $projeto->user->curso->nome ?? 'N/A' }}</p>
-                </div>
-                <div id="alunos-wrapper">
-                    @php
-                        $alunosDoProjeto = $projeto->users->where('role', 'aluno')->where('id', '!=', $projeto->user_id);
-                    @endphp
-                    @foreach (old('alunos', $alunosDoProjeto->pluck('id')->all()) as $alunoId)
-                        @php $a = $alunos->find($alunoId); @endphp
-                        @if ($a)
-                        <div class="search-component mb-4 p-4 border rounded-md relative">
-                            <div class="flex justify-between items-center mb-2">
-                                <p><strong>Aluno {{ $loop->iteration + 1 }}</strong></p>
-                                <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
-                            </div>
-                             <div class="search-container" style="display: none;">
-                                <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar por nome, RA ou curso...">
-                                <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
-                            </div>
-                            <div class="selected-user mt-2 text-sm text-gray-800 space-y-1">
-                                <p><strong>Nome:</strong> {{ $a->name }}</p>
-                                <p><strong>RA:</strong> {{ $a->ra ?? 'N/A' }}</p>
-                                <p><strong>Curso:</strong> {{ $a->curso->nome ?? 'N/A' }}</p>
-                                <button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>
-                            </div>
-                            <input type="hidden" name="alunos[]" class="user-id-input" value="{{ $a->id }}">
+            <div class="mb-6">
+                <h3 class="text-md font-semibold text-gray-800 mb-2">Orientadores</h3>
+                <div class="space-y-2 mb-4">
+                    @foreach ($orientadores as $orientador)
+                        <div class="flex items-center justify-between p-2 border rounded-md bg-green-50 text-green-800">
+                            <span>{{ $orientador->name }} ({{ $orientador->email }})</span>
+                            <span class="text-xs font-bold">CONFIRMADO</span>
                         </div>
-                        @endif
                     @endforeach
                 </div>
-                @if ($role === 'aluno') 
-                    <button type="button" id="add-aluno-search" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Adicionar Outro Aluno</button>
-                @endif
-            </fieldset>
+                <div id="orientador-search-component">
+                    <div class="search-container mb-2 relative">
+                        <input type="text" id="orientador-search-input" class="w-full border-gray-300 rounded-md" placeholder="Buscar e convidar novo orientador...">
+                        <ul id="orientador-search-results" class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10"></ul>
+                    </div>
+                    <div id="orientadores-invitations-list" class="space-y-2">
+                        {{-- Lista de novos orientadores selecionados para convite --}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-md font-semibold text-gray-800 mb-2">Alunos</h3>
+                <div class="space-y-2 mb-4">
+                    @foreach ($alunos as $aluno)
+                        <div class="flex items-center justify-between p-2 border rounded-md bg-green-50 text-green-800">
+                            <span>{{ $aluno->name }} ({{ $aluno->ra ?? $aluno->email }})</span>
+                            @if($aluno->id === $projeto->user_id) 
+                                <span class="text-xs font-bold text-blue-600">PROPONENTE</span> 
+                            @else
+                                <span class="text-xs font-bold">CONFIRMADO</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <div id="aluno-search-component">
+                    <div class="search-container mb-2 relative">
+                        <input type="text" id="aluno-search-input" class="w-full border-gray-300 rounded-md" placeholder="Buscar e convidar novo aluno...">
+                        <ul id="aluno-search-results" class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10"></ul>
+                    </div>
+                    <div id="alunos-invitations-list" class="space-y-2">
+                        {{-- Lista de novos alunos selecionados para convite --}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-md font-semibold text-gray-800 mb-2">Convites Pendentes</h3>
+                <div class="space-y-2">
+                    @forelse ($convitesPendentes as $convite)
+                        <div class="flex items-center justify-between p-2 border rounded-md bg-yellow-50 text-yellow-800">
+                            <span>{{ $convite->email }} (Convidado como {{ $convite->role }})</span>
+                            <span class="text-xs font-bold">PENDENTE</span>
+                        </div>
+                    @empty
+                        <p class="text-gray-500 text-sm">Nenhum convite pendente.</p>
+                    @endforelse
+                </div>
+            </div>
+        </fieldset>
+
+        {{-- Container para os inputs hidden dos NOVOS convites --}}
+        <div id="invitations-hidden-inputs"></div>
 
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Datas e Público</legend>
@@ -219,196 +215,185 @@
         </form>
     </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const createSearchComponent = (type, pluralName, wrapperId, addButtonId, initialCount = 0) => {
-            const wrapper = document.getElementById(wrapperId);
-            const addButton = document.getElementById(addButtonId);
-            let userCount = wrapper.querySelectorAll('.search-component').length + initialCount;
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-            const reindexTitles = () => {
-                wrapper.querySelectorAll('.search-component').forEach((comp, i) => {
-                    const titleElement = comp.querySelector('p > strong');
-                    if (titleElement) {
-                        const newTitle = `${type.charAt(0).toUpperCase() + type.slice(1)} ${i + 1 + initialCount}`;
-                        titleElement.textContent = newTitle;
+            /**
+             * Função para criar o componente de busca e convite na tela de EDIÇÃO.
+             * Ela já exclui participantes existentes e convites pendentes da busca.
+             */
+            const setupInvitationSearch = (role, searchInputId, resultsListId, invitationsListId, hiddenContainerId) => {
+                const searchInput = document.getElementById(searchInputId);
+                const resultsList = document.getElementById(resultsListId);
+                const invitationsList = document.getElementById(invitationsListId);
+                const hiddenContainer = document.getElementById(hiddenContainerId);
+                
+                // Pré-popula com emails de usuários já no projeto ou com convites pendentes para não serem buscados novamente.
+                const existingUserEmails = @json($projeto->users->pluck('email')->merge($convitesPendentes->pluck('email')));
+                const selectedUserEmails = new Set(existingUserEmails);
+
+                // Evento de digitação no campo de busca
+                searchInput.addEventListener('input', async () => {
+                    const searchTerm = searchInput.value;
+                    if (searchTerm.length < 3) {
+                        resultsList.classList.add('hidden');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}`);
+                        const users = await response.json();
+                        
+                        resultsList.innerHTML = '';
+                        const foundUsers = users.filter(user => !selectedUserEmails.has(user.email));
+
+                        if (foundUsers.length > 0) {
+                            foundUsers.forEach(user => {
+                                const li = document.createElement('li');
+                                li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
+                                li.textContent = (role === 'aluno') ? `${user.name} (RA: ${user.ra || 'N/A'})` : `${user.name} (${user.email})`;
+                                li.dataset.email = user.email;
+                                li.dataset.name = user.name;
+                                resultsList.appendChild(li);
+                            });
+                        } else {
+                            resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário novo encontrado.</li>';
+                        }
+                        resultsList.classList.remove('hidden');
+                    } catch (error) {
+                        console.error('Erro na busca:', error);
                     }
                 });
-                userCount = wrapper.querySelectorAll('.search-component').length + initialCount;
-            };
 
-            const addSearchField = () => {
-                const title = `${type.charAt(0).toUpperCase() + type.slice(1)} ${userCount + 1}`;
-                userCount++;
-                
-                const searchComponent = document.createElement('div');
-                searchComponent.className = 'search-component mb-4 p-4 border rounded-md relative';
-                
-                searchComponent.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <p><strong>${title}</strong></p>
-                        <button type="button" class="remove-btn bg-red-600 text-white text-xs px-2 py-1 rounded">Remover</button>
-                    </div>
-                    <div class="search-container">
-                        <input type="text" class="search-input w-full border-gray-300 rounded-md" placeholder="Buscar...">
-                        <ul class="search-results mt-1 border rounded max-h-48 overflow-y-auto hidden absolute bg-white w-full z-10" style="width: calc(100% - 2rem);"></ul>
-                    </div>
-                    <div class="selected-user mt-2 text-sm text-gray-800 space-y-1" style="display: none;"></div>
-                    <input type="hidden" name="${pluralName}[]" class="user-id-input">
-                `;
-                wrapper.appendChild(searchComponent);
-            };
+                // Evento de clique em um resultado da busca
+                resultsList.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'LI' || !e.target.dataset.email) return;
 
-            addButton.addEventListener('click', addSearchField);
+                    const user = e.target.dataset;
+                    const index = `new_${user.email.replace(/[^a-zA-Z0-9]/g, '')}`;
 
-            wrapper.addEventListener('input', async (e) => {
-                if (!e.target.classList.contains('search-input')) return;
-                const component = e.target.closest('.search-component');
-                const resultsList = component.querySelector('.search-results');
-                const searchTerm = e.target.value;
+                    selectedUserEmails.add(user.email);
 
-                if (searchTerm.length < 3) {
+                    // Cria o item visual na lista de "a convidar"
+                    const listItem = document.createElement('div');
+                    listItem.id = `item_${index}`;
+                    listItem.className = 'dynamic-item flex items-center justify-between p-2 border rounded-md bg-blue-50 text-blue-800';
+                    listItem.innerHTML = `
+                        <span>${user.name}</span>
+                        <button type="button" class="remove-invitation-btn text-red-500 hover:text-red-700 font-bold" data-index="${index}" data-email="${user.email}">&times;</button>
+                    `;
+                    invitationsList.appendChild(listItem);
+
+                    // Cria os inputs hidden para enviar com o formulário de update
+                    const hiddenInputs = document.createElement('div');
+                    hiddenInputs.id = `hidden_${index}`;
+                    hiddenInputs.innerHTML = `
+                        <input type="hidden" name="invitations[${index}][email]" value="${user.email}">
+                        <input type="hidden" name="invitations[${index}][role]" value="${role}">
+                    `;
+                    hiddenContainer.appendChild(hiddenInputs);
+
+                    searchInput.value = '';
                     resultsList.classList.add('hidden');
-                    return;
-                }
+                });
 
-                const role = (type === 'aluno') ? 'aluno' : 'professor';
-                const excludeId = {{ $projeto->user->id }};
-                const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}&exclude=${excludeId}`);
-                const users = await response.json();
-
-                resultsList.innerHTML = '';
-                if (users.length > 0) {
-                    users.forEach(user => {
-                        const li = document.createElement('li');
-                        li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
-                        const courseName = user.curso ? user.curso.nome : 'N/A';
-                        li.textContent = type === 'aluno' ? `${user.name} (RA: ${user.ra || 'N/A'}, Curso: ${courseName})` : `${user.name} (${user.email})`;
-                        li.dataset.id = user.id;
-                        li.dataset.name = user.name;
-                        li.dataset.ra = user.ra || '';
-                        li.dataset.curso = courseName;
-                        li.dataset.email = user.email || '';
-                        resultsList.appendChild(li);
-                    });
-                } else {
-                    resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
-                }
-                resultsList.classList.remove('hidden');
-            });
-
-            wrapper.addEventListener('click', (e) => {
-                if (e.target.tagName === 'LI' && e.target.closest('.search-results')) {
-                    const component = e.target.closest('.search-component');
-                    const selectedDiv = component.querySelector('.selected-user');
-                    const hiddenInput = component.querySelector('.user-id-input');
-                    const searchContainer = component.querySelector('.search-container');
-                    
-                    hiddenInput.value = e.target.dataset.id;
-                    
-                    let selectedHTML = `<p><strong>Nome:</strong> ${e.target.dataset.name}</p>`;
-                    if (type === 'aluno') {
-                        selectedHTML += `<p><strong>RA:</strong> ${e.target.dataset.ra || 'N/A'}</p><p><strong>Curso:</strong> ${e.target.dataset.curso || 'N/A'}</p>`;
-                    } else {
-                         selectedHTML += `<p><strong>Email:</strong> ${e.target.dataset.email || 'N/A'}</p>`;
-                    }
-                    selectedHTML += `<button type="button" class="change-btn text-blue-600 underline text-xs mt-1">Trocar</button>`;
-                    
-                    selectedDiv.innerHTML = selectedHTML;
-                    selectedDiv.style.display = 'block';
-                    searchContainer.style.display = 'none';
-                }
-
-                if (e.target.classList.contains('remove-btn')) {
-                    e.target.closest('.search-component').remove();
-                    reindexTitles();
-                }
-                
-                if (e.target.classList.contains('change-btn')) {
-                    const component = e.target.closest('.search-component');
-                    component.querySelector('.selected-user').style.display = 'none';
-                    component.querySelector('.user-id-input').value = '';
-                    const searchContainer = component.querySelector('.search-container');
-                    searchContainer.style.display = 'block';
-                    searchContainer.querySelector('.search-input').focus();
-                }
-            });
-        };
-        
-        createSearchComponent('professor', 'professores', 'professores-wrapper', 'add-professor-search', 0);
-        createSearchComponent('aluno', 'alunos', 'alunos-wrapper', 'add-aluno-search', 1);
-
-        const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
-            const wrapper = document.getElementById(wrapperId);
-            const addButton = document.getElementById(addButtonId);
-
-            const reindexFields = () => {
-                const items = wrapper.children;
-                Array.from(items).forEach((item, index) => {
-                    item.querySelector('strong').textContent = `${type} ${index + 1}`;
-                    item.querySelectorAll('[name]').forEach(field => {
-                        field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
-                    });
-                    const removeBtn = item.querySelector('.remove-item-btn');
-                    if(removeBtn) {
-                       removeBtn.style.display = items.length > 1 ? 'inline-block' : 'none';
+                // Evento para o botão de remover um convite da lista
+                document.body.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('remove-invitation-btn')) {
+                        const index = e.target.dataset.index;
+                        const email = e.target.dataset.email;
+                        document.getElementById(`item_${index}`)?.remove();
+                        document.getElementById(`hidden_${index}`)?.remove();
+                        selectedUserEmails.delete(email);
                     }
                 });
             };
 
-            const addField = () => {
-                const index = wrapper.children.length;
-                const newField = document.createElement('div');
-                newField.innerHTML = templateFunction(index); 
-                wrapper.appendChild(newField.firstElementChild);
-                reindexFields();
-            };
-            
-            addButton.addEventListener('click', addField);
+            // Inicializa os componentes de busca para orientadores e alunos
+            setupInvitationSearch('professor', 'orientador-search-input', 'orientador-search-results', 'orientadores-invitations-list', 'invitations-hidden-inputs');
+            setupInvitationSearch('aluno', 'aluno-search-input', 'aluno-search-results', 'alunos-invitations-list', 'invitations-hidden-inputs');
 
-            wrapper.addEventListener('click', (e) => {
-                if (e.target && e.target.classList.contains('remove-item-btn')) {
-                    e.target.closest('.dynamic-item').remove();
+            // --- LÓGICA PARA ATIVIDADES E CRONOGRAMA (MANTIDA) ---
+            const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
+                const wrapper = document.getElementById(wrapperId);
+                const addButton = document.getElementById(addButtonId);
+
+                const reindexFields = () => {
+                    const items = wrapper.children;
+                    Array.from(items).forEach((item, index) => {
+                        const strongTag = item.querySelector('strong');
+                        if (strongTag) {
+                            strongTag.textContent = `${type} ${index + 1}`;
+                        }
+                        
+                        item.querySelectorAll('[name]').forEach(field => {
+                            field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
+                        });
+
+                        const removeBtn = item.querySelector('.remove-item-btn');
+                        if(removeBtn) {
+                        removeBtn.style.display = items.length > 1 ? 'inline-block' : 'none';
+                        }
+                    });
+                };
+
+                const addField = () => {
+                    const index = wrapper.children.length;
+                    const newField = document.createElement('div');
+                    newField.innerHTML = templateFunction(index); 
+                    wrapper.appendChild(newField.firstElementChild);
+                    reindexFields();
+                };
+                
+                if (addButton) {
+                    addButton.addEventListener('click', addField);
+                }
+
+                wrapper.addEventListener('click', (e) => {
+                    if (e.target && e.target.classList.contains('remove-item-btn')) {
+                        e.target.closest('.dynamic-item').remove();
+                        reindexFields();
+                    }
+                });
+                
+                if (wrapper.children.length === 0) {
+                    if (addButton) {
+                        addField();
+                    }
+                } else {
                     reindexFields();
                 }
-            });
+            };
             
-            if (wrapper.children.length === 0) {
-                addField();
-            } else {
-                reindexFields();
-            }
-        };
-        
-        const atividadeTemplate = (index) => `
-            <div class="mb-4 border p-3 rounded-md dynamic-item">
-                <div class="flex justify-between items-center mb-2">
-                    <strong>Atividade ${index + 1}</strong>
-                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
-                <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
-                <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1">
-            </div>`;
-        
-        const cronogramaTemplate = (index) => {
-            const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
-            return `
-            <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
-                <div class="flex justify-between items-center mb-2">
-                    <strong>Atividade do Cronograma ${index + 1}</strong>
-                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                    <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
-                    <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
-                    <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
-                </div>
-            </div>`;
-        };
+            const atividadeTemplate = (index) => `
+                <div class="mb-4 border p-3 rounded-md dynamic-item">
+                    <div class="flex justify-between items-center mb-2">
+                        <strong>Atividade ${index + 1}</strong>
+                        <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    </div>
+                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
+                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
+                    <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1">
+                </div>`;
+            
+            const cronogramaTemplate = (index) => {
+                const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
+                return `
+                <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
+                    <div class="flex justify-between items-center mb-2">
+                        <strong>Atividade do Cronograma ${index + 1}</strong>
+                        <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                        <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required>
+                        <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
+                        <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
+                    </div>
+                </div>`;
+            };
 
-        setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
-        setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
-    });
+            setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
+            setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
+        });
     </script>
 </x-app-layout>

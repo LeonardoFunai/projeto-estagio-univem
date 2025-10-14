@@ -23,7 +23,7 @@
                 color: #251c57 !important;
             }
             
-            /* ===== INÍCIO DA CORREÇÃO 1: GARANTE QUE O ALPINE.JS ESCONDA O MENU ATÉ ESTAR PRONTO ===== */
+    
             [x-cloak] { display: none !important; }
         </style>
     </head>
@@ -81,6 +81,16 @@
                     @endif
                 </a>
                 |
+
+                <a href="{{ route('convites.index') }}" class="btn custom-btn me-2 position-relative">
+                    Meus Convites
+                    @if(isset($pendingInvitationsCount) && $pendingInvitationsCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ $pendingInvitationsCount }}
+                            <span class="visually-hidden">convites pendentes</span>
+                        </span>
+                    @endif
+                </a>|
 
                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                     @csrf

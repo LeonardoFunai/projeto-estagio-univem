@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResultadoController;
 use App\Http\Controllers\Admin\UserController; 
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\InvitationController;
 
 // Redireciona a raiz para a tela de login
 Route::get('/', function () {
@@ -70,6 +71,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+
+    // Rotas para o Sistema de Convites
+    Route::post('/projetos/{projeto}/convidar', [App\Http\Controllers\ProjetoController::class, 'convidarParticipante'])->name('projetos.convidar');
+    Route::get('/meus-convites', [InvitationController::class, 'index'])->name('convites.index');
+    Route::post('/convites/{invitation}/aceitar', [InvitationController::class, 'aceitar'])->name('convites.aceitar');
+    Route::post('/convites/{invitation}/recusar', [InvitationController::class, 'recusar'])->name('convites.recusar');
 });
 
 

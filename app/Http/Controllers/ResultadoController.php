@@ -350,7 +350,7 @@ class ResultadoController extends Controller
         
         $resultado->save();
 
-        return redirect()->route('projetos.show', $resultado->projeto_id)->with('success', 'Parecer salvo com sucesso!');
+     return redirect()->route('resultados.show', $resultado)->with('success', 'Parecer salvo com sucesso!');
     }
 
     public function gerarPdf(Resultado $resultado)

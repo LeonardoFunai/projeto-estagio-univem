@@ -69,6 +69,11 @@ class StoreProjetoRequest extends FormRequest
             'cronograma.*.atividade' => ['required', 'string', 'max:100'],
             'cronograma.*.mes_inicio' => ['required', 'string', Rule::in($todosOsMeses)],
             'cronograma.*.mes_fim' => ['required', 'string', Rule::in($todosOsMeses)],
+
+            // Novas regras para os convites
+            'invitations' => 'nullable|array',
+            'invitations.*.email' => 'required|email',
+            'invitations.*.role' => 'required|in:aluno,professor',
         ];
     }
 

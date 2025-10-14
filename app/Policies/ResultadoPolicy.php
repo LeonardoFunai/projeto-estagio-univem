@@ -14,29 +14,31 @@ class ResultadoPolicy
     /**
      * Determina se o usuário pode ver um relatório de resultado.
      */
-
     public function view(User $user, Resultado $resultado): bool
     {
-        // Admin pode ver tudo.
         if ($user->role === 'admin') {
             return true;
         }
-
         if ($resultado->projeto->users()->where('users.id', $user->id)->exists()) {
             return true;
         }
+        $visibleStatuses = ['entregue', 'aprovado', 'reprovado','Finalizado'];
 
-        if ($user->role === 'napex') {
-            return in_array($resultado->status, ['entregue', 'aprovado']);
-        }
+        if (in_array($resultado->status, $visibleStatuses)) {
 
-        if ($user->role === 'coordenador') {
-            if (in_array($resultado->status, ['entregue', 'aprovado'])) {
+            if ($user->role === 'napex') {
+                return true;
+            }
+
+            if ($user->role === 'coordenador') {
+                $cursoDoProjetoId = $resultado->projeto->user->curso_id;
+                if (!$cursoDoProjetoId) {
+                    return false;
+                }
                 $coordenadorCursosIds = $user->cursosCoordenados->pluck('id')->toArray();
-                return in_array($resultado->projeto->curso_id, $coordenadorCursosIds);
+                return in_array($cursoDoProjetoId, $coordenadorCursosIds);
             }
         }
-
         return false;
     }
 
@@ -68,12 +70,10 @@ class ResultadoPolicy
      */
     public function sendForEvaluation(User $user, Resultado $resultado): bool
     {
-        // Apenas pode enviar se estiver como rascunho ou reprovado
         if (!in_array($resultado->status, ['editando', 'reprovado'])) {
             return false;
         }
 
-        // O usuário precisa ser o criador (aluno) ou um professor vinculado.
         return $this->update($user, $resultado);
     }
     
@@ -82,12 +82,10 @@ class ResultadoPolicy
      */
     public function revertToDraft(User $user, Resultado $resultado): bool
     {
-        // 1. O resultado precisa estar no estado correto para ser revertido.
         if ($resultado->status !== 'entregue' || $resultado->aprovado_napex !== 'pendente' || $resultado->aprovado_coordenador !== 'pendente') {
             return false;
         }
 
-        // 2. O usuário precisa ser o criador (aluno) ou um professor vinculado.
         if ($user->id === $resultado->projeto->user_id) {
             return true;
         }
@@ -103,12 +101,11 @@ class ResultadoPolicy
      */
     public function evaluate(User $user, Resultado $resultado): bool
     {
-        // 1. O resultado deve estar 'entregue' para ser avaliado.
+
         if ($resultado->status !== 'entregue') {
             return false;
         }
 
-        // 2. Apenas NAPEX e Coordenador podem avaliar.
         return in_array($user->role, ['napex', 'coordenador']);
     }
 }

@@ -20,6 +20,9 @@ use App\Notifications\PropostaAvaliada;
 use App\Notifications\ProfessorVinculadoAProjeto;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProjetoLog;
+use App\Models\ProjetoInvitation;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProjetoController extends Controller
 {
@@ -139,66 +142,75 @@ class ProjetoController extends Controller
     {
         $this->authorize('create', Projeto::class);
 
-        $data = $request->validated();
-        $data['status'] = 'editando';
+        $validatedData = $request->validated();
 
-        // A lógica de arquivo e período permanece a mesma
-        if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
-            $file = $request->file('arquivo');
-            $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
-            $file->move(public_path('arquivos_projetos'), $fileName);
-            $data['arquivo'] = 'arquivos_projetos/' . $fileName;
-        }
+        DB::beginTransaction();
+        try {
+            // 1. Cria a instância do projeto com os dados validados
+            $projeto = new Projeto($validatedData);
+            $projeto->user_id = auth()->id();
+            $projeto->status = 'editando';
+            $projeto->etapa = 'Proposta';
 
-        if ($request->filled('data_inicio') && $request->filled('data_fim')) {
-            $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
-            $fim = date('d/m/Y', strtotime($request->input('data_fim')));
-            $data['periodo_realizacao'] = "$inicio a $fim";
-        }
-
-        // Define o criador do projeto como o usuário logado
-        $data['user_id'] = auth()->id();
-        
-        // Cria o projeto com os dados principais
-        $projeto = Projeto::create($data);
-        $alunoLogadoId = auth()->id();
-        $outrosAlunosIds = $request->input('alunos', []);
-        $professoresIds = $request->input('professores', []);
-        
-        // Une o ID do aluno logado com os outros alunos e professores selecionados
-        $todosOsParticipantesIds = array_unique(array_merge([$alunoLogadoId], $outrosAlunosIds, $professoresIds));
-
-        // O método sync() anexa todos os participantes ao projeto de uma só vez
-        if (!empty($todosOsParticipantesIds)) {
-            $projeto->users()->sync($todosOsParticipantesIds);
-        }
-
-        // Notifica apenas os professores
-        if (!empty($professoresIds)) {
-            $professoresParaNotificar = User::findMany($professoresIds);
-            if ($professoresParaNotificar->isNotEmpty()) {
-                Notification::send($professoresParaNotificar, new \App\Notifications\ProfessorVinculadoAProjeto($projeto));
+            // Lógica para arquivo (se existir no seu formulário)
+            if ($request->hasFile('arquivo') && $request->file('arquivo')->isValid()) {
+                $file = $request->file('arquivo');
+                $fileName = md5($file->getClientOriginalName() . time()) . '.' . $file->extension();
+                $filePath = $file->storeAs('arquivos_projetos', $fileName, 'public');
+                $projeto->arquivo = $filePath;
             }
-        }
+            
+            // Salva o projeto para obter um ID
+            $projeto->save();
 
+            // 2. Anexa o criador (aluno logado) como o primeiro participante
+            $projeto->users()->attach(auth()->id());
 
-        if ($request->has('atividades')) {
-            foreach ($request->atividades as $atividadeData) {
-                if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
+            // 3. Salva as atividades e cronogramas
+            if (isset($validatedData['atividades'])) {
+                foreach ($validatedData['atividades'] as $atividadeData) {
                     $projeto->atividades()->create($atividadeData);
                 }
             }
-        }
-
-        if ($request->has('cronograma') && is_array($request->cronograma)) {
-            foreach ($request->cronograma as $itemDataCronograma) {
-                if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
-                    $projeto->cronogramas()->create($itemDataCronograma);
+            if (isset($validatedData['cronograma'])) {
+                foreach ($validatedData['cronograma'] as $cronogramaData) {
+                    $projeto->cronogramas()->create($cronogramaData);
                 }
             }
-        }
 
-        return redirect()->route('projetos.index')->with('success', 'Projeto salvo com sucesso!');
+            // 4. Processa e cria os convites
+            if ($request->has('invitations')) {
+                foreach ($request->input('invitations') as $invitationData) {
+                    // Garante que os dados do convite não estão vazios
+                    if (!empty($invitationData['email']) && !empty($invitationData['role'])) {
+                        
+                        // Evita que o criador se auto-convide
+                        if ($invitationData['email'] === auth()->user()->email) {
+                            continue;
+                        }
+                        
+                        ProjetoInvitation::create([
+                            'projeto_id' => $projeto->id,
+                            'user_id'    => auth()->id(), // ID de quem convidou
+                            'email'      => $invitationData['email'],
+                            'role'       => $invitationData['role'],
+                            'token'      => Str::uuid(),
+                            'status'     => 'pendente',
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            // 5. Redireciona para a página de edição para o próximo passo
+            return redirect()->route('projetos.show', $projeto)->with('success', 'Proposta criada! Os convites foram enviados para os participantes.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Retorna para o formulário com os dados preenchidos e uma mensagem de erro
+            return back()->withInput()->with('error', 'Ocorreu um erro ao salvar o projeto. Por favor, tente novamente.');
+        }
     }
 
     /**
@@ -265,32 +277,25 @@ class ProjetoController extends Controller
      */
     public function edit($id)
     {
-        // Busca o projeto manualmente para garantir que os dados estão 100% corretos
-        $projeto = Projeto::with('users', 'atividades', 'cronogramas')->findOrFail($id);
+        $projeto = Projeto::with([
+            'users', 
+            'invitations.inviter', 
+            'atividades', 
+            'cronogramas'
+        ])->findOrFail($id);
 
-        // Agora, a autorização funcionará, pois o $projeto está correto
         $this->authorize('update', $projeto);
 
-         $autorProjeto = $projeto->user;
+        $orientadores = $projeto->users->filter(fn($user) => str_starts_with($user->role, 'professor') || str_starts_with($user->role, 'coordenador'));
+        $alunos = $projeto->users->filter(fn($user) => $user->role === 'aluno');
+        $convitesPendentes = $projeto->invitations->where('status', 'pendente');
 
-        // O restante do seu código para carregar dados para a view
-        $alunos = User::where('role', 'aluno')
-                  ->where('curso_id', $autorProjeto->curso_id)
-                  ->orderBy('name')
-                  ->get();
-
-        $professores = User::where('role', 'like', 'professor%')
-                        ->orWhere('role', 'like', 'coordenador%')
-                        ->orderBy('name')
-                        ->get();
-
-        $cursos = Curso::orderBy('nome')->get();
-
-       $role = auth()->user()->role;
-
-        $participantesIds = $projeto->users()->pluck('users.id')->toArray();
-
-        return view('projetos.edit', compact('projeto', 'alunos', 'professores', 'cursos', 'participantesIds','role'));
+        return view('projetos.edit', compact(
+            'projeto',
+            'orientadores',
+            'alunos',
+            'convitesPendentes'
+        ));
     }
 
     /**
@@ -301,53 +306,75 @@ class ProjetoController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-public function update(UpdateProjetoRequest $request, $id)
+    public function update(UpdateProjetoRequest $request, $id)
     {
-        // 1. Busca manualmente o projeto para garantir que os dados estão 100% corretos
+        // 1. Busca o projeto e autoriza a ação
         $projeto = Projeto::findOrFail($id);
-
-        // 2. Agora a autorização funcionará, pois o objeto $projeto está completo
         $this->authorize('update', $projeto);
 
-        $data = $request->validated();
+        $validatedData = $request->validated();
 
-        if ($request->filled('data_inicio') && $request->filled('data_fim')) {
-            $inicio = date('d/m/Y', strtotime($request->input('data_inicio')));
-            $fim = date('d/m/Y', strtotime($request->input('data_fim')));
-            $data['periodo_realizacao'] = "$inicio a $fim";
-        }
+        DB::beginTransaction();
+        try {
+            // 2. Atualiza os dados principais do projeto (título, período, etc.)
+            $projeto->update($validatedData);
 
-        $projeto->update($data);
+            // 3. Processa e cria os NOVOS convites que foram adicionados na tela de edição
+            if ($request->has('invitations')) {
+                foreach ($request->input('invitations') as $invitationData) {
+                    if (!empty($invitationData['email']) && !empty($invitationData['role'])) {
+                        
+                        // Verifica se já existe um convite pendente para este email
+                        $isAlreadyInvited = $projeto->invitations()
+                                                ->where('email', $invitationData['email'])
+                                                ->where('status', 'pendente')
+                                                ->exists();
+                        
+                        // Verifica se o usuário já é um membro confirmado do projeto
+                        $isAlreadyMember = $projeto->users()->where('email', $invitationData['email'])->exists();
 
-        $alunosIds = $request->input('alunos', []);
-        $professoresIds = $request->input('professores', []);
-        
-        // 3. CORREÇÃO CRÍTICA: Garante que o proponente original do projeto não seja removido
-        $todosOsParticipantesIds = array_unique(array_merge([$projeto->user_id], $alunosIds, $professoresIds));
-        
-        $projeto->users()->sync($todosOsParticipantesIds);
-
-        // A lógica para atualizar atividades e cronogramas deve ser mais robusta
-        // para evitar a perda de dados se o formulário for enviado vazio.
-        if ($request->has('atividades')) {
-            $projeto->atividades()->delete();
-            foreach ($request->atividades as $atividadeData) {
-                if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
-                    $projeto->atividades()->create($atividadeData);
+                        // Só cria o convite se o usuário não for membro e não tiver um convite pendente
+                        if (!$isAlreadyInvited && !$isAlreadyMember) {
+                            ProjetoInvitation::create([
+                                'projeto_id' => $projeto->id,
+                                'user_id'    => auth()->id(),
+                                'email'      => $invitationData['email'],
+                                'role'       => $invitationData['role'],
+                                'token'      => Str::uuid(),
+                                'status'     => 'pendente',
+                            ]);
+                        }
+                    }
                 }
             }
-        }
 
-        if ($request->has('cronograma')) {
-            $projeto->cronogramas()->delete();
-            foreach ($request->cronograma as $itemDataCronograma) {
-                if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
-                    $projeto->cronogramas()->create($itemDataCronograma);
+            // 4. Lógica para atualizar atividades e cronogramas (mantida)
+            if ($request->has('atividades')) {
+                $projeto->atividades()->delete(); // Apaga os antigos para simplicidade
+                foreach ($request->atividades as $atividadeData) {
+                    if (!empty($atividadeData['o_que_fazer']) && !empty($atividadeData['como_fazer'])) {
+                        $projeto->atividades()->create($atividadeData);
+                    }
                 }
             }
-        }
 
-        return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto atualizado com sucesso!');
+            if ($request->has('cronograma')) {
+                $projeto->cronogramas()->delete(); // Apaga os antigos
+                foreach ($request->cronograma as $itemDataCronograma) {
+                    if (!empty($itemDataCronograma['atividade']) && !empty($itemDataCronograma['mes_inicio']) && !empty($itemDataCronograma['mes_fim'])) {
+                        $projeto->cronogramas()->create($itemDataCronograma);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('projetos.show', $projeto->id)->with('success', 'Projeto atualizado e novos convites enviados com sucesso!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Ocorreu um erro ao atualizar o projeto: ' . $e->getMessage());
+        }
     }
     /**
      * Processa a avaliação de um projeto pelo NAPEx.
@@ -683,5 +710,34 @@ public function update(UpdateProjetoRequest $request, $id)
         $pdf = Pdf::loadView('pdf.logs-historico', $data);
 
         return $pdf->download('historico-projeto-' . $projeto->id . '.pdf');
+    }
+
+    public function convidarParticipante(Request $request, Projeto $projeto)
+    {
+        $this->authorize('update', $projeto);
+
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'role' => 'required|in:aluno,professor',
+        ]);
+
+        $convidado = User::where('email', $validated['email'])->first();
+        if ($convidado && $projeto->users()->where('user_id', $convidado->id)->exists()) {
+            return back()->with('error', 'Este usuário já participa do projeto.');
+        }
+
+        if (ProjetoInvitation::where('projeto_id', $projeto->id)->where('email', $validated['email'])->where('status', 'pendente')->exists()) {
+            return back()->with('error', 'Já existe um convite pendente para este email.');
+        }
+
+        $convite = ProjetoInvitation::create([
+            'projeto_id' => $projeto->id,
+            'user_id'    => auth()->id(),
+            'email'      => $validated['email'],
+            'role'       => $validated['role'],
+            'token'      => Str::uuid(), 
+            'status'     => 'pendente',
+        ]);
+        return back()->with('success', "Convite enviado com sucesso para {$validated['email']}!");
     }
 }

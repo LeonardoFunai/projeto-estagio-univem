@@ -125,4 +125,9 @@ class Projeto extends Model
                                 ->orWhere('role', 'like', 'coordenador%');
                         });
         }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProjetoInvitation::class);
+    }
 }
