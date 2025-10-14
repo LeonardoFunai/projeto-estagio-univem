@@ -15,11 +15,38 @@
                     @else
                         <div class="space-y-4">
                             @foreach($notifications as $notification)
-                                <a href="{{ $notification->data['url'] ?? '#' }}" class="block p-4 rounded-lg transition {{ $notification->read_at ? 'bg-gray-100' : 'bg-blue-50 border border-blue-300' }}">
-                                    <p class="font-semibold text-gray-800">{{ $notification->data['titulo_projeto'] ?? 'Notificação' }}</p>
-                                    <p class="text-sm text-gray-600">{{ $notification->data['mensagem'] ?? 'Você tem uma nova notificação.' }}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                </a>
+                                {{-- Bloco principal da notificação --}}
+                                <div class="p-4 rounded-lg flex items-start gap-4 transition {{ $notification->read_at ? 'bg-gray-100' : 'bg-blue-50 border border-blue-200' }}">
+                                    
+                                    {{-- Ícone de Informação --}}
+                                    <div class="text-blue-500 text-xl pt-1">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </div>
+
+                                    {{-- Conteúdo da Notificação --}}
+                                    <div class="flex-grow">
+                                        {{-- Linha do Título e Horário --}}
+                                        <div class="flex justify-between items-baseline">
+                                            <h3 class="font-semibold text-gray-800">
+                                                {{-- Usa a chave 'titulo' que definimos nas novas notificações, ou a antiga 'titulo_projeto' como fallback --}}
+                                                {{ $notification->data['titulo'] ?? ($notification->data['titulo_projeto'] ?? 'Notificação') }}
+                                            </h3>
+                                            <p class="text-xs text-gray-500 whitespace-nowrap ml-4">
+                                                {{ $notification->created_at->diffForHumans() }}
+                                            </p>
+                                        </div>
+
+                                        {{-- Mensagem --}}
+                                        <p class="text-sm text-gray-600 mt-1">{{ $notification->data['mensagem'] ?? 'Você tem uma nova notificação.' }}</p>
+
+                                        {{-- Link (se houver) --}}
+                                        @if(isset($notification->data['url']))
+                                            <a href="{{ $notification->data['url'] }}" class="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                                                Ver detalhes →
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
 

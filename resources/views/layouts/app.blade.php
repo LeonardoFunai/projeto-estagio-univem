@@ -71,19 +71,26 @@
                 @if(in_array(auth()->user()->role, ['admin', 'napex']) || str_starts_with(auth()->user()->role, 'coordenador'))
                     <a href="{{ route('admin.users.index') }}" class="btn custom-btn me-2">Gerenciar Usuários</a> |
                 @endif
-
-                <a href="{{ route('notifications.index') }}" class="btn custom-btn relative">
-                    🔔
+                <a href="{{ route('notifications.index') }}" 
+                class="btn relative" 
+                style="transition: transform 0.2s ease-in-out; display: inline-block; color: white; background: none; border: none;"
+                onmouseover="this.style.transform='scale(1.15)'"
+                onmouseout="this.style.transform='scale(1)'">
+                    &emsp;🔔&emsp;
                     @if(auth()->user()->unreadNotifications->count() > 0)
-                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
+                        {{-- CONTADOR MENOR E MAIS BAIXO --}}
+                        <span class="absolute top-px -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-600 border border-white rounded-full">
                             {{ auth()->user()->unreadNotifications->count() }}
                         </span>
                     @endif
-                </a>
-                |
+                </a>|
 
-                <a href="{{ route('convites.index') }}" class="btn custom-btn me-2 position-relative">
-                    Meus Convites
+                <a href="{{ route('convites.index') }}" 
+                class="btn me-2 position-relative" 
+                style="transition: transform 0.2s ease-in-out; display: inline-block; color: white; background: none; border: none;"
+                onmouseover="this.style.transform='scale(1.15)'"
+                onmouseout="this.style.transform='scale(1)'">
+                    &emsp;✉️&emsp;
                     @if(isset($pendingInvitationsCount) && $pendingInvitationsCount > 0)
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                             {{ $pendingInvitationsCount }}

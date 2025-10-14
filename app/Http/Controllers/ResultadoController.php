@@ -202,6 +202,8 @@ class ResultadoController extends Controller
         unset($validatedData['anexos']); 
         $resultado->update($validatedData);
 
+
+
         return redirect()->route('resultados.show', $resultado)->with('success', 'Relatório de Resultados atualizado com sucesso!');
 }
 
@@ -269,6 +271,8 @@ class ResultadoController extends Controller
 
         $resultado->status = 'editando';
         $resultado->save();
+
+
 
         return redirect()->route('resultados.edit', $resultado)->with('success', 'O relatório de resultados voltou para o modo de edição.');
     }

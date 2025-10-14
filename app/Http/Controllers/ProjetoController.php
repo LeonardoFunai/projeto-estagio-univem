@@ -316,7 +316,7 @@ class ProjetoController extends Controller
 
         DB::beginTransaction();
         try {
-            // 2. Atualiza os dados principais do projeto (título, período, etc.)
+           
             $projeto->update($validatedData);
 
             // 3. Processa e cria os NOVOS convites que foram adicionados na tela de edição
