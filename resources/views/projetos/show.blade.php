@@ -102,7 +102,6 @@
         <div class="py-3">
             <div class="w-full">
                 
-                <!-- mensagens de erro e sucesso -->
                 @if (session('error'))
                     <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                         <strong>Erro:</strong> {{ session('error') }}
@@ -116,7 +115,6 @@
                 @endif
 
 
-                <!-- Título  -->
                 <x-slot name="pageTitle">
                     Detalhes da Proposta de Extensão
                 </x-slot>
@@ -175,28 +173,27 @@
                 {{-- ============================================================================== --}}
                 
                 
-                <!-- TABELA 1 - Detalhes do Projeto -->
                 <div class="overflow-x-auto">
-                    <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
+                    <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10 table-fixed">
                         
                         <tbody>
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left w-1/5">Título</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->titulo }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Período</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->periodo }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Professor(es) envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     @forelse ($professores as $professor)
                                         <p>{{ $professor->name }} ({{ $professor->email }})</p>
                                     @empty
@@ -207,7 +204,7 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Alunos envolvidos</th>
-                                <td class="bg-white p-4 border-b border-gray-300">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     @forelse ($alunos as $aluno)
                                         <p>{{ $aluno->name }} - RA: {{ $aluno->ra ?? 'N/A' }} - Curso: {{ $aluno->curso->nome ?? 'N/A' }}</p>
                                     @empty
@@ -218,42 +215,42 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Público Alvo da Atividade</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->publico_alvo }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Período da realização do projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }} a {{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Introdução</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->introducao }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Objetivo do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->objetivo_geral }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Justificativa do Projeto</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->justificativa }}
                                 </td>
                             </tr>
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Metodologia</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->metodologia }}
                                 </td>
                             </tr>
@@ -263,19 +260,19 @@
                                 <th class="bg-[#251C57] text-white p-4 text-left align-top">Atividades e Carga Horária</th>
                                 <td class="bg-white p-2 border-b border-gray-300">
                                     @if ($projeto->atividades && $projeto->atividades->count())
-                                        <table class="table-auto w-full text-sm">
+                                        <table class="table-fixed w-full text-sm">
                                             <thead class="bg-gray-100">
                                                 <tr>
-                                                    <th class="text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">O que fazer</th>
-                                                    <th class="text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">Como fazer</th>
-                                                    <th class="text-center py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700" style="width: 120px;">Carga Horária</th>
+                                                    <th class="w-2/5 text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">O que fazer</th>
+                                                    <th class="w-2/5 text-left py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">Como fazer</th>
+                                                    <th class="w-1/5 text-center py-2 px-3 border-b-2 border-gray-300 font-semibold text-gray-700">Carga Horária</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($projeto->atividades as $atividade)
                                                     <tr class="hover:bg-gray-50">
-                                                        <td class="py-2 px-3 border-b border-gray-200" style="white-space: pre-line;">{{ $atividade->o_que_fazer }}</td>
-                                                        <td class="py-2 px-3 border-b border-gray-200" style="white-space: pre-line;">{{ $atividade->como_fazer }}</td>
+                                                        <td class="py-2 px-3 border-b border-gray-200" style="white-space: pre-line; word-wrap: break-word;">{{ $atividade->o_que_fazer }}</td>
+                                                        <td class="py-2 px-3 border-b border-gray-200" style="white-space: pre-line; word-wrap: break-word;">{{ $atividade->como_fazer }}</td>
                                                         <td class="py-2 px-3 border-b border-gray-200 text-center">{{ $atividade->carga_horaria }} horas</td>
                                                     </tr>
                                                 @endforeach
@@ -341,13 +338,13 @@
 
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Recursos Necessários</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->recursos }}
                                 </td>
                             </tr>
                             <tr>
                                 <th class="bg-[#251C57] text-white p-4 text-left">Resultados Esperados</th>
-                                <td class="bg-white p-4 border-b border-gray-300" style="max-width: 200px; word-wrap: break-word; white-space: pre-line;">
+                                <td class="bg-white p-4 border-b border-gray-300" style="word-wrap: break-word; white-space: pre-line;">
                                     {{ $projeto->resultados_esperados }}
                                 </td>
                             </tr>
@@ -371,7 +368,6 @@
                     </table>
                 </div>
 
-                <!-- TABELA DE PARECERES - VISUAL PARA ALUNO -->
                 @if(auth()->user()->role === 'aluno')
                     <h2 class="text-xl font-bold text-[#251C57] mb-2">Parecer do NAPEx</h2>
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-6">
@@ -434,10 +430,8 @@
                 @endif
 
 
-                <!-- FORMULÁRIO/VISÃO DO NAPEX -->
                 @if(auth()->user()->role === 'napex')
                     
-                    <!-- Tabela do coordenador que aparece para o napex -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do Coordenador</h2>
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-10">
                         <tbody>
@@ -458,7 +452,6 @@
                         </tbody>
                     </table>
 
-                    <!-- Form do Napex -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
                     @if($projeto->status === 'entregue' && (request('editar') === 'napex' || is_null($projeto->aprovado_napex)))
                         <form id="form-parecer-napex" method="POST" action="{{ route('projetos.avaliar.napex', $projeto->id) }}" class="mb-10">
@@ -483,7 +476,6 @@
                         </form>
                     @else
 
-                    <!-- tabela de napex que aparece p/ napex-->
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-4">
                         <tbody>
                             <tr>
@@ -513,7 +505,6 @@
                         </tbody>
                     </table>
                     
-                        <!-- Botão editar  -->
                         @if ($projeto->status != 'aprovado')
                             <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'napex']) }}#form-parecer-napex"
                             class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-6">
@@ -525,7 +516,6 @@
 
                 @if(str_starts_with(auth()->user()->role, 'coordenador'))
 
-                    <!-- Tabela do napex que aparece para coordenador -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-4">Parecer do NAPEx</h2>
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-6">
                         <tbody>
@@ -555,8 +545,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <!-- Form do coordenador -->
-                     @if($projeto->status === 'entregue' && (request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador)))
+                    @if($projeto->status === 'entregue' && (request('editar') === 'coordenador' || is_null($projeto->aprovado_coordenador)))
                         <form id="form-parecer-coordenador" method="POST" action="{{ route('projetos.avaliar.coordenador', $projeto->id) }}" class="mb-10">
                             @csrf
                             <label>Aprovação</label>
@@ -573,7 +562,6 @@
                         </form>
                     @else
 
-                    <!-- Tabela coordenador que aparece para coordenador -->
                     <h2 class="text-xl font-bold text-[#251C57] mb-2">Parecer do Coordenador de Curso</h2>
                     <table class="min-w-full w-full border border-gray-300 rounded-lg mb-4">
                         <tbody>
@@ -600,8 +588,7 @@
                         </tbody>
                     </table>
 
-                        <!-- Botão de Editar -->
-                    @if($projeto->status === 'entregue')
+                        @if($projeto->status === 'entregue')
                         <a href="{{ route('projetos.show', ['id' => $projeto->id, 'editar' => 'coordenador']) }}#form-parecer-coordenador"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded inline-block mb-10">
                             Editar Parecer
@@ -612,7 +599,6 @@
                 @endif
 
 
-                <!-- Rejeições -->
                 @if ($projeto->rejeicoes->count() > 0)
                     <h1 class="text-2xl font-bold text-[#251C57] text-center mb-8">Rejeições Registradas</h1>
                     <div class="overflow-x-auto">

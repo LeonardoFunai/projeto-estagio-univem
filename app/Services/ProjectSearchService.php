@@ -60,6 +60,13 @@ class ProjectSearchService
             // NAPEX só vê projetos que não estão mais em edição
             $query->where('status', '!=', 'editando');
         }
+        elseif ($user->role === 'admin') {
+            // Nenhuma restrição de visibilidade aplicada
+        }   
+        else {
+            // Para qualquer outro papel, não retorna projetos
+            $query->whereRaw('1 = 0'); // Condição impossível
+        }
 
         // --- Lógica de Filtros (continua a mesma) ---
         if (!empty($filters['curso_id'])) {
@@ -81,75 +88,40 @@ class ProjectSearchService
             $query->where('status', $filters['status']);
         }
 
-        $query->orderBy('created_at', 'desc');
-
-        return $query;
-    }
-
-    /**
-     * Aplica as regras de visibilidade baseadas no perfil do usuário logado.
-     */
-    private function applyRoleBasedVisibility(Builder $query, $user): void
-    {
-        // Aluno: vê apenas os projetos que ele criou
-        if ($user->role === 'aluno') {
-            $query->where('user_id', $user->id);
+        if (!empty($filters['etapa'])) {
+            $query->where('etapa', $filters['etapa']);
         }
 
-        // Professor: vê os projetos nos quais ele está vinculado como participante
-        if (str_starts_with($user->role, 'professor')) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            });
-        }
-        
-        // Coordenador: Vê todos os projetos dos cursos que coordena
-        if (str_starts_with($user->role, 'coordenador')) {
-            $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
-            if ($cursosCoordenadosIds->isNotEmpty()) {
-                $query->whereHas('user', function ($q) use ($cursosCoordenadosIds) {
-                    $q->whereIn('curso_id', $cursosCoordenadosIds);
-                });
-            } else {
-                // Se não coordena cursos, não vê nenhum projeto
-                $query->whereRaw('1 = 0');
-            }
-        }
-
-        // NAPEX: Vê todos os projetos que já foram entregues para avaliação
-        if ($user->role === 'napex') {
-            $query->where('status', '!=', 'editando');
-        }
-    }
-
-    /**
-     * Aplica os filtros vindos do formulário de busca.
-     */
-    private function applyRequestFilters(Builder $query, array $filters): void
-    {
         if (!empty($filters['titulo'])) {
             $query->where('titulo', 'like', '%' . $filters['titulo'] . '%');
         }
-        
-        if (!empty($filters['cadastrado_por'])) {
-            $query->whereHas('user', function ($q) use ($filters) {
-                $q->where('name', 'like', '%' . $filters['cadastrado_por'] . '%');
-            });
+
+        if (!empty($filters['data_inicio_de'])) {
+            $query->whereDate('data_inicio', '>=', $filters['data_inicio_de']);
         }
 
-        // Adicione outros filtros conforme necessário
-    }
-
-    /**
-     * Aplica a ordenação na query.
-     */
-    private function applyOrdering(Builder $query, array $filters): void
-    {
-        $ordenar = $filters['ordenar'] ?? 'data_desc';
-        if ($ordenar == 'data_asc') {
-            $query->orderBy('created_at', 'asc');
-        } else {
-            $query->orderBy('created_at', 'desc');
+        if (!empty($filters['data_inicio_ate'])) {
+            $query->whereDate('data_inicio', '<=', $filters['data_inicio_ate']);
         }
+
+        if (!empty($filters['data_fim_de'])) {
+            $query->whereDate('data_fim', '>=', $filters['data_fim_de']);
+        }
+
+        if (!empty($filters['data_fim_ate'])) {
+            $query->whereDate('data_fim', '<=', $filters['data_fim_ate']);
+        }
+
+        if (!empty($filters['aprovado_napex'])) {
+            $query->where('aprovado_napex', $filters['aprovado_napex']);
+        }
+
+        if (!empty($filters['aprovado_coordenador'])) {
+            $query->where('aprovado_coordenador', $filters['aprovado_coordenador']);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        return $query;
     }
 }

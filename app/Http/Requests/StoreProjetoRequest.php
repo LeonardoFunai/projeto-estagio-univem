@@ -35,13 +35,13 @@ class StoreProjetoRequest extends FormRequest
             'data_fim' => ['required', 'date_format:Y-m-d', 'after_or_equal:data_inicio'],
 
             // Descrição do Projeto
-            'publico_alvo' => ['nullable', 'string', 'max:100'],
-            'introducao' => ['nullable', 'string', 'max:1000'],
-            'objetivo_geral' => ['nullable', 'string', 'max:1000'],
-            'justificativa' => ['nullable', 'string', 'max:1000'],
-            'metodologia' => ['nullable', 'string', 'max:500'],
-            'recursos' => ['nullable', 'string', 'max:1000'],
-            'resultados_esperados' => ['nullable', 'string', 'max:1000'],
+            'publico_alvo' => ['nullable', 'string', 'max:1000'],
+            'introducao' => ['nullable', 'string', 'max:15000'],
+            'objetivo_geral' => ['nullable', 'string', 'max:15000'],
+            'justificativa' => ['nullable', 'string', 'max:15000'],
+            'metodologia' => ['nullable', 'string', 'max:15000'],
+            'recursos' => ['nullable', 'string', 'max:15000'],
+            'resultados_esperados' => ['nullable', 'string', 'max:15000'],
             
             // Arquivo
             'arquivo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf,doc,docx', 'max:5120'],
@@ -60,8 +60,8 @@ class StoreProjetoRequest extends FormRequest
 
             // Atividades
             'atividades' => ['required', 'array', 'min:1', 'max:10'],
-            'atividades.*.o_que_fazer' => ['required', 'string', 'max:1000'],
-            'atividades.*.como_fazer' => ['required', 'string', 'max:1000'],
+            'atividades.*.o_que_fazer' => ['required', 'string', 'max:15000'],
+            'atividades.*.como_fazer' => ['required', 'string', 'max:15000'],
             'atividades.*.carga_horaria' => ['required', 'integer', 'min:1', 'max:99999'],
 
             // Cronograma

@@ -18,32 +18,26 @@
        
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
 
-            <!-- Erros -->
-                @if (session('success'))
+            @if (session('success'))
                     <div class="mb-4 text-green-600 font-semibold">
                         {{ session('success') }}
                     </div>
                 @endif
                 
-                <!-- Botões -->
                 <div class="flex justify-between items-center flex-wrap mb-6 gap-2">
 
-                    <!-- Botões à esquerda -->
                     <div class="flex items-center gap-2 flex-wrap">
-                        <!-- Filtrar -->
                         <button id="btn-filtro"
                             class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 h-[36px] rounded text-sm">
                             🔍 Filtrar
                         </button>
 
-                        <!-- Limpar -->
                         <a href="{{ route('projetos.index') }}"
                             class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold px-3 py-1.5 h-[36px] rounded text-sm">
                             <img src="{{ asset('img/site/btn-limpar.png') }}" alt="Limpar" width="18" height="18" class="self-center">
                             Limpar Filtros
                         </a>
 
-                        <!-- Ordenar -->
                         <div class="flex items-center gap-2">
                             <label for="ordenar" class="text-sm fw-bold mb-0">Ordenar por:</label>
                             <form method="GET" action="{{ route('projetos.index') }}" id="form-ordenar">
@@ -61,7 +55,6 @@
                         </div>
                     </div>
 
-                    <!-- Botão Gerar PDF à direita -->
                     @if (in_array(auth()->user()->role, ['napex', 'coordenador']))
                         <a href="{{ route('projetos.exportarPdf', request()->query()) }}"
                             class="inline-flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white font-bold px-4 h-[36px] rounded text-sm">
@@ -89,16 +82,7 @@
                         </div>
                     @endif
 
-                    <!-- Filtro -->
                     <form method="GET" action="{{ route('projetos.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                        <!-- Cadastrado por
-                         <input type="hidden" name="ordenar" value="{{ request('ordenar') }}">
-                        <div>
-                            <label class="block mb-1">Cadastrado por:</label>
-                            <input type="text" name="cadastrado_por" value="{{ request('cadastrado_por') }}" class="w-full border-gray-300 rounded-md py-0.5">
-                        </div> -->
-                        
-                        <!-- Etapa -->
                         <div>
                             <label class="block mb-1">Etapa:</label>
                             <select name="etapa" class="w-full border-gray-300 rounded-md py-1">
@@ -109,12 +93,12 @@
                             </select>
                         </div>
 
-                        <!-- Título -->
                         <div>
                             <label class="block mb-1">Título:</label>
                             <input type="text" name="titulo" value="{{ request('titulo') }}" class="w-full border-gray-300 rounded-md py-0.5">
                         </div>
 
+                        @if(in_array(auth()->user()->role, ['coordenador', 'napex','admin']))
                         <div>
                             <label for="curso_id" class="block mb-1">Curso:</label>
                             <select name="curso_id" id="curso_id" class="w-full border-gray-300 rounded-md py-1">
@@ -126,8 +110,8 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endif
 
-                        <!-- Data Início de/até -->
                         <div class="col-span-2">
                             <label class="block mb-1">Data Início:</label>
                             <div class="flex gap-2">
@@ -137,7 +121,6 @@
                             </div>
                         </div>
 
-                        <!-- Data Fim de/até -->
                         <div class="col-span-2">
                             <label class="block mb-1">Data Fim:</label>
                             <div class="flex gap-2">
@@ -152,7 +135,6 @@
                             $role = auth()->user()->role;
                         @endphp
 
-                        <!-- Status -->
                         <div>
                             <label for="status" class="block mb-1">Status:</label>
                             <select name="status" id="status" class="w-full border-gray-300 rounded-md py-1">
@@ -169,7 +151,6 @@
                         </div>
 
 
-                        <!-- Aprovações -->
                         <div>
                             <label class="block mb-1">Aprovação NAPEx:</label>
                             <select name="aprovado_napex" class="w-full border-gray-300 rounded-md py-1">
@@ -202,10 +183,8 @@
                     <table class="min-w-full w-full max-w-7xl bg-white border border-gray-300 rounded-lg">
                         <thead>
 
-                            <!-- Colunas -->
                             <tr class="bg-[#251C57] text-white">
                                 <th class="py-1 px-4 text-left">#</th>
-                                <!-- <th class="py-1 px-4 text-left">Cadastrado por</th> -->
                                 <th class="py-1 px-4 text-center">Título</th>
                                 <th class="py-1 px-4 text-center">Curso</th>
                                 <th class="py-1 px-4 text-center">Data Início</th>
@@ -225,31 +204,20 @@
                                     <td class="py-2 px-6 text-center">{{ ($projetos->currentPage() - 1) * $projetos->perPage() + $index + 1 }}</td>
 
 
-                                    <!-- Nome do perfil de cadastro
-                                    <td class="py-2 px-6" style="max-width: 200px; word-wrap: break-word;">
-                                        {{ Str::limit($projeto->user->name ?? 'Desconhecido', 50, '...') }}
-                                    </td> -->
-
-
-                                    <!-- Título -->
                                     <td class="py-2 px-6 text-center" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
                                         {{ $projeto->titulo }}
                                     </td>
 
-                                    <!-- Curso -->
                                     <td class="py-2 px-6 text-center" style="max-width: 200px; word-wrap: break-word; white-space: normal;">
                                             {{ $projeto->user->curso->nome_resumido ?? 'N/D' }}
                                     </td>
 
 
-                                    <!-- Dat Início -->
                                     <td class="py-2 px-6 text-center" >{{ \Carbon\Carbon::parse($projeto->data_inicio)->format('d/m/Y') }}</td>
 
-                                    <!-- Data Fim -->
                                     <td class="py-2 px-6 text-center">{{ \Carbon\Carbon::parse($projeto->data_fim)->format('d/m/Y') }}</td>
 
 
-                                    <!-- Aprovação Napex -->
                                     <td class="py-2 px-6 text-center" style="max-width: 50px;">
                                         @php
                                             $aprovacao = 'N/A'; // Define um valor padrão
@@ -268,7 +236,6 @@
                                         {{ $aprovacao === 'sim' ? 'Sim' : ($aprovacao === 'nao' ? 'Não' : 'Pendente') }}
                                     </td>
 
-                                    <!-- Aprovação Coord -->
                                     <td class="py-2 px-6 text-center" style="max-width: 50px;">
                                         @php
                                             $aprovacao = 'N/A'; // Define um valor padrão
@@ -283,12 +250,10 @@
                                         {{ $aprovacao === 'sim' ? 'Sim' : ($aprovacao === 'nao' ? 'Não' : 'Pendente') }}
                                     </td>
 
-                                    <!-- Etapa -->
                                     <td class="py-2 px-6 font-bold text-center">
                                         {{ $projeto->etapa }}
                                     </td>
 
-                                    <!-- status -->
                                     @php
                                         $status = '';
                                         $cor = 'text-gray-700'; // Cor padrão
@@ -328,7 +293,6 @@
                                     </td>
   
 
-                                    <!-- Ações -->
                                     {{-- ======================= CÉLULA DE AÇÕES  ======================= --}}
                                     <td class="py-2 px-6" style="min-width: 200px;" x-data="{ openModal: false }">
                                         <div class="flex items-center justify-start gap-2 flex-nowrap">
@@ -424,7 +388,6 @@
 
                 </div>
 
-                <!-- Comportamento do Filtro -->
                 <script>
                     const btnFiltro = document.getElementById('btn-filtro');
                     const filtroBox = document.getElementById('filtro-box');

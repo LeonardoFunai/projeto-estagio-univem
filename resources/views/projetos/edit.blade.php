@@ -142,7 +142,7 @@
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Datas e Público</legend>
                 <label class="block mb-2">Público Alvo:</label>
-                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4">{{ old('publico_alvo', $projeto->publico_alvo) }}</textarea>
+                <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('publico_alvo', $projeto->publico_alvo) }}</textarea>
                 <label class="block mb-2">Data de Início:</label>
                 <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_inicio', $projeto->data_inicio) }}" required>
                 <label class="block mb-2">Data de Término:</label>
@@ -152,13 +152,13 @@
             <fieldset class="mb-8">
                 <legend class="text-lg font-semibold text-blue-700 mb-4">Conteúdo do Projeto</legend>
                 <label class="block mb-2">1. Introdução</label>
-                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4">{{ old('introducao', $projeto->introducao) }}</textarea>
+                <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('introducao', $projeto->introducao) }}</textarea>
                 <label class="block mb-2">2. Objetivos do Projeto</label>
-                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4">{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
+                <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('objetivo_geral', $projeto->objetivo_geral) }}</textarea>
                 <label class="block mb-2">3. Justificativa</label>
-                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4">{{ old('justificativa', $projeto->justificativa) }}</textarea>
+                <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('justificativa', $projeto->justificativa) }}</textarea>
                 <label class="block mb-2">4. Metodologia</label>
-                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4">{{ old('metodologia', $projeto->metodologia) }}</textarea>
+                <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('metodologia', $projeto->metodologia) }}</textarea>
 
                 <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                 <div id="atividades-wrapper">
@@ -203,9 +203,9 @@
                 <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade ao Cronograma</button>
 
                 <label class="block mb-2">7. Recursos Necessários</label>
-                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4">{{ old('recursos', $projeto->recursos) }}</textarea>
+                <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('recursos', $projeto->recursos) }}</textarea>
                 <label class="block mb-2">8. Resultados Esperados</label>
-                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4">{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
+                <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('resultados_esperados', $projeto->resultados_esperados) }}</textarea>
             </fieldset>
 
             <div class="flex justify-center gap-4">
@@ -371,8 +371,8 @@
                         <strong>Atividade ${index + 1}</strong>
                         <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                     </div>
-                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required></textarea>
-                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required></textarea>
+                    <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required maxlength="15000"></textarea>
+                    <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required maxlength="15000"></textarea>
                     <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1">
                 </div>`;
             

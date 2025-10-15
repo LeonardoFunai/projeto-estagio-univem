@@ -136,7 +136,7 @@
                     <div id="invitations-hidden-inputs"></div>
 
                     <label class="block mb-2">Público Alvo:</label>
-                    <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-1" placeholder="População em Geral" maxlength="100">{{ old('publico_alvo') }} </textarea>
+                    <textarea name="publico_alvo" class="w-full border-gray-300 rounded-md mb-1" placeholder="População em Geral" maxlength="1000">{{ old('publico_alvo') }} </textarea>
 
                     <label class="block mb-2">Data de Início:</label>
                     <input type="date" name="data_inicio" id="data_inicio" class="w-full border-gray-300 rounded-md mb-4" value="{{ old('data_inicio') }}" required>
@@ -149,18 +149,18 @@
                     <legend class="text-lg font-semibold text-blue-700 mb-4">Detalhes do Projeto</legend>
 
                     <label class="block mb-2">1. Introdução</label>
-                    <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('introducao') }}</textarea>
+                    <textarea name="introducao" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('introducao') }}</textarea>
 
                     <label class="block mb-2">2. Objetivos do Projeto</label>
-                    <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('objetivo_geral') }}</textarea>
+                    <textarea name="objetivo_geral" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('objetivo_geral') }}</textarea>
 
 
                     <label class="block mb-2">3. Justificativa</label>
-                    <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('justificativa') }}</textarea>
+                    <textarea name="justificativa" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('justificativa') }}</textarea>
 
 
                     <label class="block mb-2">4. Metodologia</label>
-                    <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" maxlength="500">{{ old('metodologia') }}</textarea>
+                    <textarea name="metodologia" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('metodologia') }}</textarea>
 
                     <label class="block mb-2">5. Atividades a serem desenvolvidas</label>
                     <small class="block mb-2 text-gray-600">(O que fazer, como fazer e carga horária)</small>
@@ -177,10 +177,10 @@
                                 <button type="button" id="add-cronograma" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6">+ Adicionar Atividade ao Cronograma</button>
 
                     <label class="block mb-2">7. Recursos Necessários</label>
-                    <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('recursos') }}</textarea>
+                    <textarea name="recursos" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('recursos') }}</textarea>
 
                     <label class="block mb-2">8. Resultados Esperados</label>
-                    <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" maxlength="1000">{{ old('resultados_esperados') }}</textarea>
+                    <textarea name="resultados_esperados" class="w-full border-gray-300 rounded-md mb-4" maxlength="15000">{{ old('resultados_esperados') }}</textarea>
 
                 </fieldset>
 
@@ -196,125 +196,13 @@
         </div>
     @endcan
 
-<script>
+    <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        /**
-         * Função genérica para criar um componente de busca e convite.
-         * @param {string} role - 'aluno' ou 'professor'.
-         * @param {string} searchInputId - ID do campo de input da busca.
-         * @param {string} resultsListId - ID da lista <ul> para os resultados.
-         * @param {string} invitationsListId - ID do div para a lista visual de convites.
-         * @param {string} hiddenContainerId - ID do div que guardará os inputs hidden.
-         */
-        const setupInvitationSearch = (role, searchInputId, resultsListId, invitationsListId, hiddenContainerId) => {
-            const searchInput = document.getElementById(searchInputId);
-            const resultsList = document.getElementById(resultsListId);
-            const invitationsList = document.getElementById(invitationsListId);
-            const hiddenContainer = document.getElementById(hiddenContainerId);
-            const selectedUserIds = new Set();
+        // -------------------------------------------------------------------
+        // PARTE 1: MANIPULAÇÃO DE CAMPOS DINÂMICOS (ATIVIDADES E CRONOGRAMA)
+        // -------------------------------------------------------------------
 
-            // Adiciona o ID do usuário logado para não aparecer na busca de alunos
-            if (role === 'aluno') {
-                const loggedInUserId = "{{ auth()->id() }}";
-                selectedUserIds.add(parseInt(loggedInUserId));
-            }
-
-            // Evento de digitação no campo de busca
-            searchInput.addEventListener('input', async () => {
-                const searchTerm = searchInput.value;
-
-                if (searchTerm.length < 3) {
-                    resultsList.classList.add('hidden');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}`);
-                    const users = await response.json();
-                    
-                    resultsList.innerHTML = '';
-                    if (users.length > 0) {
-                        users.forEach(user => {
-                            if (selectedUserIds.has(user.id)) return; // Não mostra usuários já selecionados
-
-                            const li = document.createElement('li');
-                            li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
-                            
-                            const courseName = user.curso ? user.curso.nome : 'N/A';
-                            li.textContent = (role === 'aluno') 
-                                ? `${user.name} (RA: ${user.ra || 'N/A'})`
-                                : `${user.name} (${user.email})`;
-                            
-                            li.dataset.id = user.id;
-                            li.dataset.name = user.name;
-                            li.dataset.email = user.email;
-                            
-                            resultsList.appendChild(li);
-                        });
-                    } else {
-                        resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
-                    }
-                    resultsList.classList.remove('hidden');
-                } catch (error) {
-                    console.error('Erro na busca:', error);
-                    resultsList.innerHTML = '<li class="p-2 text-red-500">Erro ao buscar.</li>';
-                }
-            });
-
-            // Evento de clique em um resultado da busca
-            resultsList.addEventListener('click', (e) => {
-                if (e.target.tagName !== 'LI' || !e.target.dataset.id) return;
-
-                const user = e.target.dataset;
-                const index = `user_${user.id}`;
-
-                // 1. Adiciona o ID ao set de selecionados
-                selectedUserIds.add(parseInt(user.id));
-
-                // 2. Cria a representação visual na lista de convites
-                const listItem = document.createElement('div');
-                listItem.id = `item_${index}`;
-                listItem.className = 'dynamic-item flex items-center justify-between p-2 border rounded-md bg-gray-50';
-                listItem.innerHTML = `
-                    <span>${user.name}</span>
-                    <button type="button" class="remove-invitation-btn text-red-500 hover:text-red-700 font-bold" data-index="${index}" data-id="${user.id}">&times;</button>
-                `;
-                invitationsList.appendChild(listItem);
-
-                // 3. Cria os inputs hidden que serão enviados com o formulário
-                const hiddenInputs = document.createElement('div');
-                hiddenInputs.id = `hidden_${index}`;
-                hiddenInputs.innerHTML = `
-                    <input type="hidden" name="invitations[${index}][email]" value="${user.email}">
-                    <input type="hidden" name="invitations[${index}][role]" value="${role}">
-                `;
-                hiddenContainer.appendChild(hiddenInputs);
-
-                // 4. Limpa e esconde a busca
-                searchInput.value = '';
-                resultsList.classList.add('hidden');
-            });
-
-            // Evento para o botão de remover
-            document.body.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-invitation-btn')) {
-                    const index = e.target.dataset.index;
-                    const userId = e.target.dataset.id;
-
-                    document.getElementById(`item_${index}`)?.remove();
-                    document.getElementById(`hidden_${index}`)?.remove();
-                    selectedUserIds.delete(parseInt(userId));
-                }
-            });
-        };
-
-        // Inicializa os dois componentes de busca e convite
-        setupInvitationSearch('professor', 'orientador-search-input', 'orientador-search-results', 'orientadores-invitations-list', 'invitations-hidden-inputs');
-        setupInvitationSearch('aluno', 'aluno-search-input', 'aluno-search-results', 'alunos-invitations-list', 'invitations-hidden-inputs');
-
-        // --- MANTER O RESTANTE DO SEU SCRIPT (ATIVIDADES, CRONOGRAMA, DATAS) ---
-        // ... cole o resto do seu script para atividades, etc., aqui ...
         const setupDynamicFields = (type, wrapperId, addButtonId, templateFunction) => {
             const wrapper = document.getElementById(wrapperId);
             const addButton = document.getElementById(addButtonId);
@@ -324,7 +212,7 @@
                 Array.from(items).forEach((item, index) => {
                     item.querySelector('strong').textContent = `${type} ${index + 1}`;
                     item.querySelectorAll('[name]').forEach(field => {
-                        field.name = field.name.replace(/\[\d+\]/, `[${index}]`);
+                        field.name = field.name.replace(/\[\d+\]/g, `[${index}]`);
                     });
                     const removeBtn = item.querySelector('.remove-item-btn');
                     if (removeBtn) {
@@ -333,15 +221,16 @@
                 });
             };
 
-            const addField = () => {
+            const addField = (data = {}) => {
                 const index = wrapper.children.length;
                 const newField = document.createElement('div');
-                newField.innerHTML = templateFunction(index); 
+                // A função de template agora recebe os dados para preenchimento
+                newField.innerHTML = templateFunction(index, data);
                 wrapper.appendChild(newField.firstElementChild);
                 reindexFields();
             };
-            
-            addButton.addEventListener('click', addField);
+
+            addButton.addEventListener('click', () => addField());
 
             wrapper.addEventListener('click', (e) => {
                 if (e.target && e.target.classList.contains('remove-item-btn')) {
@@ -350,41 +239,168 @@
                 }
             });
 
-            if (wrapper.children.length === 0) {
-                addField();
-            }
+            // Retorna a função addField para ser usada pela lógica de repopulação
+            return { addField };
         };
 
-        const atividadeTemplate = (index) => `
+        // TEMPLATES com lógica para preencher dados
+        const atividadeTemplate = (index, data = {}) => `
             <div class="mb-4 border p-3 rounded-md dynamic-item">
                 <div class="flex justify-between items-center mb-2">
                     <strong>Atividade ${index + 1}</strong>
-                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
+                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                 </div>
-                <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required maxlength="1000"></textarea>
-                <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required maxlength="1000"></textarea>
-                <input type="number" name="atividades[${index}][carga_horaria]" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1" max="99999">
+                <textarea name="atividades[${index}][o_que_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="O que fazer?" required maxlength="15000">${data.o_que_fazer || ''}</textarea>
+                <textarea name="atividades[${index}][como_fazer]" class="w-full border-gray-300 rounded-md mb-2" placeholder="Como fazer?" required maxlength="15000">${data.como_fazer || ''}</textarea>
+                <input type="number" name="atividades[${index}][carga_horaria]" value="${data.carga_horaria || ''}" class="w-full border-gray-300 rounded-md" placeholder="Carga horária" required min="1" max="99999">
             </div>`;
-        
-        const cronogramaTemplate = (index) => {
-            const mesesOptionsHtml = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => `<option value="${m}">${m}</option>`).join('');
+
+        const cronogramaTemplate = (index, data = {}) => {
+            const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const mesesInicioHtml = meses.map(m => `<option value="${m}" ${data.mes_inicio === m ? 'selected' : ''}>${m}</option>`).join('');
+            const mesesFimHtml = meses.map(m => `<option value="${m}" ${data.mes_fim === m ? 'selected' : ''}>${m}</option>`).join('');
             return `
             <div class="border p-4 rounded-md mb-4 dynamic-item cronograma-item">
                 <div class="flex justify-between items-center mb-2">
                     <strong>Atividade do Cronograma ${index + 1}</strong>
-                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded" style="display: ${index > 0 ? 'inline-block' : 'none'}">Remover</button>
+                    <button type="button" class="remove-item-btn bg-red-600 text-white text-xs py-1 px-2 rounded">Remover</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                    <input type="text" name="cronograma[${index}][atividade]" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required maxlength="100">
-                    <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesOptionsHtml}</select>
-                    <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesOptionsHtml}</select>
+                    <input type="text" name="cronograma[${index}][atividade]" value="${data.atividade || ''}" class="form-input w-full border-gray-300 rounded-md" placeholder="Título da Atividade" required maxlength="100">
+                    <select name="cronograma[${index}][mes_inicio]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Início --</option>${mesesInicioHtml}</select>
+                    <select name="cronograma[${index}][mes_fim]" class="form-select w-full border-gray-300 rounded-md" required><option value="">-- Mês de Fim --</option>${mesesFimHtml}</select>
                 </div>
             </div>`;
         };
 
-        setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
-        setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
+        // Inicializa os gerenciadores
+        const atividadesManager = setupDynamicFields('Atividade', 'atividades-wrapper', 'add-atividade', atividadeTemplate);
+        const cronogramaManager = setupDynamicFields('Atividade do Cronograma', 'cronograma-wrapper', 'add-cronograma', cronogramaTemplate);
 
+
+        // -------------------------------------------------------------------
+        // PARTE 2: BUSCA E ADIÇÃO DE PARTICIPANTES
+        // -------------------------------------------------------------------
+
+        const selectedUsers = {
+            professor: new Set(),
+            aluno: new Set()
+        };
+
+        const addUserToView = (user, role) => {
+            const invitationsList = document.getElementById(role === 'professor' ? 'orientadores-invitations-list' : 'alunos-invitations-list');
+            const hiddenContainer = document.getElementById('invitations-hidden-inputs');
+            const index = `user_${user.id}`;
+
+            if (document.getElementById(`item_${index}`)) return;
+
+            selectedUsers[role].add(parseInt(user.id));
+
+            const listItem = document.createElement('div');
+            listItem.id = `item_${index}`;
+            listItem.className = 'dynamic-item flex items-center justify-between p-2 border rounded-md bg-gray-50';
+            listItem.innerHTML = `<span>${user.name}</span><button type="button" class="remove-invitation-btn text-red-500 hover:text-red-700 font-bold" data-role="${role}" data-index="${index}" data-id="${user.id}">&times;</button>`;
+            invitationsList.appendChild(listItem);
+
+            const hiddenInputs = document.createElement('div');
+            hiddenInputs.id = `hidden_${index}`;
+            hiddenInputs.innerHTML = `<input type="hidden" name="invitations[${index}][email]" value="${user.email}"><input type="hidden" name="invitations[${index}][role]" value="${role}">`;
+            hiddenContainer.appendChild(hiddenInputs);
+        };
+
+        const setupInvitationSearch = (role, searchInputId, resultsListId, invitationsListId) => {
+            const searchInput = document.getElementById(searchInputId);
+            const resultsList = document.getElementById(resultsListId);
+            
+            if (role === 'aluno') {
+                selectedUsers.aluno.add({{ auth()->id() }});
+            }
+
+            searchInput.addEventListener('input', async () => {
+                const searchTerm = searchInput.value;
+                if (searchTerm.length < 3) {
+                    resultsList.classList.add('hidden');
+                    return;
+                }
+                try {
+                    const response = await fetch(`{{ route('users.search') }}?search=${searchTerm}&role=${role}`);
+                    const users = await response.json();
+                    resultsList.innerHTML = '';
+                    if (users.length > 0) {
+                        users.forEach(user => {
+                            if (selectedUsers[role].has(user.id)) return;
+                            const li = document.createElement('li');
+                            li.className = 'p-2 border-b hover:bg-gray-100 cursor-pointer';
+                            li.textContent = role === 'aluno' ? `${user.name} (RA: ${user.ra || 'N/A'})` : `${user.name} (${user.email})`;
+                            li.dataset.user = JSON.stringify(user);
+                            resultsList.appendChild(li);
+                        });
+                    } else {
+                        resultsList.innerHTML = '<li class="p-2 text-gray-500">Nenhum usuário encontrado.</li>';
+                    }
+                    resultsList.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Erro na busca:', error);
+                }
+            });
+
+            resultsList.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'LI' || !e.target.dataset.user) return;
+                const user = JSON.parse(e.target.dataset.user);
+                addUserToView(user, role);
+                searchInput.value = '';
+                resultsList.classList.add('hidden');
+            });
+        };
+
+        document.body.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-invitation-btn')) {
+                const { role, index, id } = e.target.dataset;
+                document.getElementById(`item_${index}`)?.remove();
+                document.getElementById(`hidden_${index}`)?.remove();
+                selectedUsers[role].delete(parseInt(id));
+            }
+        });
+
+        setupInvitationSearch('professor', 'orientador-search-input', 'orientador-search-results', 'orientadores-invitations-list');
+        setupInvitationSearch('aluno', 'aluno-search-input', 'aluno-search-results', 'alunos-invitations-list');
+
+
+        // -------------------------------------------------------------------
+        // PARTE 3: REPOPULAÇÃO DO FORMULÁRIO AO CARREGAR A PÁGINA
+        // -------------------------------------------------------------------
+
+        const repopulateForm = () => {
+            // Repopula Atividades
+            const atividadesAntigas = @json(old('atividades'));
+            if (Array.isArray(atividadesAntigas) && atividadesAntigas.length > 0) {
+                atividadesAntigas.forEach(data => atividadesManager.addField(data));
+            } else {
+                atividadesManager.addField(); // Adiciona um campo inicial se não houver erro
+            }
+
+            // Repopula Cronograma
+            const cronogramasAntigos = @json(old('cronograma'));
+            if (Array.isArray(cronogramasAntigos) && cronogramasAntigos.length > 0) {
+                cronogramasAntigos.forEach(data => cronogramaManager.addField(data));
+            } else {
+                cronogramaManager.addField(); // Adiciona um campo inicial se não houver erro
+            }
+
+            // Repopula Convites
+            const orientadoresAntigos = @json($orientadoresSelecionados ?? []);
+            const alunosAntigos = @json($alunosSelecionados ?? []);
+
+            orientadoresAntigos.forEach(user => addUserToView(user, 'professor'));
+            alunosAntigos.forEach(user => addUserToView(user, 'aluno'));
+        };
+
+        repopulateForm(); // Executa a repopulação
+
+
+        // -------------------------------------------------------------------
+        // PARTE 4: VALIDAÇÃO FINAL
+        // -------------------------------------------------------------------
         document.getElementById('form-projeto').addEventListener('submit', function (e) {
             const inicio = document.getElementById('data_inicio').value;
             const fim = document.getElementById('data_fim').value;
@@ -393,7 +409,6 @@
                 alert('A data de início deve ser anterior ou igual à data de término.');
             }
         });
-
     });
-</script>
+    </script>
 </x-app-layout>

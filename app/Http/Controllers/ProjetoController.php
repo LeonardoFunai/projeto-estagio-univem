@@ -35,7 +35,7 @@ class ProjetoController extends Controller
     public function index(Request $request, ProjectSearchService $searchService)
     {
         // 1. Define os filtros permitidos, incluindo o novo 'curso_id'
-        $filters = $request->only(['search', 'status', 'curso_id']);
+        $filters = $request->only(['search', 'status', 'curso_id', 'etapa', 'titulo', 'data_inicio_de', 'data_inicio_ate', 'data_fim_de', 'data_fim_ate', 'aprovado_napex', 'aprovado_coordenador']);
 
         // 2. Constrói a query com os filtros e já otimiza o carregamento do curso do usuário
         $query = $searchService->buildQuery($filters);
@@ -44,7 +44,15 @@ class ProjetoController extends Controller
         $projetos = $query->paginate(10)->appends($request->query());
 
         // 4. Busca a lista de cursos para popular o dropdown de filtro na tela
-        $cursos = Curso::orderBy('nome')->get();
+        $user = Auth::user();
+        if (str_starts_with($user->role, 'coordenador')) {
+            $cursos = $user->cursosCoordenados()->orderBy('nome')->get();
+        } elseif (in_array($user->role, ['napex', 'admin'])) {
+            $cursos = Curso::orderBy('nome')->get();
+        } else {
+            $cursos = collect(); // Retorna uma coleção vazia para outros perfis
+        }
+
 
         // 5. Envia os projetos e a lista de cursos para a view
         $response = response(view('projetos.index', compact('projetos', 'cursos')));
@@ -72,6 +80,8 @@ class ProjetoController extends Controller
 
         // Carrega o curso do aluno para evitar consultas extras
         $alunoLogado->load('curso');
+
+        $old_invitations = collect(old('invitations', []));
 
         // Busca apenas os outros alunos (excluindo o que está logado) do mesmo curso
         $alunos = User::where('role', 'aluno')

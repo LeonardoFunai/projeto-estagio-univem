@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Notifications\ResultadoEnviado;
 use App\Notifications\ResultadoAvaliado;
 use App\Notifications\ResultadoCadastradoPeloAluno;
+use App\Http\Requests\UpdateResultadoRequest;
 
 
 class ResultadoController extends Controller
@@ -165,7 +166,7 @@ class ResultadoController extends Controller
     /**
      * Atualiza um resultado existente no banco de dados.
      */
-    public function update(StoreResultadoRequest $request, Resultado $resultado)
+    public function update(UpdateResultadoRequest $request, Resultado $resultado)
     {
         $this->authorize('update', $resultado);
 

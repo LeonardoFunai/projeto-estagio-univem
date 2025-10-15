@@ -106,23 +106,23 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <x-input-label for="parceiro_organizacao" value="Organização" />
-                                    <x-text-input id="parceiro_organizacao" name="parceiro_organizacao" type="text" class="mt-1 block w-full" :value="old('parceiro_organizacao')" />
+                                    <x-text-input id="parceiro_organizacao" name="parceiro_organizacao" type="text" class="mt-1 block w-full" :value="old('parceiro_organizacao')" maxlength="255" />
                                 </div>
                                 <div>
                                     <x-input-label for="parceiro_responsavel" value="Nome do Responsável" />
-                                    <x-text-input id="parceiro_responsavel" name="parceiro_responsavel" type="text" class="mt-1 block w-full" :value="old('parceiro_responsavel')" />
+                                    <x-text-input id="parceiro_responsavel" name="parceiro_responsavel" type="text" class="mt-1 block w-full" :value="old('parceiro_responsavel')" maxlength="255"/>
                                 </div>
                                 <div>
                                     <x-input-label for="parceiro_endereco" value="Endereço" />
-                                    <x-text-input id="parceiro_endereco" name="parceiro_endereco" type="text" class="mt-1 block w-full" :value="old('parceiro_endereco')" />
+                                    <x-text-input id="parceiro_endereco" name="parceiro_endereco" type="text" class="mt-1 block w-full" :value="old('parceiro_endereco')" maxlength="255" />
                                 </div>
                                 <div>
                                     <x-input-label for="parceiro_cnpj" value="CNPJ" />
-                                    <x-text-input id="parceiro_cnpj" name="parceiro_cnpj" type="text" class="mt-1 block w-full" :value="old('parceiro_cnpj')" />
+                                    <x-text-input id="parceiro_cnpj" name="parceiro_cnpj" type="text" class="mt-1 block w-full" :value="old('parceiro_cnpj')" maxlength="20" />
                                 </div>
                                 <div class="col-span-1 md:col-span-2">
                                      <x-input-label for="parceiro_tipo_participacao" value="Tipo de Participação" />
-                                    <x-text-input id="parceiro_tipo_participacao" name="parceiro_tipo_participacao" type="text" class="mt-1 block w-full" :value="old('parceiro_tipo_participacao')" />
+                                    <x-text-input id="parceiro_tipo_participacao" name="parceiro_tipo_participacao" type="text" class="mt-1 block w-full" :value="old('parceiro_tipo_participacao')" maxlength="255"/>
                                 </div>
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                         <div class="mt-6">
                             <x-input-label for="comunidade_externa" value="Pessoas da Comunidade Externa Envolvidas" class="font-bold" />
                             <p class="text-sm text-gray-500 mb-2">Liste os nomes das pessoas ou organizações da comunidade externa que participaram.</p>
-                            <textarea maxlength="1000" id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('comunidade_externa') }}</textarea>
+                            <textarea maxlength="5000" id="comunidade_externa" name="comunidade_externa" rows="4" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('comunidade_externa') }}</textarea>
                         </div>
 
                         {{-- Seção de Anexos Dinâmicos --}}
@@ -175,7 +175,7 @@
                 <div class="space-y-2">
                     <div>
                         <label for="anexo_descricao_${newIndex}" class="block text-xs font-medium text-gray-600">Descrição do Anexo</label>
-                        <input type="text" name="anexos[${newIndex}][descricao]" id="anexo_descricao_${newIndex}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm" required>
+                        <input type="text" name="anexos[${newIndex}][descricao]" id="anexo_descricao_${newIndex}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm" required maxlength="255">
                     </div>
                     <div>
                         <label for="anexo_arquivo_${newIndex}" class="block text-xs font-medium text-gray-600">Arquivo</label>
