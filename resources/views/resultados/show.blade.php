@@ -22,8 +22,6 @@
         </div>
     </x-slot>
 
-    <!-- Trilha de Status -->
-
     @php
         // --- Lógica para Definir o Estado Atual do Relatório ---
         $resultadoStatus = $resultado->status;
@@ -59,7 +57,6 @@
 
     <div class="flex items-center justify-center">
         
-
         <div class="flex flex-col items-center text-center w-24">
             <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center {{ etapaClasseFinal($propostaAprovada) }}">
                 <span>✓</span>
@@ -132,11 +129,9 @@
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8 space-y-3">
             <div class="flex items-center space-x-4">
             
-            <!-- Gerar pdf -->
             <a href="{{ route('resultados.gerarPdf', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
                     Gerar PDF do Relatório
                 </a>
-                <!-- Botão de Voltar para edição -->
                 @if ($isAluno && $podeVoltar)
                     <form action="{{ route('resultados.voltarParaRascunho', $resultado) }}" method="POST" onsubmit="return confirm('Tem certeza? A ação removerá o relatório da fila de avaliação e você precisará enviá-lo novamente.')">
                         @csrf
@@ -146,7 +141,7 @@
                     </form>
                 @endif
 
-                                
+                        
                 @can('update', $resultado)
                     <a href="{{ route('resultados.edit', $resultado) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700">
                         Editar Relatório
@@ -166,43 +161,40 @@
                 </a>
             </div>
 
-            <!-- Título -->
             <x-slot name="pageTitle">
                 Detalhes do Relatório de Resultados
             </x-slot>
-
-
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">IDENTIFICAÇÃO DO PROJETO</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     
                     {{-- Título --}}
-                    <div>
+                    <div style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Título:</strong>
                         <p class="text-gray-900">{{ $resultado->projeto->titulo }}</p>
                     </div>
 
                     {{-- Número do Projeto --}}
-                    <div>
+                    <div style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Número do Projeto:</strong>
                         <p class="text-gray-900 font-mono">{{ $resultado->projeto->numero_projeto ?? 'Aguardando aprovação do NAPEX' }}</p>
                     </div>
 
                     {{-- Período --}}
-                    <div>
+                    <div style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Período:</strong>
                         <p class="text-gray-900">{{ $resultado->projeto->periodo }}</p>
                     </div>
 
                     {{-- Carga Horária Total --}}
-                    <div>
+                    <div style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Carga Horária Total:</strong>
                         <p class="text-gray-900">{{ $resultado->projeto->atividades->sum('carga_horaria') }} horas</p>
                     </div>
 
                     {{-- Professores Envolvidos --}}
-                    <div class="col-span-1 md:col-span-2">
+                    <div class="col-span-1 md:col-span-2" style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Professor(es) Orientador(es):</strong>
                         <p class="text-gray-900">
                             @if($resultado->projeto->professores && $resultado->projeto->professores->isNotEmpty())
@@ -214,7 +206,7 @@
                     </div>
                     
                     {{-- Alunos Envolvidos --}}
-                    <div class="col-span-1 md:col-span-2">
+                    <div class="col-span-1 md:col-span-2" style="overflow-wrap: break-word;">
                         <strong class="text-gray-600">Alunos Envolvidos:</strong>
                         <ul class="list-disc list-inside mt-1 text-gray-900">
                             @forelse($resultado->projeto->alunos ?? [] as $aluno)
@@ -224,13 +216,12 @@
                             @endforelse
                         </ul>
                     </div>
-
                 </div>
             </div>
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">RELATÓRIO DE RESULTADOS ENTREGUE</h3>
-                <div class="space-y-4 text-sm">
+                <div class="space-y-4 text-sm" style="overflow-wrap: break-word;">
                     <div>
                         <strong class="text-gray-600">Atividades Desenvolvidas no Período:</strong>
                         <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ $resultado->atividades_desenvolvidas }}</p>
@@ -238,26 +229,26 @@
 
                     <hr>
 
-                        <div>
-                            <strong class="text-gray-600">Parcerias - Organizações Envolvidas:</strong>
-                            @if($resultado->parceiro_organizacao)
-                                <ul class="mt-1 list-disc list-inside text-gray-900">
-                                    <li><strong>Organização:</strong> {{ $resultado->parceiro_organizacao }}</li>
-                                    <li><strong>Responsável:</strong> {{ $resultado->parceiro_responsavel ?? 'N/A' }}</li>
-                                    <li><strong>Endereço:</strong> {{ $resultado->parceiro_endereco ?? 'N/A' }}</li>
-                                    <li><strong>CNPJ:</strong> {{ $resultado->parceiro_cnpj ?? 'N/A' }}</li>
-                                    <li><strong>Participação:</strong> {{ $resultado->parceiro_tipo_participacao ?? 'N/A' }}</li>
-                                </ul>
-                            @else
-                                <p class="mt-1 text-gray-900">Nenhuma parceria envolvida.</p>
-                            @endif
-                        </div>
-                    
+                    <div>
+                        <strong class="text-gray-600">Parcerias - Organizações Envolvidas:</strong>
+                        @if($resultado->parceiro_organizacao)
+                            <ul class="mt-1 list-disc list-inside text-gray-900">
+                                <li><strong>Organização:</strong> {{ $resultado->parceiro_organizacao }}</li>
+                                <li><strong>Responsável:</strong> {{ $resultado->parceiro_responsavel ?? 'N/A' }}</li>
+                                <li><strong>Endereço:</strong> {{ $resultado->parceiro_endereco ?? 'N/A' }}</li>
+                                <li><strong>CNPJ:</strong> {{ $resultado->parceiro_cnpj ?? 'N/A' }}</li>
+                                <li><strong>Participação:</strong> {{ $resultado->parceiro_tipo_participacao ?? 'N/A' }}</li>
+                            </ul>
+                        @else
+                            <p class="mt-1 text-gray-900">Nenhuma parceria envolvida.</p>
+                        @endif
+                    </div>
+                
                     <hr>
-                        <div>
-                            <strong class="text-gray-600">Pessoas da Comunidade Externa Envolvidas:</strong>
-                            <p class="mt-1 text-gray-900">{{ $resultado->comunidade_externa ?? 'Não informado' }}</p>
-                        </div>
+                    <div>
+                        <strong class="text-gray-600">Pessoas da Comunidade Externa Envolvidas:</strong>
+                        <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ $resultado->comunidade_externa ?? 'Não informado' }}</p>
+                    </div>
                     <hr>
 
                     {{-- Anexos do Relatório --}}
@@ -266,9 +257,8 @@
                         
                         <div class="space-y-4">
                             @forelse ($resultado->anexos as $anexo)
-                                <div class="p-4 border rounded-lg bg-gray-50/50">
+                                <div class="p-4 border rounded-lg bg-gray-50/50" style="overflow-wrap: break-word;">
                                     <p class="font-bold text-gray-700">
-                                        {{-- Utiliza a variável $loop->iteration para a numeração --}}
                                         Anexo {{ $loop->iteration }}: 
                                         <span class="font-normal text-gray-900">{{ $anexo->descricao }}</span>
                                     </p>
@@ -294,17 +284,14 @@
                     <div>
                         <h4 class="font-semibold">Parecer do NAPEX</h4>
                         @php
-                            // Condição para mostrar o formulário: ser do NAPEx E o relatório ter sido entregue.
                             $podeAvaliarNapex = auth()->user()->role === 'napex' && $resultado->status === 'entregue';
                         @endphp
 
                         @if($podeAvaliarNapex)
                             <form action="{{ route('resultados.avaliar', $resultado) }}" method="POST" class="mt-2">
                                 @csrf
-                                {{-- O campo é pré-preenchido com o parecer existente --}}
                                 <textarea name="parecer" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" required>{{ old('parecer', $resultado->parecer_napex) }}</textarea>
                                 <div class="mt-2 flex items-center gap-4">
-                                    {{-- O select é pré-selecionado com a decisão existente --}}
                                     <select name="aprovacao" class="border-gray-300 rounded-md shadow-sm" required>
                                         <option value="">-- Decisão --</option>
                                         <option value="sim" {{ $resultado->aprovado_napex == 'sim' ? 'selected' : '' }}>Aprovar</option>
@@ -314,9 +301,9 @@
                                 </div>
                             </form>
                         @else
-                            <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap">{{ $resultado->parecer_napex ?? 'Aguardando avaliação.' }}</p>
+                            <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap" style="overflow-wrap: break-word;">{{ $resultado->parecer_napex ?? 'Aguardando avaliação.' }}</p>
                             @if($resultado->aprovado_napex !== 'pendente')
-                               <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_napex === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
+                              <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_napex === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
                                     {{ $resultado->aprovado_napex === 'sim' ? 'Aprovado' : 'Não Aprovado' }}
                                 </span></p>
                             @endif
@@ -326,7 +313,6 @@
                     <div>
                         <h4 class="font-semibold">Parecer da Coordenação</h4>
                         @php
-                            // Condição para mostrar o formulário: ser Coordenador E o relatório ter sido entregue.
                             $podeAvaliarCoord = auth()->user()->role === 'coordenador' && $resultado->status === 'entregue';
                         @endphp
 
@@ -344,9 +330,9 @@
                                 </div>
                             </form>
                         @else
-                            <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap">{{ $resultado->parecer_coordenador ?? 'Aguardando avaliação.' }}</p>
+                            <p class="mt-1 text-sm text-gray-700 border p-3 rounded-md bg-gray-50 whitespace-pre-wrap" style="overflow-wrap: break-word;">{{ $resultado->parecer_coordenador ?? 'Aguardando avaliação.' }}</p>
                             @if($resultado->aprovado_coordenador !== 'pendente')
-                               <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_coordenador === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
+                              <p class="mt-2 text-sm"><strong>Status:</strong> <span class="{{ $resultado->aprovado_coordenador === 'sim' ? 'text-green-600' : 'text-red-600' }} font-bold">
                                     {{ $resultado->aprovado_coordenador === 'sim' ? 'Aprovado' : 'Não Aprovado' }}
                                 </span></p>
                             @endif
@@ -371,7 +357,7 @@
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $rejeicao->created_at->format('d/m/Y H:i') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $rejeicao->user->name }} ({{ ucfirst($rejeicao->user->role) }})</td>
-                                        <td class="px-6 py-4 whitespace-pre-wrap">{{ $rejeicao->motivo }}</td>
+                                        <td class="px-6 py-4 whitespace-pre-wrap" style="word-wrap: break-word;">{{ $rejeicao->motivo }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -421,7 +407,6 @@
                             @if ($projeto && $logs->isNotEmpty())
                                 @foreach ($logs->groupBy('batch_id') as $batchId => $batch)
                                     @php
-                                        // Se o batch_id for nulo ou vazio, não é um grupo de verdade
                                         $isGroup = !empty($batchId) && $batch->count() > 1;
                                     @endphp
 
@@ -442,8 +427,8 @@
                                                         <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">Relatório</span>
                                                     @endif
                                                 </td>
-                                                <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
+                                                <td class="py-2 px-3 border-b" style="overflow-wrap: break-word;">{{ $log->acao }}</td>
+                                                <td class="py-2 px-3 border-b" style="overflow-wrap: break-word;">{{ $log->descricao }}</td>
                                             </tr>
                                         @else
                                             <tr class="hover:bg-gray-50 border-l-4 border-blue-500">
@@ -454,8 +439,8 @@
                                                         <span class="px-2 py-1 font-semibold leading-tight text-purple-700 bg-purple-100 rounded-full">Relatório</span>
                                                     @endif
                                                 </td>
-                                                <td class="py-2 px-3 border-b">{{ $log->acao }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $log->descricao }}</td>
+                                                <td class="py-2 px-3 border-b" style="overflow-wrap: break-word;">{{ $log->acao }}</td>
+                                                <td class="py-2 px-3 border-b" style="overflow-wrap: break-word;">{{ $log->descricao }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -470,5 +455,6 @@
                 </div>
             </div>
 
+        </div>
     </div>
 </x-app-layout>

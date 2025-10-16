@@ -32,11 +32,11 @@ class StoreResultadoRequest extends FormRequest
 
         if ($this->isMethod('put') || $this->isMethod('patch')) {
             $rules['anexos'] = 'nullable|array';
-            $rules['anexos.*.descricao'] = 'required_with:anexos|string|max:255';
+            $rules['anexos.*.descricao'] = 'required_with:anexos|string|max:1000';
             $rules['anexos.*.arquivo'] = 'required_with:anexos|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,mp4,avi,mkv|max:20480';
         } else {
             $rules['anexos'] = 'required|array|min:1';
-            $rules['anexos.*.descricao'] = 'required|string|max:255';
+            $rules['anexos.*.descricao'] = 'required|string|max:1000';
             $rules['anexos.*.arquivo'] = 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,mp4,avi,mkv|max:20480';
         }
 

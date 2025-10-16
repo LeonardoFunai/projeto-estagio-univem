@@ -175,7 +175,7 @@
                 <div class="space-y-2">
                     <div>
                         <label for="anexo_descricao_${newIndex}" class="block text-xs font-medium text-gray-600">Descrição do Anexo</label>
-                        <input type="text" name="anexos[${newIndex}][descricao]" id="anexo_descricao_${newIndex}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm" required maxlength="255">
+                        <input type="text" name="anexos[${newIndex}][descricao]" id="anexo_descricao_${newIndex}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm" required maxlength="1000">
                     </div>
                     <div>
                         <label for="anexo_arquivo_${newIndex}" class="block text-xs font-medium text-gray-600">Arquivo</label>

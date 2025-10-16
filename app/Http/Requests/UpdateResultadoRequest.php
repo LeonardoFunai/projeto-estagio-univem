@@ -29,11 +29,11 @@ class UpdateResultadoRequest extends FormRequest
             'parceiro_endereco' => 'nullable|string|max:255',
             'parceiro_cnpj' => 'nullable|string|max:20',
             'parceiro_tipo_participacao' => 'nullable|string|max:255',
-            'comunidade_externa' => 'nullable|string|max:5000',
+            'comunidade_externa' => 'nullable|string|max:10000',
             'anexos_a_deletar' => 'nullable|array',
             'anexos_a_deletar.*' => 'integer|exists:anexos,id',
             'anexos' => 'nullable|array',
-            'anexos.*.descricao' => 'required_with:anexos.*.arquivo|string|max:255',
+            'anexos.*.descricao' => 'required_with:anexos.*.arquivo|string|max:1000',
             'anexos.*.arquivo' => 'required_with:anexos.*.descricao|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png|max:2048',
         ];
     }
