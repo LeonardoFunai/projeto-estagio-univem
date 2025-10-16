@@ -7,6 +7,7 @@ use App\Http\Controllers\ResultadoController;
 use App\Http\Controllers\Admin\UserController; 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\DashboardController;
 
 // Redireciona a raiz para a tela de login
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::get('/', function () {
 
 // Área logada
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Rotas de perfil do usuário (Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
