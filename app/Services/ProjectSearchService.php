@@ -8,17 +8,10 @@ use Illuminate\Support\Facades\Auth;
 
 class ProjectSearchService
 {
-    /**
-     * Retorna uma instância da query de projetos com filtros e regras de permissão aplicados.
-     */
-    // app/Services/ProjectSearchService.php
-
-    public function buildQuery(array $filters)
+    public function buildQuery(array $filters): Builder
     {
         $query = Projeto::query()->with(['user.curso', 'resultado', 'users']);
         $user = Auth::user();
-
-        // --- LÓGICA DE VISIBILIDADE BASEADA NO PERFIL ---
 
         if ($user->role === 'aluno') {
             $query->where(function ($q) use ($user) {
@@ -33,14 +26,11 @@ class ProjectSearchService
                 $q->where('users.id', $user->id);
             });
         }
-        // --- CORREÇÃO PRINCIPAL PARA COORDENADOR E NAPEX ---
         elseif (str_starts_with($user->role, 'coordenador')) {
             $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
             
-            // Inicia um grupo de condições para o coordenador
             $query->where(function ($q) use ($user, $cursosCoordenadosIds) {
                 
-                // Condição 1: Vê projetos dos seus cursos que NÃO ESTÃO em edição
                 if ($cursosCoordenadosIds->isNotEmpty()) {
                     $q->where(function($subq) use ($cursosCoordenadosIds) {
                         $subq->whereHas('user', function ($uq) use ($cursosCoordenadosIds) {
@@ -49,7 +39,6 @@ class ProjectSearchService
                     });
                 }
 
-                // Condição 2 (OU): Vê projetos em que é participante (professor), independentemente do status
                 $q->orWhereHas('users', function ($uq) use ($user) {
                     $uq->where('users.id', $user->id);
                 });
@@ -57,18 +46,98 @@ class ProjectSearchService
 
         }
         elseif ($user->role === 'napex') {
-            // NAPEX só vê projetos que não estão mais em edição
             $query->where('status', '!=', 'editando');
         }
         elseif ($user->role === 'admin') {
-            // Nenhuma restrição de visibilidade aplicada
+            // Nenhuma restrição
         }   
         else {
-            // Para qualquer outro papel, não retorna projetos
-            $query->whereRaw('1 = 0'); // Condição impossível
+            $query->whereRaw('1 = 0');
         }
 
-        // --- Lógica de Filtros (continua a mesma) ---
+
+        // --- LÓGICA DE FILTROS CORRIGIDA E UNIFICADA ---
+
+        // Filtro de Etapa
+        if (!empty($filters['etapa'])) {
+            $query->where('etapa', $filters['etapa']);
+        }
+
+        // Filtro de Status
+        if (!empty($filters['status'])) {
+            $status = $filters['status'];
+            $query->where(function ($q) use ($status) {
+                // Condição 1: Etapa 'Proposta' E status da proposta corresponde
+                $q->where(function ($subq) use ($status) {
+                    $subq->where('etapa', 'Proposta')
+                         ->where('status', $status);
+                })
+                // OU Condição 2: Etapa 'Resultado' E status do resultado corresponde
+                ->orWhere(function ($subq) use ($status) {
+                    $subq->where('etapa', 'Resultado')
+                         ->whereHas('resultado', function ($res) use ($status) {
+                             $res->where('status', $status);
+                         });
+                })
+                // OU Condição 3: Etapa 'Concluído' E o status buscado é 'Finalizado'
+                ->orWhere(function ($subq) use ($status) {
+                    if (strtolower($status) === 'finalizado') {
+                        $subq->where('etapa', 'Concluído');
+                    }
+                });
+            });
+        }
+
+        // Filtro de Aprovação NAPEX
+        if (isset($filters['aprovado_napex']) && $filters['aprovado_napex'] !== '') {
+            $aprovacao = $filters['aprovado_napex'];
+            $query->where(function ($q) use ($aprovacao) {
+                // Condição 1: Etapa 'Proposta' E aprovação da proposta corresponde
+                $q->where(function ($subq) use ($aprovacao) {
+                    $subq->where('etapa', 'Proposta')
+                         ->where('aprovado_napex', $aprovacao);
+                })
+                // OU Condição 2: Etapa 'Resultado' E aprovação do resultado corresponde
+                ->orWhere(function ($subq) use ($aprovacao) {
+                    $subq->where('etapa', 'Resultado')
+                         ->whereHas('resultado', function ($res) use ($aprovacao) {
+                             $res->where('aprovado_napex', $aprovacao);
+                         });
+                })
+                // OU Condição 3: Etapa 'Concluído' (que é sempre 'sim')
+                ->orWhere(function ($subq) use ($aprovacao) {
+                    if ($aprovacao === 'sim') {
+                        $subq->where('etapa', 'Concluído');
+                    }
+                });
+            });
+        }
+        
+        // Filtro de Aprovação Coordenador
+        if (isset($filters['aprovado_coordenador']) && $filters['aprovado_coordenador'] !== '') {
+            $aprovacao = $filters['aprovado_coordenador'];
+            $query->where(function ($q) use ($aprovacao) {
+                // Condição 1: Etapa 'Proposta' E aprovação da proposta corresponde
+                $q->where(function ($subq) use ($aprovacao) {
+                    $subq->where('etapa', 'Proposta')
+                         ->where('aprovado_coordenador', $aprovacao);
+                })
+                // OU Condição 2: Etapa 'Resultado' E aprovação do resultado corresponde
+                ->orWhere(function ($subq) use ($aprovacao) {
+                    $subq->where('etapa', 'Resultado')
+                         ->whereHas('resultado', function ($res) use ($aprovacao) {
+                             $res->where('aprovado_coordenador', $aprovacao);
+                         });
+                })
+                // OU Condição 3: Etapa 'Concluído' (que é sempre 'sim')
+                ->orWhere(function ($subq) use ($aprovacao) {
+                    if ($aprovacao === 'sim') {
+                        $subq->where('etapa', 'Concluído');
+                    }
+                });
+            });
+        }
+        
         if (!empty($filters['curso_id'])) {
             $query->whereHas('user', function ($q) use ($filters) {
                 $q->where('curso_id', $filters['curso_id']);
@@ -78,18 +147,8 @@ class ProjectSearchService
         if (!empty($filters['search'])) {
             $searchTerm = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('titulo', 'like', $searchTerm)
-                ->orWhere('status', 'like', $searchTerm)
-                ->orWhere('etapa', 'like', $searchTerm);
+                $q->where('titulo', 'like', $searchTerm);
             });
-        }
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['etapa'])) {
-            $query->where('etapa', $filters['etapa']);
         }
 
         if (!empty($filters['titulo'])) {
@@ -112,16 +171,13 @@ class ProjectSearchService
             $query->whereDate('data_fim', '<=', $filters['data_fim_ate']);
         }
 
-        if (!empty($filters['aprovado_napex'])) {
-            $query->where('aprovado_napex', $filters['aprovado_napex']);
-        }
-
-        if (!empty($filters['aprovado_coordenador'])) {
-            $query->where('aprovado_coordenador', $filters['aprovado_coordenador']);
-        }
-
         $query->orderBy('created_at', 'desc');
 
         return $query;
     }
 }
+
+
+
+
+

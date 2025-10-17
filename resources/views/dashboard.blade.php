@@ -23,8 +23,6 @@
                 </div>
                 
                 {{-- GRÁFICOS CONDICIONAIS POR PERFIL --}}
-
-                {{-- Mostra para Admin e Napex --}}
                 @if(auth()->user()->role === 'admin' || auth()->user()->role === 'napex')
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="font-semibold text-lg text-gray-800 mb-4">Pareceres NAPEX</h3>
@@ -32,11 +30,18 @@
                 </div>
                 @endif
                 
-                {{-- Mostra para Admin e Coordenadores --}}
                 @if(auth()->user()->role === 'admin' || str_starts_with(auth()->user()->role, 'coordenador'))
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="font-semibold text-lg text-gray-800 mb-4">Pareceres Coordenação de Curso</h3>
                     <canvas id="coordChart"></canvas>
+                </div>
+                @endif
+
+                {{-- GRÁFICO DE PARECERES POR CURSO (Ocupa a linha toda) --}}
+                @if(!empty($pareceresPorCurso))
+                <div class="md:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-4">Análise de Pareceres por Curso</h3>
+                    <canvas id="pareceresPorCursoChart"></canvas>
                 </div>
                 @endif
 
@@ -58,42 +63,110 @@
     </div>
 
 <script>
-    // Configuração global para o plugin que mostra os números nos gráficos
-    Chart.register(ChartDataLabels);
-    Chart.defaults.set('plugins.datalabels', {
-        color: '#FFF',
-        font: {
-            weight: 'bold'
-        },
-        formatter: (value) => value > 0 ? value : '', // Só mostra o número se for maior que zero
-    });
-
     document.addEventListener('DOMContentLoaded', function () {
-        // --- GRÁFICOS DE STATUS ---
-        const statusPropostaCtx = document.getElementById('statusPropostaChart').getContext('2d');
-        new Chart(statusPropostaCtx, { type: 'pie', data: { labels: @json($statusPropostaCounts->keys()), datasets: [{ data: @json($statusPropostaCounts->values()) }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+        // Configuração global para o plugin que mostra os números nos gráficos
+        Chart.register(ChartDataLabels);
+        Chart.defaults.set('plugins.datalabels', {
+            color: '#FFF',
+            font: { weight: 'bold' },
+            formatter: (value) => value > 0 ? value : '',
+        });
 
-        const statusResultadoCtx = document.getElementById('statusResultadoChart').getContext('2d');
-        new Chart(statusResultadoCtx, { type: 'doughnut', data: { labels: @json($statusResultadoCounts->keys()), datasets: [{ data: @json($statusResultadoCounts->values()) }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+        // --- Paleta de Cores Padrão ---
+        const colors = {
+            editando: '#ff9f05ff',
+            entregue: '#60A5FA',
+            aprovado: '#00d64fff',
+            reprovado: '#F87171',
+            pendente: '#9CA3AF',
+            finalizado: '#4ADE80',
+        };
+        const parecerColors = {
+            'Aprovados': colors.aprovado,
+            'Reprovados': colors.reprovado,
+            'Pendentes': colors.pendente,
+        };
+        const getColorsForLabels = (labels) => {
+            return labels.map(label => colors[label.toLowerCase()] || '#E5E7EB');
+        };
 
-        // --- GRÁFICOS DE PARECERES (renderiza apenas se o elemento <canvas> existir na página) ---
+        // --- GRÁFICOS DE STATUS E PARECERES (Sem alterações) ---
+        const statusPropostaLabels = @json($statusPropostaCounts->keys());
+        const statusPropostaData = @json($statusPropostaCounts->values());
+        if (document.getElementById('statusPropostaChart')) {
+            const statusPropostaCtx = document.getElementById('statusPropostaChart').getContext('2d');
+            new Chart(statusPropostaCtx, { type: 'pie', data: { labels: statusPropostaLabels, datasets: [{ data: statusPropostaData, backgroundColor: getColorsForLabels(statusPropostaLabels), }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+        }
+        const statusResultadoLabels = @json($statusResultadoCounts->keys());
+        const statusResultadoData = @json($statusResultadoCounts->values());
+        if(document.getElementById('statusResultadoChart')){
+            const statusResultadoCtx = document.getElementById('statusResultadoChart').getContext('2d');
+            new Chart(statusResultadoCtx, { type: 'doughnut', data: { labels: statusResultadoLabels, datasets: [{ data: statusResultadoData, backgroundColor: getColorsForLabels(statusResultadoLabels), }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+        }
         if (document.getElementById('napexChart')) {
             const napexCtx = document.getElementById('napexChart').getContext('2d');
-            new Chart(napexCtx, { type: 'doughnut', data: { labels: ['Aprovados', 'Reprovados', 'Pendentes'], datasets: [{ data: [{{ $napexCounts['sim'] ?? 0 }}, {{ $napexCounts['nao'] ?? 0 }}, {{ $napexCounts['pendente'] ?? 0 }}] }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+            new Chart(napexCtx, { type: 'doughnut', data: { labels: ['Aprovados', 'Reprovados', 'Pendentes'], datasets: [{ data: [{{ $napexCounts['sim'] ?? 0 }}, {{ $napexCounts['nao'] ?? 0 }}, {{ $napexCounts['pendente'] ?? 0 }}], backgroundColor: [parecerColors.Aprovados, parecerColors.Reprovados, parecerColors.Pendentes], }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
         }
-        
         if (document.getElementById('coordChart')) {
             const coordCtx = document.getElementById('coordChart').getContext('2d');
-            new Chart(coordCtx, { type: 'doughnut', data: { labels: ['Aprovados', 'Reprovados', 'Pendentes'], datasets: [{ data: [{{ $coordCounts['sim'] ?? 0 }}, {{ $coordCounts['nao'] ?? 0 }}, {{ $coordCounts['pendente'] ?? 0 }}] }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+            new Chart(coordCtx, { type: 'doughnut', data: { labels: ['Aprovados', 'Reprovados', 'Pendentes'], datasets: [{ data: [{{ $coordCounts['sim'] ?? 0 }}, {{ $coordCounts['nao'] ?? 0 }}, {{ $coordCounts['pendente'] ?? 0 }}], backgroundColor: [parecerColors.Aprovados, parecerColors.Reprovados, parecerColors.Pendentes], }] }, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+        }
+        
+        // --- GRÁFICO FINAL: Barras Lado a Lado ---
+        if (document.getElementById('pareceresPorCursoChart')) {
+            const pareceresCtx = document.getElementById('pareceresPorCursoChart').getContext('2d');
+            const dadosGrafico = @json($pareceresPorCurso);
+            
+            const labels = Object.keys(dadosGrafico);
+
+            const napexData = {
+                sim: labels.map(curso => dadosGrafico[curso].napex.sim),
+                nao: labels.map(curso => dadosGrafico[curso].napex.nao),
+                pendente: labels.map(curso => dadosGrafico[curso].napex.pendente),
+            };
+
+            const coordData = {
+                sim: labels.map(curso => dadosGrafico[curso].coordenador.sim),
+                nao: labels.map(curso => dadosGrafico[curso].coordenador.nao),
+                pendente: labels.map(curso => dadosGrafico[curso].coordenador.pendente),
+            };
+
+            new Chart(pareceresCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'NAPEX - Aprovado', data: napexData.sim, backgroundColor: colors.aprovado },
+                        { label: 'NAPEX - Reprovado', data: napexData.nao, backgroundColor: colors.reprovado },
+                        { label: 'NAPEX - Pendente', data: napexData.pendente, backgroundColor: colors.pendente },
+                        { label: 'Coordenador - Aprovado', data: coordData.sim, backgroundColor: colors.aprovado },
+                        { label: 'Coordenador - Reprovado', data: coordData.nao, backgroundColor: colors.reprovado },
+                        { label: 'Coordenador - Pendente', data: coordData.pendente, backgroundColor: colors.pendente },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1 } 
+                        }
+                    }
+                }
+            });
         }
 
-        // --- OUTROS GRÁFICOS ---
-        const reprovacoesCtx = document.getElementById('reprovacoesChart').getContext('2d');
-        new Chart(reprovacoesCtx, { type: 'bar', data: { labels: Object.keys(@json($dadosReprovacoes)), datasets: [{ label: 'Nº de Projetos', data: Object.values(@json($dadosReprovacoes)) }] }, options: { plugins: { datalabels: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-        
-        if (document.getElementById('cursosChart')) {
-            const cursosCtx = document.getElementById('cursosChart').getContext('2d');
-            new Chart(cursosCtx, { type: 'bar', data: { labels: Object.keys(@json($projetosPorCurso)), datasets: [{ label: 'Nº de Projetos', data: Object.values(@json($projetosPorCurso)) }] }, options: { plugins: { datalabels: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        // --- OUTROS GRÁFICOS (Sem alterações) ---
+        const reprovacoesCtx = document.getElementById('reprovacoesChart');
+        if (reprovacoesCtx) {
+            new Chart(reprovacoesCtx.getContext('2d'), { type: 'bar', data: { labels: Object.keys(@json($dadosReprovacoes)), datasets: [{ label: 'Nº de Projetos', data: Object.values(@json($dadosReprovacoes)), backgroundColor: '#60A5FA', }] }, options: { plugins: { datalabels: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        }
+        const cursosCtx = document.getElementById('cursosChart');
+        if (cursosCtx) {
+            new Chart(cursosCtx.getContext('2d'), { type: 'bar', data: { labels: Object.keys(@json($projetosPorCurso)), datasets: [{ label: 'Nº de Projetos', data: Object.values(@json($projetosPorCurso)), backgroundColor: '#6366F1', }] }, options: { plugins: { datalabels: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
         }
     });
 </script>

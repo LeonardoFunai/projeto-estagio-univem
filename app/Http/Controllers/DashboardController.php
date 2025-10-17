@@ -6,6 +6,7 @@ use App\Models\Projeto;
 use App\Models\Resultado;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Curso;
 
 class DashboardController extends Controller
 {
@@ -26,7 +27,6 @@ class DashboardController extends Controller
         // --- DADOS PARA OS GRÁFICOS ---
 
         // 1. Status Geral das PROPOSTAS
-        // Usa a $projetoQuery, então já vem filtrada por perfil.
         $statusPropostaCounts = (clone $projetoQuery)->groupBy('status')
             ->select('status', DB::raw('count(*) as total'))
             ->pluck('total', 'status');
@@ -34,7 +34,6 @@ class DashboardController extends Controller
         // 2. Status Geral dos RELATÓRIOS de Mensuração
         $resultadoQuery = Resultado::query();
         if (str_starts_with($user->role, 'coordenador')) {
-            // Re-aplica o filtro para os resultados, através do projeto associado
             $cursosCoordenadosIds = $user->cursosCoordenados()->pluck('cursos.id');
             $resultadoQuery->whereHas('projeto.user', function ($q) use ($cursosCoordenadosIds) {
                 $q->whereIn('curso_id', $cursosCoordenadosIds);
@@ -44,18 +43,21 @@ class DashboardController extends Controller
             ->select('status', DB::raw('count(*) as total'))
             ->pluck('total', 'status');
 
-        // 3. Dados de Pareceres NAPEX
-        $napexCounts = (clone $projetoQuery)->groupBy('aprovado_napex')
-            ->select('aprovado_napex', DB::raw('count(*) as total'))
-            ->pluck('total', 'aprovado_napex');
+        // 3. Dados de Pareceres NAPEX (considera proposta e resultado)
+        $napexCountsQuery = (clone $projetoQuery);
+        $napexCountsProposta = (clone $napexCountsQuery)->where('etapa', 'Proposta')->select('aprovado_napex', DB::raw('count(*) as total'))->groupBy('aprovado_napex')->pluck('total', 'aprovado_napex');
+        $napexCountsResultado = Resultado::whereIn('projeto_id', (clone $napexCountsQuery)->where('etapa', 'Resultado')->pluck('id'))->select('aprovado_napex', DB::raw('count(*) as total'))->groupBy('aprovado_napex')->pluck('total', 'aprovado_napex');
+        $napexCounts = $napexCountsProposta->merge($napexCountsResultado)->mapWithKeys(fn ($item, $key) => [$key => $napexCountsProposta->get($key, 0) + $napexCountsResultado->get($key, 0)]);
 
-        // 4. Dados de Pareceres Coordenação
-        $coordCounts = (clone $projetoQuery)->groupBy('aprovado_coordenador')
-            ->select('aprovado_coordenador', DB::raw('count(*) as total'))
-            ->pluck('total', 'aprovado_coordenador');
+        // 4. Dados de Pareceres Coordenação (considera proposta e resultado)
+        $coordCountsQuery = (clone $projetoQuery);
+        $coordCountsProposta = (clone $coordCountsQuery)->where('etapa', 'Proposta')->select('aprovado_coordenador', DB::raw('count(*) as total'))->groupBy('aprovado_coordenador')->pluck('total', 'aprovado_coordenador');
+        $coordCountsResultado = Resultado::whereIn('projeto_id', (clone $coordCountsQuery)->where('etapa', 'Resultado')->pluck('id'))->select('aprovado_coordenador', DB::raw('count(*) as total'))->groupBy('aprovado_coordenador')->pluck('total', 'aprovado_coordenador');
+        $coordCounts = $coordCountsProposta->merge($coordCountsResultado)->mapWithKeys(fn ($item, $key) => [$key => $coordCountsProposta->get($key, 0) + $coordCountsResultado->get($key, 0)]);
+
 
         // 5. Análise de Reprovações
-        $projetosFinalizadosIds = (clone $projetoQuery)->whereIn('status', ['finalizado', 'aprovado'])->pluck('id');
+        $projetosFinalizadosIds = (clone $projetoQuery)->whereIn('etapa', ['Concluído'])->pluck('id');
         $reprovacoesPorProjeto = DB::table('rejeicoes')
             ->whereIn('projeto_id', $projetosFinalizadosIds)
             ->groupBy('projeto_id')
@@ -73,11 +75,48 @@ class DashboardController extends Controller
             '3+ vezes' => $reprovacoesPorProjeto->filter(fn ($count) => $count >= 3)->count(),
         ]);
 
-        // 6. Projetos por Curso (só é relevante para Admin e Napex, mas calculamos sempre para simplificar)
-        $projetosPorCurso = Projeto::with('user.curso') // Usa uma nova query sem filtro de coordenador
+        // 6. Projetos por Curso (só é relevante para Admin e Napex)
+        $projetosPorCurso = Projeto::with('user.curso')
             ->get()
             ->groupBy('user.curso.nome')
             ->map(fn ($group) => $group->count());
+            
+        // --- NOVO GRÁFICO: 7. Análise de Pareceres por Curso ---
+        $pareceresPorCurso = [];
+        // Se for coordenador, pega apenas os cursos que ele coordena. Senão, todos.
+        $cursos = str_starts_with($user->role, 'coordenador') 
+            ? $user->cursosCoordenados
+            : Curso::all();
+
+        foreach ($cursos as $curso) {
+            $pareceresPorCurso[$curso->nome] = [
+                'napex' => ['sim' => 0, 'nao' => 0, 'pendente' => 0],
+                'coordenador' => ['sim' => 0, 'nao' => 0, 'pendente' => 0],
+            ];
+        }
+
+        // Usa a query já filtrada por perfil
+        $projetosParaAvaliar = (clone $projetoQuery)->with(['user.curso', 'resultado'])
+            ->where('status', '!=', 'editando')
+            ->where('etapa', '!=', 'Concluído') // Exclui projetos já concluídos
+            ->get();
+
+        foreach ($projetosParaAvaliar as $projeto) {
+            if (!$projeto->user->curso) continue;
+            
+            $cursoNome = $projeto->user->curso->nome;
+
+            // Se o curso não estiver na lista (relevante para coordenador), pula
+            if (!isset($pareceresPorCurso[$cursoNome])) continue;
+
+            $fonte = ($projeto->etapa === 'Resultado' && $projeto->resultado) ? $projeto->resultado : $projeto;
+
+            $mapStatus = fn($valor) => $valor === 'sim' ? 'sim' : ($valor === 'nao' ? 'nao' : 'pendente');
+
+            $pareceresPorCurso[$cursoNome]['napex'][$mapStatus($fonte->aprovado_napex)]++;
+            $pareceresPorCurso[$cursoNome]['coordenador'][$mapStatus($fonte->aprovado_coordenador)]++;
+        }
+
 
         // Retorna a view com todas as variáveis necessárias
         return view('dashboard', compact(
@@ -86,7 +125,8 @@ class DashboardController extends Controller
             'napexCounts',
             'coordCounts',
             'projetosPorCurso',
-            'dadosReprovacoes'
+            'dadosReprovacoes',
+            'pareceresPorCurso' // <-- Variável nova adicionada aqui
         ));
     }
 }
