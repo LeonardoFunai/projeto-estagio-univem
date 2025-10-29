@@ -8,18 +8,54 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AlunoDashboardController;
 
-// Redireciona a raiz para a tela de login
+// ### INÍCIO DA MODIFICAÇÃO ###
+// Redireciona a raiz para o "Início" correto se estiver logado
 Route::get('/', function () {
     if (auth()->check()) {
-        return redirect('/projetos'); // se estiver logado, manda para projetos
+        $user = auth()->user();
+        
+        // Se for aluno, manda para a dashboard de aluno
+        if ($user->role === 'aluno') {
+            return redirect()->route('aluno.dashboard');
+        } 
+        
+        // Se for admin, napex ou coordenador, manda para a dashboard principal
+        elseif ($user->role === 'admin' || $user->role === 'napex' || str_starts_with($user->role, 'coordenador')) {
+            return redirect()->route('dashboard');
+        }
+        
+        // Fallback (caso seja um perfil não previsto), manda para projetos
+        return redirect('/projetos');
     }
-    return redirect('/login'); // se não, manda para login
+    
+    // Se não estiver logado, manda para login
+    return redirect('/login');
 });
+// ### FIM DA MODIFICAÇÃO ###
+
 
 // Área logada
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+ 
+    // ### Proteção das Dashboards (Como fizemos antes) ###
+
+    // Dashboard de Admin/Napex/Coord
+    Route::middleware('role:admin,napex,coordenador')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    });
+
+    // Dashboard do Aluno
+    Route::middleware('role:aluno')->group(function () {
+        Route::get('/meu-inicio', [AlunoDashboardController::class, 'index'])->name('aluno.dashboard');
+    });
+    // ### Fim da Proteção ###
+
+
+    // Rotas comuns a todos os usuários logados
+    Route::get('/convites', [InvitationController::class, 'index'])->name('convites.index');
+    
     // Rotas de perfil do usuário (Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

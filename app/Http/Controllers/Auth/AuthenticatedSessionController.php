@@ -22,13 +22,28 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+   public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect('/projetos');
+        // ### INÍCIO DA MODIFICAÇÃO ###
+        
+        $user = $request->user();
+
+        // Se o perfil for 'aluno', redireciona para a nova dashboard de aluno
+        if ($user->role === 'aluno') {
+            return redirect()->intended(route('aluno.dashboard'));
+        }
+
+        // Para 'admin', 'napex', 'coordenador', etc., redireciona para a dashboard principal
+        return redirect()->intended(route('dashboard'));
+        
+        // ### FIM DA MODIFICAÇÃO ###
+        
+        // Linha original removida:
+        // return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

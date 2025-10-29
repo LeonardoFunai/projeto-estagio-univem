@@ -45,15 +45,26 @@ class DashboardController extends Controller
 
         // 3. Dados de Pareceres NAPEX (considera proposta e resultado)
         $napexCountsQuery = (clone $projetoQuery);
+        // Ajuste para garantir que a query base (com filtro de coordenador, se aplicável) seja usada
         $napexCountsProposta = (clone $napexCountsQuery)->where('etapa', 'Proposta')->select('aprovado_napex', DB::raw('count(*) as total'))->groupBy('aprovado_napex')->pluck('total', 'aprovado_napex');
-        $napexCountsResultado = Resultado::whereIn('projeto_id', (clone $napexCountsQuery)->where('etapa', 'Resultado')->pluck('id'))->select('aprovado_napex', DB::raw('count(*) as total'))->groupBy('aprovado_napex')->pluck('total', 'aprovado_napex');
-        $napexCounts = $napexCountsProposta->merge($napexCountsResultado)->mapWithKeys(fn ($item, $key) => [$key => $napexCountsProposta->get($key, 0) + $napexCountsResultado->get($key, 0)]);
+        
+        $projetoIdsEtapaResultado = (clone $napexCountsQuery)->where('etapa', 'Resultado')->pluck('id');
+        $napexCountsResultado = Resultado::whereIn('projeto_id', $projetoIdsEtapaResultado)->select('aprovado_napex', DB::raw('count(*) as total'))->groupBy('aprovado_napex')->pluck('total', 'aprovado_napex');
+        
+        // Combina os resultados
+        $keys = $napexCountsProposta->keys()->merge($napexCountsResultado->keys())->unique();
+        $napexCounts = $keys->combine($keys->map(fn($key) => $napexCountsProposta->get($key, 0) + $napexCountsResultado->get($key, 0)));
+
 
         // 4. Dados de Pareceres Coordenação (considera proposta e resultado)
         $coordCountsQuery = (clone $projetoQuery);
         $coordCountsProposta = (clone $coordCountsQuery)->where('etapa', 'Proposta')->select('aprovado_coordenador', DB::raw('count(*) as total'))->groupBy('aprovado_coordenador')->pluck('total', 'aprovado_coordenador');
-        $coordCountsResultado = Resultado::whereIn('projeto_id', (clone $coordCountsQuery)->where('etapa', 'Resultado')->pluck('id'))->select('aprovado_coordenador', DB::raw('count(*) as total'))->groupBy('aprovado_coordenador')->pluck('total', 'aprovado_coordenador');
-        $coordCounts = $coordCountsProposta->merge($coordCountsResultado)->mapWithKeys(fn ($item, $key) => [$key => $coordCountsProposta->get($key, 0) + $coordCountsResultado->get($key, 0)]);
+        
+        $projetoIdsEtapaResultadoCoord = (clone $coordCountsQuery)->where('etapa', 'Resultado')->pluck('id');
+        $coordCountsResultado = Resultado::whereIn('projeto_id', $projetoIdsEtapaResultadoCoord)->select('aprovado_coordenador', DB::raw('count(*) as total'))->groupBy('aprovado_coordenador')->pluck('total', 'aprovado_coordenador');
+        
+        $keysCoord = $coordCountsProposta->keys()->merge($coordCountsResultado->keys())->unique();
+        $coordCounts = $keysCoord->combine($keysCoord->map(fn($key) => $coordCountsProposta->get($key, 0) + $coordCountsResultado->get($key, 0)));
 
 
         // 5. Análise de Reprovações
@@ -76,12 +87,20 @@ class DashboardController extends Controller
         ]);
 
         // 6. Projetos por Curso (só é relevante para Admin e Napex)
-        $projetosPorCurso = Projeto::with('user.curso')
-            ->get()
-            ->groupBy('user.curso.nome')
-            ->map(fn ($group) => $group->count());
+        // Se for admin/napex, busca todos. Se for coordenador, usa a query base filtrada.
+        if ($user->role === 'admin' || $user->role === 'napex') {
+            $projetosPorCurso = Projeto::with('user.curso')
+                ->get()
+                ->groupBy('user.curso.nome')
+                ->map(fn ($group) => $group->count());
+        } else {
+             $projetosPorCurso = (clone $projetoQuery)->with('user.curso')
+                ->get()
+                ->groupBy('user.curso.nome')
+                ->map(fn ($group) => $group->count());
+        }
             
-        // --- NOVO GRÁFICO: 7. Análise de Pareceres por Curso ---
+        // --- GRÁFICO: 7. Análise de Pareceres por Curso ---
         $pareceresPorCurso = [];
         // Se for coordenador, pega apenas os cursos que ele coordena. Senão, todos.
         $cursos = str_starts_with($user->role, 'coordenador') 
@@ -117,6 +136,72 @@ class DashboardController extends Controller
             $pareceresPorCurso[$cursoNome]['coordenador'][$mapStatus($fonte->aprovado_coordenador)]++;
         }
 
+        // --- NOVO: DADOS PARA OS STAT CARDS (REORDENADOS E ATUALIZADOS) ---
+        $statCards = [];
+        $userRole = $user->role;
+
+        // 1. "Aguardando Avaliação" (Pendentes)
+        if ($userRole === 'napex') {
+            $statCards[] = [
+                'title' => 'Aguardando Avaliação (NAPEX)',
+                'value' => $napexCounts->get('pendente', 0),
+                'color' => 'orange' // <-- MUDADO PARA LARANJA
+            ];
+        } elseif (str_starts_with($userRole, 'coordenador')) {
+            $statCards[] = [
+                'title' => 'Aguardando Avaliação (Coord.)',
+                'value' => $coordCounts->get('pendente', 0),
+                'color' => 'orange' // <-- MUDADO PARA LARANJA
+            ];
+        }
+
+        // 2. Aprovados
+        $totalAprovados = $statusPropostaCounts->get('aprovado', 0) + $statusResultadoCounts->get('aprovado', 0);
+        $statCards[] = [
+            'title' => 'Aprovados',
+            'value' => $totalAprovados,
+            'color' => 'green'
+        ];
+
+        // 3. Reprovados
+        $totalReprovados = $statusPropostaCounts->get('reprovado', 0) + $statusResultadoCounts->get('reprovado', 0);
+        $statCards[] = [
+            'title' => 'Reprovados',
+            'value' => $totalReprovados,
+            'color' => 'red' // <-- MUDADO PARA VERMELHO
+        ];
+        
+        // 4. Em Editando
+        $totalEditando = $statusPropostaCounts->get('editando', 0) + $statusResultadoCounts->get('editando', 0);
+        $statCards[] = [
+            'title' => 'Em Editando',
+            'value' => $totalEditando,
+            'color' => 'yellow'
+        ];
+
+        // 5. Finalizados
+        $statCards[] = [
+            'title' => 'Finalizados',
+            'value' => $totalProjetosFinalizados,
+            'color' => 'blue'
+        ];
+
+        // 6. Fase Proposta
+        $totalProposta = $statusPropostaCounts->sum();
+        $statCards[] = [
+            'title' => 'Fase Proposta',
+            'value' => $totalProposta,
+            'color' => 'gray'
+        ];
+
+        // 7. Fase Resultado
+        $totalResultado = $statusResultadoCounts->sum();
+        $statCards[] = [
+            'title' => 'Fase Resultado',
+            'value' => $totalResultado,
+            'color' => 'gray'
+        ];
+
 
         // Retorna a view com todas as variáveis necessárias
         return view('dashboard', compact(
@@ -126,7 +211,8 @@ class DashboardController extends Controller
             'coordCounts',
             'projetosPorCurso',
             'dadosReprovacoes',
-            'pareceresPorCurso' // <-- Variável nova adicionada aqui
+            'pareceresPorCurso',
+            'statCards' // <-- Variável nova adicionada aqui
         ));
     }
 }

@@ -60,6 +60,12 @@
             }
         ">
             <div style="color: white;" class="container d-flex justify-content-start align-items-center ">
+
+            @if(auth()->user()->role === 'aluno')
+                <a href="{{ route('aluno.dashboard', absolute: false) }}" class="btn custom-btn me-2"> Início </a> |
+            @elseif(auth()->user()->role === 'admin' || auth()->user()->role === 'napex' || str_starts_with(auth()->user()->role, 'coordenador'))
+                <a href="{{ route('dashboard', absolute: false) }}" class="btn custom-btn me-2"> Início </a> |
+            @endif
                 <a href="{{ route('projetos.index') }}" class="btn custom-btn me-2">Projetos de Extensão </a> |
 
 
