@@ -23,9 +23,13 @@ use App\Models\ProjetoLog;
 use App\Models\ProjetoInvitation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Jobs\GerarPdfsEmLoteJob;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ProjetoController extends Controller
 {
+    const PDF_BATCH_LIMIT = 25;
     /**
      * Exibe uma lista de projetos com base nos filtros aplicados e no papel (role) do usuário.
      * Permite paginação e ordenação.
@@ -34,30 +38,30 @@ class ProjetoController extends Controller
      */
     public function index(Request $request, ProjectSearchService $searchService)
     {
-        // 1. Define os filtros permitidos, incluindo o novo 'curso_id'
         $filters = $request->only(['search', 'status', 'curso_id', 'etapa', 'titulo', 'data_inicio_de', 'data_inicio_ate', 'data_fim_de', 'data_fim_ate', 'aprovado_napex', 'aprovado_coordenador']);
 
-        // 2. Constrói a query com os filtros e já otimiza o carregamento do curso do usuário
         $query = $searchService->buildQuery($filters);
 
-        // 3. Executa a paginação
         $projetos = $query->paginate(10)->appends($request->query());
 
-        // 4. Busca a lista de cursos para popular o dropdown de filtro na tela
         $user = Auth::user();
         if (str_starts_with($user->role, 'coordenador')) {
             $cursos = $user->cursosCoordenados()->orderBy('nome')->get();
         } elseif (in_array($user->role, ['napex', 'admin'])) {
             $cursos = Curso::orderBy('nome')->get();
         } else {
-            $cursos = collect(); // Retorna uma coleção vazia para outros perfis
+            $cursos = collect(); 
         }
 
+        $pdfLimit = self::PDF_BATCH_LIMIT;
 
-        // 5. Envia os projetos e a lista de cursos para a view
-        $response = response(view('projetos.index', compact('projetos', 'cursos')));
+        $viewData = array_merge(
+            compact('projetos', 'cursos', 'pdfLimit'),
+            $filters 
+        );
 
-        // 6. Mantém seus headers de controle de cache
+        $response = response(view('projetos.index', $viewData));
+
         $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');
@@ -720,6 +724,52 @@ class ProjetoController extends Controller
         $pdf = Pdf::loadView('pdf.logs-historico', $data);
 
         return $pdf->download('historico-projeto-' . $projeto->id . '.pdf');
+    }
+
+   public function gerarPdfEmLote(Request $request)
+    {
+        // 1. Autorização (Apenas admin/napex/coordenador podem fazer isso)
+        if (!in_array(auth()->user()->role, ['admin', 'napex']) && !str_starts_with(auth()->user()->role, 'coordenador')) {
+            abort(403, 'Você não tem permissão para realizar esta ação.');
+        }
+
+        // 2. Validação (Impõe o limite de segurança)
+        $validator = Validator::make($request->all(), [
+            'projeto_ids' => 'required|array',
+            'projeto_ids.*' => 'integer|exists:projetos,id',
+            'projeto_ids' => function ($attribute, $value, $fail) {
+                if (count($value) > self::PDF_BATCH_LIMIT) {
+                    $fail('Você só pode gerar ' . self::PDF_BATCH_LIMIT . ' PDFs por vez. Por favor, refine seu filtro.');
+                }
+                if (count($value) === 0) {
+                    $fail('Nenhum projeto selecionado. Refine seu filtro.');
+                }
+            },
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $projetoIds = $validator->validated()['projeto_ids'];
+
+        // 3. Carrega os projetos com os relacionamentos necessários para os PDFs
+        $projetos = Projeto::with(['resultado', 'professores', 'alunos'])
+                            ->findMany($projetoIds);
+
+        // 4. Segurança: Verifica se o usuário pode ver TODOS os projetos que pediu
+        // (A policy 'viewAny' já filtrou a lista na index, mas é uma boa dupla checagem)
+        foreach ($projetos as $projeto) {
+            // Usamos a policy 'view' que já existe
+            $this->authorize('view', $projeto);
+        }
+
+        // 5. Despacha o Job para a fila
+        GerarPdfsEmLoteJob::dispatch($projetos, auth()->user());
+
+        // 6. Redireciona o usuário com sucesso
+        return redirect()->route('projetos.index')
+            ->with('success', 'Seu lote de PDFs está sendo processado! Você receberá uma notificação quando o download estiver pronto.');
     }
 
     public function convidarParticipante(Request $request, Projeto $projeto)

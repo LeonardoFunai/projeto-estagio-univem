@@ -160,6 +160,15 @@
                         </form>
                     @endcan
 
+                    {{-- Botão para ADICIONAR Relatório (só aparece se aprovado e sem relatório criado) --}}
+                    @if (auth()->user()->id === $projeto->user_id && $projeto->status === 'aprovado' && !$projeto->resultado)
+                        <a href="{{ route('resultados.create', ['projeto' => $projeto->id]) }}" 
+                        title="Adicionar Relatório de Resultados" 
+                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-green-700">
+                        Adicionar Relatório
+                        </a>
+                    @endif
+
                     {{-- Botão para Ver o Resultado --}}
                     @if (($projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído') && $projeto->resultado)
                         <a href="{{ route('resultados.show', $projeto->resultado) }}" 

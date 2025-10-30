@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\User;
+use App\Notifications\PdfsEmLoteProntos;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use ZipArchive;
+
+class GerarPdfsEmLoteJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Tenta executar o job por 10 minutos antes de falhar.
+     */
+    public $timeout = 600;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(
+        public Collection $projetos, 
+        public User $user
+    ) {}
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        // Garante que o diretório de zips exista
+        Storage::disk('public')->makeDirectory('lotes-pdf');
+
+        $zip = new ZipArchive;
+        $zipFileName = 'Lote_Projetos_' . $this->user->id . '_' . time() . '.zip';
+        $zipPath = Storage::disk('public')->path('lotes-pdf/' . $zipFileName);
+
+        if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
+            // Falha ao criar o ZIP, podemos notificar o usuário sobre o erro
+            // (Implementação de notificação de falha omitida por brevidade)
+            return;
+        }
+
+        foreach ($this->projetos as $projeto) {
+            $pdfContent = null;
+            $fileName = '';
+
+            try {
+                // Lógica para decidir qual PDF gerar
+                if ($projeto->etapa === 'Resultado' && $projeto->resultado) {
+                    
+                    // Lógica de 'ResultadosController@gerarPdf'
+                    $resultado = $projeto->resultado;
+                    $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
+                    $pdfContent = $pdf->output();
+                    $fileName = 'Relatorio_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+
+                } else {
+                    
+                    // Lógica de 'ProjetoController@gerarPdf'
+                    $professores = $projeto->professores;
+                    $alunos = $projeto->alunos;
+                    $pdf = Pdf::loadView('projetos.pdf', compact('projeto', 'professores', 'alunos'));
+                    $pdfContent = $pdf->output();
+                    $fileName = 'Proposta_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+                }
+
+                if ($pdfContent) {
+                    $zip->addFromString($fileName, $pdfContent);
+                }
+
+            } catch (\Exception $e) {
+                // Se um PDF falhar, adiciona um arquivo de log de erro ao zip
+                $zip->addFromString('ERRO_NO_PROJETO_' . $projeto->id . '.txt', 'Houve um erro ao gerar o PDF para este projeto: ' . $e->getMessage());
+            }
+        }
+
+        $zip->close();
+
+        // 6. Notificar o usuário com o link de download
+        $downloadUrl = Storage::disk('public')->url('lotes-pdf/' . $zipFileName);
+        $this->user->notify(new PdfsEmLoteProntos($downloadUrl, $this->projetos->count()));
+    }
+}

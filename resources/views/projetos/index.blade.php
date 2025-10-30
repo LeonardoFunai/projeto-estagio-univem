@@ -67,9 +67,7 @@
                     ＋ Nova Proposta
                 </a>
             @endcan
-
-
-                </div>
+        </div>
 
                 <div id="filtro-box" style="display: none;" class="bg-gray-50 p-4 rounded-lg mb-8">
                     @if ($errors->any())
@@ -178,7 +176,54 @@
 
 
                 </div>
+{{-- =================================== --}}
+{{-- ==== FORMULÁRIO DE PDF EM LOTE ==== --}}
+{{-- =================================== --}}
+@if(in_array(auth()->user()->role, ['admin', 'napex']) || str_starts_with(auth()->user()->role, 'coordenador'))
+    
+    @php
+        // Pega o limite definido no Controller
+        $projetoCount = $projetos->count();
+        $excedeLimite = $projetoCount > $pdfLimit;
+    @endphp
 
+    <div class="mb-4 p-4 border rounded-lg bg-gray-50">
+        <form action="{{ route('projetos.gerarPdfEmLote') }}" method="POST"
+              onsubmit="return confirm('Isso irá gerar um .zip com {{ $projetoCount }} PDF(s) com base nos filtros atuais. Deseja continuar?')">
+            @csrf
+            
+            {{-- Passa todos os IDs dos projetos atualmente filtrados --}}
+            @foreach ($projetos as $projeto)
+                <input type="hidden" name="projeto_ids[]" value="{{ $projeto->id }}">
+            @endforeach
+
+            <div class="flex flex-wrap items-center gap-4">
+                <button type="submit" 
+                        @if($excedeLimite || $projetoCount === 0) disabled @endif
+                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-red-700
+                               disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Gerar PDF do Lote ({{ $projetoCount }} projetos)
+                </button>
+                
+                @if($excedeLimite)
+                    <p class="text-sm text-red-600 font-semibold">
+                        Limite de {{ $pdfLimit }} PDFs por lote excedido. Por favor, refine seus filtros.
+                    </p>
+                @elseif($projetoCount === 0)
+                     <p class="text-sm text-gray-500">
+                        Nenhum projeto encontrado para gerar PDFs.
+                    </p>
+                @else
+                    <p class="text-sm text-gray-600">
+                        Isso irá gerar um .zip com as propostas ou relatórios dos {{ $projetoCount }} projetos listados.
+                    </p>
+                @endif
+            </div>
+        </form>
+    </div>
+@endif
+{{-- =================================== --}}   
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full max-w-7xl bg-white border border-gray-300 rounded-lg">
                         <thead>

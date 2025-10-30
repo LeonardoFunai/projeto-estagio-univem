@@ -38,6 +38,9 @@ Route::get('/', function () {
 
 // Área logada
 Route::middleware('auth')->group(function () {
+    
+    Route::post('/projetos/gerar-pdf-em-lote', [App\Http\Controllers\ProjetoController::class, 'gerarPdfEmLote'])
+    ->name('projetos.gerarPdfEmLote');
  
     // ### Proteção das Dashboards (Como fizemos antes) ###
 
