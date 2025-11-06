@@ -49,10 +49,16 @@ class PdfsEmLoteProntos extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        // 1. Extrai o nome do arquivo ZIP da URL completa
+        $zipFileName = basename($this->downloadUrl); // Ex: Lote_Projetos_...zip
+        
         return [
             'titulo' => 'Lote de PDFs Pronto',
             'mensagem' => "Seu .zip com {$this->count} PDFs está pronto para download.",
-            'url' => $this->downloadUrl,
+            'zip_file' => $zipFileName, // Novo campo para uso no Blade
+            
+            // 2. Usa a nova rota de Controller + Placeholder para o ID da Notificação
+            'url' => route('notifications.downloadZip', ['filename' => $zipFileName, 'notification' => '__NOTIFICATION_ID__']), 
         ];
     }
 }

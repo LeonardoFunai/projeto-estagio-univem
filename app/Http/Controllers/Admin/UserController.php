@@ -112,7 +112,7 @@ public function index(Request $request)
             // A relação aqui deve ser a que você definiu para os cursos que um coordenador gerencia
             $cursos = $user->cursosCoordenados; 
         }
-
+        
         return view('admin.users.create', compact('cursos'));
     }
 

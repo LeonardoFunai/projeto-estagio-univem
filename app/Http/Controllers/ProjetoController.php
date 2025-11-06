@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Notifications\PropostaEnviada;
 use Illuminate\Support\Facades\Notification;
@@ -26,6 +27,7 @@ use Illuminate\Support\Str;
 use App\Jobs\GerarPdfsEmLoteJob;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use ZipArchive;                       
 
 class ProjetoController extends Controller
 {
@@ -770,6 +772,56 @@ class ProjetoController extends Controller
         // 6. Redireciona o usuário com sucesso
         return redirect()->route('projetos.index')
             ->with('success', 'Seu lote de PDFs está sendo processado! Você receberá uma notificação quando o download estiver pronto.');
+    }
+
+    /**
+     * Gera um arquivo ZIP contendo o PDF da Proposta e o PDF do Relatório (se entregue).
+     */
+    public function generateCombinedPdfZip(Projeto $projeto)
+    {
+        // O projeto é finalizado se o resultado existe E não está em rascunho ('editando')
+        $resultado = $projeto->resultado;
+        if (!$resultado || $resultado->status === 'editando') {
+            return redirect()->back()->with('error', 'A geração combinada só está disponível para projetos com relatório finalizado.');
+        }
+
+        $zipFileName = 'Projeto_' . $projeto->id . '_Completo.zip';
+        $tempDir = 'temp/zips/' . uniqid(); // Cria um subdiretório temporário
+        
+        // Cria o diretório e o caminho completo para o ZIP
+        Storage::disk('local')->makeDirectory($tempDir);
+        $zipPath = Storage::disk('local')->path($tempDir . '/' . $zipFileName);
+        
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
+            return redirect()->back()->with('error', 'Não foi possível criar o arquivo ZIP.');
+        }
+
+        // 1. Gerar PDF da Proposta
+        try {
+            $professores = $projeto->professores;
+            $alunos = $projeto->alunos;
+            $pdfProposta = Pdf::loadView('projetos.pdf', compact('projeto', 'professores', 'alunos'));
+            $fileNameProposta = 'Proposta_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+            $zip->addFromString($fileNameProposta, $pdfProposta->output());
+        } catch (\Exception $e) {
+            // Se a proposta falhar, registra um erro (pode-se adicionar um log mais detalhado)
+            $zip->addFromString('ERRO_PROPOSTA.txt', 'Erro ao gerar Proposta: ' . $e->getMessage());
+        }
+        
+        // 2. Gerar PDF do Relatório (Garantido que foi submetido pela checagem inicial)
+        try {
+            $pdfRelatorio = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
+            $fileNameRelatorio = 'Relatorio_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+            $zip->addFromString($fileNameRelatorio, $pdfRelatorio->output());
+        } catch (\Exception $e) {
+            $zip->addFromString('ERRO_RELATORIO.txt', 'Erro ao gerar Relatório: ' . $e->getMessage());
+        }
+
+        $zip->close();
+        
+        // Força o download do arquivo e deleta o arquivo e a pasta temporária
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 
     public function convidarParticipante(Request $request, Projeto $projeto)

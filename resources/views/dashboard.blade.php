@@ -76,16 +76,7 @@
                     </div>
                 </div>
                 
-                {{-- GRÁFICOS CONDICIONAIS POR PERFIL --}}
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'napex')
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h3 class="font-semibold text-lg text-gray-800 mb-4">Pareceres NAPEX</h3>
-                    {{-- Wrapper com altura definida --}}
-                    <div class="relative h-80">
-                        <canvas id="napexChart"></canvas>
-                    </div>
-                </div>
-                @endif
+
                 
                 {{-- ### Bloco do Gráfico de Coordenação Removido ### --}}
 

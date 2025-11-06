@@ -40,7 +40,7 @@ class ConviteRecusado extends Notification
         return [
             'titulo' => 'Convite Recusado',
             'mensagem' => "O usuário com o email {$this->invitation->email} recusou seu convite para o projeto '{$tituloProjeto}'.",
-            'url' => route('projetos.edit', $this->invitation->projeto_id),
+            'url' => route('projetos.show', $this->invitation->projeto_id),
         ];
     }
 }

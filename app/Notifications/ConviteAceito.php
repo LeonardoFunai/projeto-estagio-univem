@@ -44,7 +44,7 @@ class ConviteAceito extends Notification
         return [
             'titulo' => 'Convite Aceito!',
             'mensagem' => "Boas notícias! {$nomeConvidado} aceitou seu convite e agora faz parte do projeto '{$tituloProjeto}'.",
-            'url' => route('projetos.edit', $this->invitation->projeto_id), // Link para a página de edição do projeto
+            'url' => route('projetos.show', $this->invitation->projeto_id), // Link para a página de edição do projeto
         ];
     }
 }

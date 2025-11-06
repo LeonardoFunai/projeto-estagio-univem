@@ -34,6 +34,31 @@
             $totalHoras = $projeto->atividades->sum('carga_horaria');
         @endphp
 
+        @php
+            // --- Lógica para o Botão 'Ver Resultado' ---
+            $user = auth()->user();
+            $isAvalista = str_starts_with($user->role, 'coordenador') || $user->role === 'napex';
+            $isParticipante = $projeto->users()->where('user_id', $user->id)->exists();
+
+            $resultado = $projeto->resultado ?? null;
+            $resultadoExiste = $resultado !== null;
+            
+            // Assume que 'editando' é o status de rascunho (não entregue pelo aluno)
+            $isResultadoSubmetido = $resultadoExiste && $resultado->status !== 'editando'; 
+
+            // O botão deve estar ativo (clicável) se:
+            // 1. O relatório foi submetido (para avaliadores) OU
+            // 2. O usuário é participante (aluno/orientador) e pode ver o rascunho/editar.
+            $isButtonActive = $isResultadoSubmetido || $isParticipante;
+            
+            // O botão deve estar visível se o Resultado existe E for um participante OU um avaliador
+            $isButtonVisible = $resultadoExiste && ($isParticipante || $isAvalista);
+
+            // Classes de estilo
+            $disabledClass = 'bg-gray-400 text-gray-700 cursor-not-allowed';
+            $activeClass = 'bg-cyan-600 text-white hover:bg-cyan-700';
+        @endphp
+
         
         <h3 class="text-lg font-bold text-gray-800 mb-6 text-center">Andamento da Proposta</h3>
 
@@ -169,13 +194,23 @@
                         </a>
                     @endif
 
-                    {{-- Botão para Ver o Resultado --}}
-                    @if (($projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído') && $projeto->resultado)
-                        <a href="{{ route('resultados.show', $projeto->resultado) }}" 
-                        title="Visualizar Relatório" 
-                        class="inline-flex items-center px-4 py-2 bg-cyan-600 text-white font-semibold text-xs uppercase rounded-md hover:bg-cyan-700">
-                        Ver Resultado
-                        </a>
+                    {{-- Botão para Ver o Resultado (Lógica Condicional de Ativação) --}}
+                    @if ($isButtonVisible && ($projeto->etapa === 'Resultado' || $projeto->etapa === 'Concluído'))
+                        @if ($isButtonActive)
+                            {{-- Botão ATIVO (Relatório Entregue ou Usuário Participante) --}}
+                            <a href="{{ route('resultados.show', $projeto->resultado) }}" 
+                                title="Visualizar Relatório" 
+                                class="inline-flex items-center px-4 py-2 font-semibold text-xs uppercase rounded-md {{ $activeClass }}">
+                                Ver Resultado
+                            </a>
+                        @else
+                            {{-- Botão INATIVO (Relatório em Rascunho para Avaliadores) --}}
+                            <button disabled 
+                                title="O relatório ainda não foi submetido pelo aluno."
+                                class="inline-flex items-center px-4 py-2 font-semibold text-xs uppercase rounded-md {{ $disabledClass }}">
+                                Ver Resultado
+                            </button>
+                        @endif
                     @endif
 
                 </div>

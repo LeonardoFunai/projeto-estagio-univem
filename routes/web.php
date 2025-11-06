@@ -9,8 +9,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlunoDashboardController;
+use Illuminate\Notifications\DatabaseNotification;
 
-// ### INÍCIO DA MODIFICAÇÃO ###
 // Redireciona a raiz para o "Início" correto se estiver logado
 Route::get('/', function () {
     if (auth()->check()) {
@@ -33,7 +33,6 @@ Route::get('/', function () {
     // Se não estiver logado, manda para login
     return redirect('/login');
 });
-// ### FIM DA MODIFICAÇÃO ###
 
 
 // Área logada
@@ -41,8 +40,14 @@ Route::middleware('auth')->group(function () {
     
     Route::post('/projetos/gerar-pdf-em-lote', [App\Http\Controllers\ProjetoController::class, 'gerarPdfEmLote'])
     ->name('projetos.gerarPdfEmLote');
+
+    Route::get('/notificacoes/download-zip/{filename}/{notification}', [NotificationController::class, 'downloadZip'])
+    ->where('filename', '[\w\-\.]+\.zip') 
+    ->middleware(['auth'])
+    ->name('notifications.downloadZip');
+
+    
  
-    // ### Proteção das Dashboards (Como fizemos antes) ###
 
     // Dashboard de Admin/Napex/Coord
     Route::middleware('role:admin,napex,coordenador')->group(function () {
@@ -53,7 +58,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:aluno')->group(function () {
         Route::get('/meu-inicio', [AlunoDashboardController::class, 'index'])->name('aluno.dashboard');
     });
-    // ### Fim da Proteção ###
 
 
     // Rotas comuns a todos os usuários logados
@@ -72,6 +76,10 @@ Route::middleware('auth')->group(function () {
     
     // 📄 Exportar relatório em PDF (visível só para NAPEx e Coordenação)
     Route::get('/projetos/pdf', [ProjetoController::class, 'exportarPdf'])->name('projetos.exportarPdf');
+
+    Route::get('/projetos/{projeto}/download-completo', [ProjetoController::class, 'generateCombinedPdfZip'])
+    ->middleware(['auth'])
+    ->name('projetos.downloadCompleto');
     
     Route::get('/projetos/{id}', [ProjetoController::class, 'show'])->name('projetos.show');
     Route::delete('/projetos/{id}', [ProjetoController::class, 'destroy'])->name('projetos.destroy');

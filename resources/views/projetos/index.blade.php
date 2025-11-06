@@ -419,8 +419,21 @@
                                                         </form>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> 
+                                        </div>
+                                        @php
+                                            $canGenerateCombined = $projeto->etapa === 'Concluído' && $projeto->status === 'aprovado';
+                                        @endphp
 
+                                        <div class="flex space-x-2">
+                                            {{-- Botão Gerar PDFs (visível apenas sob condição) --}}
+                                            @if ($canGenerateCombined)
+                                                <a href="{{ route('projetos.downloadCompleto', $projeto->id) }}" 
+                                                class="text-sm px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold"
+                                                title="Gera ZIP com PDF da Proposta e Relatório Final">
+                                                    Gerar PDFs
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

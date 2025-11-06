@@ -110,7 +110,7 @@ class ProjetoPolicy
     {
         // Apenas o criador original do projeto pode deletar, e somente se não estiver aprovado/entregue.
         if ($user->id === $projeto->user_id) {
-            return !in_array($projeto->status, ['aprovado', 'entregue']);
+            return !in_array($projeto->status, ['aprovado', 'entregue', 'Finalizado', 'reprovado']);
         }
         return false;
     }
@@ -130,29 +130,34 @@ class ProjetoPolicy
     /**
      * Determina se um usuário pode reverter um projeto para o estado de 'edição'.
      */
+
+
     public function revertToEditing(User $user, Projeto $projeto): bool
     {
         // Apenas projetos 'entregues' e ainda não avaliados podem ser revertidos.
         $isRevertableState = $projeto->status === 'entregue' &&
-                             $projeto->aprovado_napex === 'pendente' &&
-                             $projeto->aprovado_coordenador === 'pendente';
+                            $projeto->aprovado_napex === 'pendente' &&
+                            $projeto->aprovado_coordenador === 'pendente';
 
         if (!$isRevertableState) {
             return false;
         }
 
-        // NAPEX, Coordenadores e participantes do projeto podem reverter.
-        if (in_array($user->role, ['napex', 'coordenador'])) {
-            if (str_starts_with($user->role, 'coordenador')) {
-                $cursoDoProjeto = $projeto->user->curso;
-                if (!$cursoDoProjeto) {
-                    return false;
-                }
-                return $user->cursosCoordenados()->where('curso_id', $cursoDoProjeto->id)->exists();
-            }
-            return true;
+        // REGRA DE EXCLUSÃO: NAPEX nunca pode reverter, conforme solicitado.
+        if ($user->role === 'napex') {
+            return false;
         }
 
+        // Coordenadores podem reverter, mas precisam ser do curso certo.
+        if (str_starts_with($user->role, 'coordenador')) {
+            $cursoDoProjeto = $projeto->user->curso;
+            if (!$cursoDoProjeto) {
+                return false;
+            }
+            return $user->cursosCoordenados()->where('curso_id', $cursoDoProjeto->id)->exists();
+        }
+
+        // Participantes do projeto (aluno, orientadores, etc.) podem reverter.
         return $projeto->users()->where('user_id', $user->id)->exists();
     }
 

@@ -1,4 +1,3 @@
-{{-- Em resources/views/notifications/index.blade.php --}}
 <x-app-layout>
     <x-slot name="pageTitle">
         Minhas Notificações
@@ -16,32 +15,28 @@
                         <div class="space-y-4">
                             @foreach($notifications as $notification)
                                 @php
-                                    // ==========================================================
-                                    // INÍCIO DA CORREÇÃO
-                                    // ==========================================================
-                                    $notificationUrl = null; // Começa como nulo
+                                    $notificationUrl = null; 
                                     
                                     if (isset($notification->data['url'])) {
                                         $urlPath = $notification->data['url'];
 
-                                        // Verificação de segurança:
-                                        // Se a URL for malformada (ex: '/projetos/' ou '/resultados/' sem ID), 
-                                        // redireciona para a página de índice de projetos como um fallback seguro.
-                                        if ($urlPath === '/projetos/' || $urlPath === '/resultados/' || str_ends_with($urlPath, '/projetos/') || str_ends_with($urlPath, '/resultados/')) {
-                                            $notificationUrl = route('projetos.index');
+                                        // CORREÇÃO: Substituir o placeholder pelo ID real da notificação
+                                        if (str_contains($urlPath, '__NOTIFICATION_ID__')) {
+                                            // Se a URL contém o placeholder, ela é uma rota interna (notifications.downloadZip)
+                                            $notificationUrl = str_replace('__NOTIFICATION_ID__', $notification->id, $urlPath);
+                                            
+                                            // Usamos url() apenas para garantir o prefixo de domínio/host
+                                            $notificationUrl = url($notificationUrl); 
                                         } else {
+                                            // Lógica de fallback para notificações antigas ou genéricas
+                                            // ... (mantenha sua lógica de fallback aqui) ...
                                             try {
-                                                // Tenta gerar a URL absoluta
                                                 $notificationUrl = url($urlPath);
                                             } catch (\Exception $e) {
-                                                // Se falhar (rota inválida, etc), aponta para o índice
                                                 $notificationUrl = route('projetos.index');
                                             }
                                         }
                                     }
-                                    // ==========================================================
-                                    // FIM DA CORREÇÃO
-                                    // ==========================================================
                                 @endphp
 
                                 {{-- Bloco principal da notificação --}}
@@ -57,7 +52,6 @@
                                         {{-- Linha do Título e Horário --}}
                                         <div class="flex justify-between items-baseline">
                                             <h3 class="font-semibold text-gray-800">
-                                                {{-- Usa a chave 'titulo' que definimos nas novas notificações, ou a antiga 'titulo_projeto' como fallback --}}
                                                 {{ $notification->data['titulo'] ?? ($notification->data['titulo_projeto'] ?? 'Notificação') }}
                                             </h3>
                                             <p class="text-xs text-gray-500 whitespace-nowrap ml-4">
@@ -71,7 +65,7 @@
                                         {{-- Link (se houver e for válido) --}}
                                         @if($notificationUrl)
                                             <a href="{{ $notificationUrl }}" class="text-sm text-blue-600 hover:underline mt-2 inline-block">
-                                                Ver detalhes →
+                                                {{ isset($notification->data['zip_file']) ? 'Baixar Lote ZIP →' : 'Ver detalhes →' }}
                                             </a>
                                         @endif
                                     </div>
@@ -88,3 +82,30 @@
         </div>
     </div>
 </x-app-layout>
+
+{{-- Lógica JavaScript para marcar como lida (necessário para download direto) --}}
+@push('scripts')
+<script>
+    function markNotificationAsRead(notificationId) {
+        // Envia uma requisição assíncrona para marcar a notificação como lida
+        fetch('{{ url('/notifications/read') }}/' + notificationId, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Notificação marcada como lida:', notificationId);
+            } else {
+                console.error('Falha ao marcar notificação como lida.');
+            }
+            // Não impede a navegação para o link de download (o href faz isso)
+        })
+        .catch(error => {
+            console.error('Erro de rede ao marcar notificação como lida:', error);
+        });
+    }
+</script>
+@endpush

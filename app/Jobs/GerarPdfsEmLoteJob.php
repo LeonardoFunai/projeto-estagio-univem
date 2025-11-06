@@ -45,36 +45,44 @@ class GerarPdfsEmLoteJob implements ShouldQueue
 
         if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
             // Falha ao criar o ZIP, podemos notificar o usuário sobre o erro
-            // (Implementação de notificação de falha omitida por brevidade)
             return;
         }
 
         foreach ($this->projetos as $projeto) {
-            $pdfContent = null;
-            $fileName = '';
-
+            
             try {
-                // Lógica para decidir qual PDF gerar
+                // ==========================================================
+                // 1. GERAR PDF DA PROPOSTA (SEMPRE)
+                // Se o projeto existe, a proposta deve ser incluída no ZIP.
+                // ==========================================================
+                $professores = $projeto->professores;
+                $alunos = $projeto->alunos;
+                $pdfProposta = Pdf::loadView('projetos.pdf', compact('projeto', 'professores', 'alunos'));
+                
+                $fileNameProposta = 'Proposta_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+                
+                $zip->addFromString($fileNameProposta, $pdfProposta->output());
+
+
+                // ==========================================================
+                // 2. GERAR PDF DO RELATÓRIO (SOMENTE SE ENTREGUE E NA ETAPA CORRETA)
+                // O Relatório só deve ser gerado se o Resultado existir E NÃO ESTIVER em rascunho ('editando').
+                // Este é o ponto de correção.
+                // ==========================================================
                 if ($projeto->etapa === 'Resultado' && $projeto->resultado) {
-                    
-                    // Lógica de 'ResultadosController@gerarPdf'
                     $resultado = $projeto->resultado;
-                    $pdf = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
-                    $pdfContent = $pdf->output();
-                    $fileName = 'Relatorio_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
 
-                } else {
-                    
-                    // Lógica de 'ProjetoController@gerarPdf'
-                    $professores = $projeto->professores;
-                    $alunos = $projeto->alunos;
-                    $pdf = Pdf::loadView('projetos.pdf', compact('projeto', 'professores', 'alunos'));
-                    $pdfContent = $pdf->output();
-                    $fileName = 'Proposta_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
-                }
-
-                if ($pdfContent) {
-                    $zip->addFromString($fileName, $pdfContent);
+                    // VERIFICAÇÃO DE ENTREGA: Assume que 'editando' é o status de rascunho (não entregue)
+                    // Se o status for diferente de 'editando', consideramos que o aluno submeteu.
+                    // Você deve ajustar 'editando' se o valor do banco for outro para rascunho.
+                    if ($resultado->status !== 'editando') {
+                        
+                        $pdfRelatorio = Pdf::loadView('pdf.resultados-relatorio', compact('resultado'));
+                        
+                        $fileNameRelatorio = 'Relatorio_' . $projeto->id . '_' . preg_replace('/[^A-Za-z0-9\-]/', '', $projeto->titulo) . '.pdf';
+                        
+                        $zip->addFromString($fileNameRelatorio, $pdfRelatorio->output());
+                    }
                 }
 
             } catch (\Exception $e) {

@@ -29,17 +29,15 @@ trait LogaAlteracoes
         });
 
         static::updating(function ($model) {
-            $alteracoes = $model->getDirty(); // Pega apenas os campos que foram modificados
-            $originais = $model->getOriginal(); // Pega os valores antigos dos campos
+            $alteracoes = $model->getDirty(); 
+            $originais = $model->getOriginal(); 
 
-            // ---- LÓGICA ATUALIZADA ----
-
-            // 1. Trata a mudança de STATUS, incluindo "Voltar para Edição"
+      
             if (isset($alteracoes['status'])) {
                 $novoStatus = $alteracoes['status'];
                 $statusAntigo = $originais['status'] ?? 'nenhum';
 
-                // Ação específica para quando volta para edição
+
                 if ($novoStatus === 'editando') {
                     $acao = ($model instanceof \App\Models\Resultado) ? 'RESULTADO_REVERTIDO' : 'PROPOSTA_REVERTIDA';
                     $descricao = ($model instanceof \App\Models\Resultado)
@@ -47,26 +45,41 @@ trait LogaAlteracoes
                         : "A proposta foi revertida para o modo de edição.";
                     $model->registrarLog($acao, $descricao);
                 } else {
-                    // Log genérico para outras mudanças de status
                     $model->registrarLog('STATUS_ALTERADO', "Status alterado de '{$statusAntigo}' para '{$novoStatus}'.");
                 }
             }
+
+            if (isset($alteracoes['aprovado_napex']) && $alteracoes['aprovado_napex'] !== 'pendente') {
+                $status = $alteracoes['aprovado_napex'] === 'sim' ? 'Aprovado' : 'Reprovado';
+                $motivo = ($alteracoes['aprovado_napex'] === 'nao' && property_exists($model, 'motivo_napex')) 
+                        ? " Motivo: " . ($model->motivo_napex ?? 'N/A') 
+                        : '';
+                $descricao = "Parecer do NAPEx enviado: $status." . $motivo;
+                $model->registrarLog('PARECER_NAPEX', $descricao);
+            }
             
-            // 2. Trata pareceres (lógica existente mantida)
+            
             if (isset($alteracoes['aprovado_coordenador']) && $alteracoes['aprovado_coordenador'] !== 'pendente') {
                 $status = $alteracoes['aprovado_coordenador'] === 'sim' ? 'Aprovado' : 'Reprovado';
                 $descricao = "Coordenação: $status. Motivo: " . ($model->motivo_coordenador ?? 'N/A');
                 $model->registrarLog('PARECER_COORDENACAO', $descricao);
             }
 
-            // 3. Trata mudança de ETAPA (lógica existente mantida)
+           
             if (isset($alteracoes['etapa'])) {
-                // ... (sua lógica para 'etapa' continua aqui) ...
+                
             }
 
-            // 4. NOVO: Log genérico para qualquer outra EDIÇÃO
-            // Verifica se houve outras alterações além das que já tratamos
-            $camposJaTratados = ['status', 'aprovado_coordenador', 'etapa', 'updated_at'];
+          
+            $camposJaTratados = [
+            'status', 
+            'aprovado_coordenador', 
+            'aprovado_napex', 
+            'motivo_napex',   
+            'motivo_coordenador', 
+            'etapa', 
+            'updated_at'
+        ];
             $outrasAlteracoes = array_diff_key($alteracoes, array_flip($camposJaTratados));
 
             if (!empty($outrasAlteracoes)) {
