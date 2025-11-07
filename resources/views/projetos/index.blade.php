@@ -360,7 +360,7 @@
                                                 <a href="{{ route('projetos.show', $projeto->id) }}" title="Avaliar Proposta" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white">Avaliar</a>
                                             @else
                                                 {{-- BOTÃO DE VISUALIZAR (Padrão para todos os outros casos) --}}
-                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="{{ $baseBtnClass }} bg-blue-600 hover:bg-blue-700 text-white">Ver Proposta</a>
+                                                <a href="{{ route('projetos.show', $projeto->id) }}" title="Visualizar Proposta" class="{{ $baseBtnClass }} bg-blue-600 hover:bg-blue-700 text-white">Proposta</a>
                                             @endif
 
                                             {{-- BOTÃO DE EDITAR PROPOSTA --}}
@@ -381,7 +381,7 @@
                                                         <a href="{{ route('resultados.show', $projeto->resultado) }}" class="{{ $baseBtnClass }} bg-green-600 hover:bg-green-700 text-white" title="Avaliar Relatório">Avaliar</a>
                                                     @elsecan('view', $projeto->resultado)
                                                         {{-- Senão, se ele pode apenas VISUALIZAR, mostra o botão de ver --}}
-                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="{{ $baseBtnClass }} bg-cyan-600 hover:bg-cyan-700 text-white">Ver Resultado</a>
+                                                        <a href="{{ route('resultados.show', $projeto->resultado) }}" title="Visualizar Relatório" class="{{ $baseBtnClass }} bg-cyan-600 hover:bg-cyan-700 text-white">Resultado</a>
                                                     @endcan
 
                                                     {{-- O botão de editar continua com sua própria lógica, sem interferir --}}
@@ -399,6 +399,21 @@
                                                         @endif
                                                     @endif
                                                 @endif
+
+                                            <!-- BOTÃO DE REGAR PDFS -->
+                                            @php
+                                                $canGenerateCombined = $projeto->etapa === 'Concluído' && $projeto->status === 'aprovado';
+                                            @endphp
+                                            <div class="flex space-x-2">
+                                                {{-- Botão Gerar PDFs (visível apenas sob condição) --}}
+                                                @if ($canGenerateCombined)
+                                                    <a href="{{ route('projetos.downloadCompleto', $projeto->id) }}" 
+                                                    class="text-sm px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold"
+                                                    title="Gera ZIP com PDF da Proposta e Relatório Final">
+                                                        PDFs
+                                                    </a>
+                                                @endif
+                                            </div>
 
 
                                             {{-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --}}
@@ -421,20 +436,7 @@
                                                 </div>
                                             </div> 
                                         </div>
-                                        @php
-                                            $canGenerateCombined = $projeto->etapa === 'Concluído' && $projeto->status === 'aprovado';
-                                        @endphp
 
-                                        <div class="flex space-x-2">
-                                            {{-- Botão Gerar PDFs (visível apenas sob condição) --}}
-                                            @if ($canGenerateCombined)
-                                                <a href="{{ route('projetos.downloadCompleto', $projeto->id) }}" 
-                                                class="text-sm px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold"
-                                                title="Gera ZIP com PDF da Proposta e Relatório Final">
-                                                    Gerar PDFs
-                                                </a>
-                                            @endif
-                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

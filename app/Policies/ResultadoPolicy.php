@@ -82,14 +82,33 @@ class ResultadoPolicy
      */
     public function revertToDraft(User $user, Resultado $resultado): bool
     {
+        // 1. Manter a Validação de Status
         if ($resultado->status !== 'entregue' || $resultado->aprovado_napex !== 'pendente' || $resultado->aprovado_coordenador !== 'pendente') {
             return false;
         }
 
-        if ($user->id === $resultado->projeto->user_id) {
+        $projeto = $resultado->projeto;
+        
+        // 2. Aluno Líder (Criador do Projeto)
+        if ($user->id === $projeto->user_id) {
             return true;
         }
-        if ($user->role === 'professor' && $resultado->projeto->professores()->where('user_id', $user->id)->exists()) {
+
+        // 3. Verifica se o usuário é um Professor ou Coordenador vinculado ao projeto.
+        // Esta é a verificação mais eficiente, pois engloba as duas roles na mesma lógica de vínculo.
+        $isLinkedToProject = $projeto->professores()->where('user_id', $user->id)->exists();
+
+        if ($isLinkedToProject) {
+            // Se for Coordenador OU Professor E estiver vinculado ao projeto como orientador,
+            // ele pode reverter para rascunho.
+            if ($user->role === 'professor' || $user->role === 'coordenador') {
+                return true;
+            }
+        }
+        
+        // 4. Aluno Co-autor/Participante (Recomendado para permitir que co-autores continuem o trabalho)
+        // Assumindo que o projeto tem um relacionamento 'alunos' ou 'users' para participantes
+        if ($user->role === 'aluno' && $projeto->alunos()->where('user_id', $user->id)->exists()) {
             return true;
         }
 
