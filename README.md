@@ -22,9 +22,9 @@ Confira abaixo algumas telas principais do sistema em funcionamento:
 
 | Login | Início |
 |:---:|:---:|
-| <img src="fotos/login.png" alt="Visão geral dos projetos do aluno" width="400"> | <img src="fotos/inicio.png" alt="Tela de listagem com filtros ativos" width="400"> |
+| <img src="fotos/login.png" alt="Tela de Login" width="400"> | <img src="fotos/inicio.png" alt="Tela de Dashboard" width="400"> |
 | **Listagem de Projetos** | **Tela de Visualização** |
-| <img src="fotos/index.png" alt="Formulário de cadastro de nova proposta" width="400"> | <img src="fotos/tview.png" alt="Área de avaliação de relatórios" width="400"> |
+| <img src="fotos/index.png" alt="Listagem de projetos" width="400"> | <img src="fotos/view.png" alt="Tela de Visualização do projeto" width="400"> |
 
 ---
 
