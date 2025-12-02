@@ -47,7 +47,7 @@ Route::middleware('auth')->group(function () {
     ->name('notifications.downloadZip');
 
     
- 
+    Route::view('/sobre', 'sobre')->name('sobre');
 
     // Dashboard de Admin/Napex/Coord
     Route::middleware('role:admin,napex,coordenador')->group(function () {

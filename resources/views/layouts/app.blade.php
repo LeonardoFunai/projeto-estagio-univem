@@ -36,6 +36,12 @@
                     <a href="mailto:atendimento@univem.edu.br" class="text-white text-decoration-none">
                         <i class="bi bi-chat-dots"></i> Fale Conosco
                     </a>
+
+                    <a href="{{ route('sobre') }}"
+                        class="inline-flex items-center gap-2 text-white font-bold px-3 py-1.5 h-[36px] rounded text-sm"
+                        title="Sobre o Sistema">
+                        ℹ️ Sobre
+                    </a>
                 </div>
             </div>
         </div>
@@ -104,6 +110,8 @@
                         </span>
                     @endif
                 </a>|
+
+                
 
                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                     @csrf
