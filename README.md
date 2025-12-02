@@ -20,11 +20,11 @@ O sistema atende a diferentes perfis de acesso: **Alunos**, **Professores/Coorde
 
 Confira abaixo algumas telas principais do sistema em funcionamento:
 
-| Dashboard e Visão Geral | Listagem de Projetos (Filtros) |
+| Login | Início |
 |:---:|:---:|
-| <img src="fotos/dashboard_aluno.png" alt="Visão geral dos projetos do aluno" width="400"> | <img src="fotos/listagem_projetos.png" alt="Tela de listagem com filtros ativos" width="400"> |
-| **Formulário de Submissão** | **Tela de Avaliação (NAPEx/Coord)** |
-| <img src="fotos/formulario_submissao.png" alt="Formulário de cadastro de nova proposta" width="400"> | <img src="fotos/tela_avaliacao.png" alt="Área de avaliação de relatórios" width="400"> |
+| <img src="fotos/login.png" alt="Visão geral dos projetos do aluno" width="400"> | <img src="fotos/inicio.png" alt="Tela de listagem com filtros ativos" width="400"> |
+| **Listagem de Projetos** | **Tela de Visualização** |
+| <img src="fotos/index.png" alt="Formulário de cadastro de nova proposta" width="400"> | <img src="fotos/tview.png" alt="Área de avaliação de relatórios" width="400"> |
 
 ---
 
