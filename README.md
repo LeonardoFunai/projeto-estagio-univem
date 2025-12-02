@@ -40,33 +40,18 @@ As seguintes ferramentas foram usadas na construção do projeto:
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🚀 Como Rodar o Projeto
 
 ### Pré-requisitos
+Certifique-se de ter instalado em sua máquina:
+* [Git](https://git-scm.com/)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop) (Recomendado)
+* OU PHP 8.2+ e Composer (para rodar manualmente sem Docker)
 
-Antes de começar, você vai precisar ter instalado em sua máquina as seguintes ferramentas:
-[Git](https://git-scm.com), [Node.js](https://nodejs.org/en/) (se for web) e/ou [Java JDK](https://www.oracle.com/java/technologies/downloads/) (se for Java).
-Além disso, é bom ter um editor para trabalhar com o código como [VSCode](https://code.visualstudio.com/).
+### Opção 1: Rodando com Docker (Laravel Sail) - Recomendado 🐳
+Este método não exige que você tenha PHP ou Composer instalados na sua máquina local, apenas o Docker.
 
-### 🎲 Rodando o Back-end (Servidor)
-
-```bash
-# Clone este repositório
-$ git clone [https://github.com/LeonardoFunai/projeto-estagio-univem.git](https://github.com/LeonardoFunai/projeto-estagio-univem.git)
-
-# Acesse a pasta do projeto no terminal/cmd
-$ cd projeto-estagio-univem
-
-# Instale as dependências (Exemplo para Node.js)
-$ npm install
-# OU (Exemplo para Python)
-$ pip install -r requirements.txt
-# OU (Exemplo para Java/Maven)
-$ mvn clean install
-
-# Execute a aplicação
-$ npm start 
-# OU
-$ mvn spring-boot:run
-
-# O servidor iniciará na porta:3000 (ou 8080) - acesse http://localhost:3000
+1. **Clone o repositório**
+   ```bash
+   git clone [https://github.com/LeonardoFunai/projeto-estagio-univem.git](https://github.com/LeonardoFunai/projeto-estagio-univem.git)
+   cd projeto-estagio-univem
