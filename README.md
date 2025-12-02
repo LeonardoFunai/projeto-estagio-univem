@@ -1,42 +1,62 @@
-# Projeto de Estágio - UNIVEM
+# Sistema de Curricularização da Extensão - UNIVEM
 
-![Badge em Desenvolvimento](http://img.shields.io/static/v1?label=STATUS&message=EM%20DESENVOLVIMENTO&color=GREEN&style=for-the-badge)
+![Badge Concluído](http://img.shields.io/static/v1?label=STATUS&message=CONCLUÍDO&color=GREEN&style=for-the-badge)
+![Badge Laravel](http://img.shields.io/static/v1?label=LARAVEL&message=v11&color=red&style=for-the-badge)
+![Badge PHP](http://img.shields.io/static/v1?label=PHP&message=8.2&color=blue&style=for-the-badge)
 ![Badge License](http://img.shields.io/static/v1?label=LICENSE&message=MIT&color=BLUE&style=for-the-badge)
 
 ## 💻 Sobre o Projeto
 
-Este repositório contém o código-fonte e a documentação do projeto desenvolvido durante o período de estágio supervisionado do curso de **[Nome do Seu Curso, ex: Ciência da Computação / Sistemas de Informação]** no **UNIVEM (Centro Universitário Eurípides de Marília)**.
+Este repositório contém o código-fonte do sistema desenvolvido para o gerenciamento de **Projetos Extensionistas (Curricularização da Extensão)** do **UNIVEM (Centro Universitário Eurípides de Marília)**.
 
-O objetivo principal deste projeto é **[Descreva aqui em 1 ou 2 frases o objetivo: ex: desenvolver um sistema web para gestão de tarefas / criar uma API para automação de processos / aplicar conhecimentos de Inteligência Artificial]**.
+O objetivo principal deste projeto é automatizar e centralizar todo o ciclo de vida das atividades extensionistas, permitindo que alunos submetam propostas, acompanhem avaliações do NAPEx e Coordenação, e enviem os relatórios de resultados finais, eliminando o uso de processos manuais e papéis.
+
+O sistema atende a diferentes perfis de acesso: **Alunos**, **Professores/Coordenadores**, **NAPEx** e **Administradores**.
 
 ---
 
-## ⚙️ Funcionalidades
+## ⚙️ Funcionalidades Principais
 
-- [x] Funcionalidade 1 (ex: Cadastro de Usuários)
-- [x] Funcionalidade 2 (ex: Login e Autenticação)
-- [ ] Funcionalidade 3 (ex: Relatórios em PDF)
-- [ ] Funcionalidade 4 (ex: Integração com API externa)
+### 🎓 Para Alunos
+- [x] **Submissão de Propostas:** Cadastro completo de projetos com título, cronograma, objetivos e anexos.
+- [x] **Gestão de Equipe:** Sistema de convites para adicionar outros participantes ao projeto.
+- [x] **Envio de Resultados:** Submissão do relatório final/parcial após a execução do projeto.
+- [x] **Dashboard do Aluno:** Visão geral do status de todos os projetos (Em análise, Aprovado, Ajustes Necessários).
+- [x] **Feedback:** Visualização detalhada dos pareceres e motivos de rejeição/ajuste.
+
+### 🏛 Para NAPEx e Coordenadores
+- [x] **Fluxo de Aprovação:** Ferramentas para avaliar propostas e relatórios (Aprovar, Reprovar ou Solicitar Correção).
+- [x] **Gerenciamento de Prazos:** Controle de datas de início e fim das atividades.
+- [x] **Relatórios PDF:** Geração automática de PDFs das propostas e relatórios finais.
+- [x] **Exportação em Lote:** Funcionalidade para gerar ZIP com múltiplos PDFs de uma vez para arquivamento.
+- [x] **Painéis Administrativos:** Dashboards com métricas e listagens filtráveis.
+
+### 🔔 Transversais
+- [x] **Notificações:** Sistema de alertas internos sobre mudanças de status e novos convites.
+- [x] **Autenticação Segura:** Controle de acesso baseado em roles (funções) e permissões.
 
 ---
 
 ## 🛠 Tecnologias Utilizadas
 
-As seguintes ferramentas foram usadas na construção do projeto:
-
-### Front-end
-- **[React / Angular / Vue / HTML5]**
-- **[CSS3 / Sass / Tailwind]**
-- **[JavaScript / TypeScript]**
+Este projeto foi construído utilizando uma stack moderna e robusta:
 
 ### Back-end
-- **[Java (Spring Boot) / Node.js / Python (Django/Flask) / C# (.NET)]**
-- **[Banco de Dados: MySQL / PostgreSQL / MongoDB]**
+- **[PHP 8.2+](https://www.php.net/)**
+- **[Laravel 11](https://laravel.com/)** - Framework principal.
+- **MySQL** - Banco de dados relacional.
+- **Redis** - Para gerenciamento de filas e cache (via Sail).
 
-### Ferramentas & Utilitários
-- Editor:  **[VS Code / IntelliJ / Eclipse]**
-- Versionamento: **Git**
-- Testes de API: **[Postman / Insomnia]**
+### Front-end
+- **[Blade Templates](https://laravel.com/docs/blade)** - Motor de templates do Laravel.
+- **[Tailwind CSS](https://tailwindcss.com/)** - Estilização utilitária e responsiva.
+- **[Alpine.js](https://alpinejs.dev/)** - Interatividade leve no front-end.
+- **Vite** - Build tool para otimização de assets.
+
+### Ferramentas & DevOps
+- **Docker & Laravel Sail** - Ambiente de desenvolvimento containerizado.
+- **Git & GitHub** - Versionamento de código.
+- **Mailpit** - Testes de envio de e-mail local.
 
 ---
 
@@ -46,10 +66,10 @@ As seguintes ferramentas foram usadas na construção do projeto:
 Certifique-se de ter instalado em sua máquina:
 * [Git](https://git-scm.com/)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop) (Recomendado)
-* OU PHP 8.2+ e Composer (para rodar manualmente sem Docker)
+* **OU** PHP 8.2+ e Composer (caso opte por rodar sem Docker)
 
 ### Opção 1: Rodando com Docker (Laravel Sail) - Recomendado 🐳
-Este método não exige que você tenha PHP ou Composer instalados na sua máquina local, apenas o Docker.
+Este método é o mais simples, pois isola todas as dependências (PHP, MySQL, Node) em containers.
 
 1. **Clone o repositório**
    ```bash
