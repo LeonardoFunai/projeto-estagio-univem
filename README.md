@@ -52,24 +52,34 @@ Confira abaixo algumas telas principais do sistema em funcionamento:
 
 ## 🛠 Tecnologias Utilizadas
 
-Este projeto foi construído utilizando uma stack moderna e robusta:
+Este projeto foi desenvolvido utilizando uma stack moderna e robusta, integrando ferramentas de alta performance para o desenvolvimento web.
 
-### Back-end
-- **[PHP 8.2+](https://www.php.net/)**
-- **[Laravel 11](https://laravel.com/)** - Framework principal.
-- **MySQL** - Banco de dados relacional.
-- **Redis** - Para gerenciamento de filas e cache (via Sail).
+### 🎨 Front-end (Interface)
+* **[HTML5](https://developer.mozilla.org/pt-BR/docs/Web/HTML)** & **[CSS3](https://developer.mozilla.org/pt-BR/docs/Web/CSS)** - Estrutura e estilização base.
+* **[JavaScript (ES6+)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)** - Lógica de interatividade no cliente.
+* **[Tailwind CSS](https://tailwindcss.com/)** - Framework CSS utilitário para estilização rápida e responsiva.
+* **[Alpine.js](https://alpinejs.dev/)** - Framework JavaScript leve para comportamento dinâmico no front-end (modais, dropdowns).
+* **[Vite](https://vitejs.dev/)** - Build tool de próxima geração para compilação rápida de assets.
+* **[Axios](https://axios-http.com/)** - Cliente HTTP para requisições assíncronas e integração com o backend.
+* **PostCSS & Autoprefixer** - Processamento avançado de CSS para compatibilidade entre navegadores.
 
-### Front-end
-- **[Blade Templates](https://laravel.com/docs/blade)** - Motor de templates do Laravel.
-- **[Tailwind CSS](https://tailwindcss.com/)** - Estilização utilitária e responsiva.
-- **[Alpine.js](https://alpinejs.dev/)** - Interatividade leve no front-end.
-- **Vite** - Build tool para otimização de assets.
+### ⚙️ Back-end (Servidor)
+* **[PHP 8.2+](https://www.php.net/)** - Linguagem de programação principal.
+* **[Laravel Framework](https://laravel.com/)** - Framework PHP utilizado para a estrutura MVC, rotas e regras de negócio.
+* **[Laravel Breeze](https://laravel.com/docs/starter-kits#laravel-breeze)** - Sistema de autenticação (Login, Registro, Recuperação de Senha).
+* **MySQL** - Banco de dados relacional (gerenciado via Docker/Sail).
 
-### Ferramentas & DevOps
-- **Docker & Laravel Sail** - Ambiente de desenvolvimento containerizado.
-- **Git & GitHub** - Versionamento de código.
-- **Mailpit** - Testes de envio de e-mail local.
+### 📚 Bibliotecas & Utilitários
+* **[DomPDF](https://github.com/barryvdh/laravel-dompdf)** - Geração de relatórios e documentos em PDF.
+* **[Laravel Excel](https://laravel-excel.com/)** - Exportação e manipulação de planilhas Excel.
+* **[PHPWord](https://github.com/PHPOffice/PHPWord)** - Manipulação de arquivos Word (.docx).
+* **[Pest / PHPUnit](https://pestphp.com/)** - Suíte de testes automatizados.
+
+### 🐳 Infraestrutura & DevOps
+* **[Docker](https://www.docker.com/)** - Containerização da aplicação.
+* **[Laravel Sail](https://laravel.com/docs/sail)** - Interface de linha de comando para interagir com o ambiente Docker do Laravel.
+* **Git & GitHub** - Controle de versão e repositório de código.
+* **Mailpit** - Servidor SMTP fake para testes de envio de e-mail localmente.
 
 ---
 
